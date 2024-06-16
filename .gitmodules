@@ -1,0 +1,4 @@
+[submodule "apps/busybox/repo"]
+	path = apps/busybox/repo
+	url = https://github.com/mirror/busybox.git
+	branch = 1_32_stable

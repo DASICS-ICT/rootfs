@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Mount virtual file system
+mount -t proc proc /proc
+
+# Execute the customized script
+if [ -f /etc/init.d/rc.local ]; then
+    sh /etc/init.d/rc.local
+fi
