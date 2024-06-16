@@ -33,3 +33,6 @@ file /lib/libresolv.so.2 ${RISCV}/sysroot/lib/libresolv.so.2 755 0 0
 # Add busybox
 file /bin/busybox ${RISCV_ROOTFS_HOME}/rootfsimg/build/busybox 755 0 0
 slink /init /bin/busybox 755 0 0
+
+# Add hello
+file /root/hello ${RISCV_ROOTFS_HOME}/rootfsimg/build/hello 755 0 0
