@@ -8,8 +8,8 @@ BUSYBOX_REPO   = $(shell realpath repo)
 BUSYBOX_CONFIG = $(BUSYBOX_REPO)/.config
 BUSYBOX_ELF    = $(BUSYBOX_REPO)/busybox
 
-.PHONY: busybox
-busybox:
+.PHONY: init
+init:
 	@if [ ! -d "$(BUSYBOX_REPO)" ] || [ -z "$$(ls -A $(BUSYBOX_REPO))" ]; then \
 		git submodule update --init --depth 1 $(BUSYBOX_REPO); \
     fi
@@ -17,7 +17,7 @@ busybox:
 		cp $(DEFAULT_CONFIG) $(BUSYBOX_CONFIG); \
     fi
 
-$(BUSYBOX_ELF): busybox
+$(BUSYBOX_ELF): init
 	$(MAKE) -C $(BUSYBOX_REPO)
 
 $(APP): $(BUSYBOX_ELF)
