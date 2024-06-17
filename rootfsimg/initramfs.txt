@@ -29,7 +29,11 @@ file /lib/ld-linux-riscv64-lp64d.so.1 ${RISCV}/sysroot/lib/ld-linux-riscv64-lp64
 file /lib/libc.so.6 ${RISCV}/sysroot/lib/libc.so.6 755 0 0
 file /lib/libm.so.6 ${RISCV}/sysroot/lib/libm.so.6 755 0 0
 file /lib/libresolv.so.2 ${RISCV}/sysroot/lib/libresolv.so.2 755 0 0
+file /lib/libdl.so.2 ${RISCV}/sysroot/lib/libdl.so.2 755 0 0
 
 # Add busybox
 file /bin/busybox ${RISCV_ROOTFS_HOME}/rootfsimg/build/busybox 755 0 0
 slink /init /bin/busybox 755 0 0
+
+# Add bash
+file /bin/bash ${RISCV_ROOTFS_HOME}/rootfsimg/build/bash 755 0 0

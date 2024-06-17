@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Mount virtual file system
 mount -t proc proc /proc
