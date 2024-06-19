@@ -2,6 +2,11 @@
 
 # Mount virtual file system
 mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+
+# Configure the network
+ifconfig lo up
+ifconfig eth up
 
 # Execute the customized script
 if [ -f /etc/init.d/rc.local ]; then
