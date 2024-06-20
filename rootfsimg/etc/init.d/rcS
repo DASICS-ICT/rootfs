@@ -5,7 +5,13 @@ mount -t proc proc /proc
 mount -t sysfs sysfs /sys
 mount -t tmpfs tmpfs /tmp
 
+# Set environment variables
+export SHELL=/bin/sh  # set this explicitly
+
 # Execute the customized script
 if [ -f /etc/init.d/rc.local ]; then
     sh /etc/init.d/rc.local
 fi
+
+# Launch sh shell
+exec sh
