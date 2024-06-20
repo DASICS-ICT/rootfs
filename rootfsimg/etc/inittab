@@ -1,4 +1,3 @@
 ::sysinit:/bin/busybox --install -s
 /dev/console::sysinit:-/bin/bash /etc/init.d/rcS
-/dev/console::sysinit:-/bin/bash
-/dev/console::respawn:-/bin/bash
+/dev/console::respawn:-/bin/bash /etc/init.d/rcS
