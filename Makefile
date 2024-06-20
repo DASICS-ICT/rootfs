@@ -3,9 +3,11 @@ $(shell mkdir -p rootfsimg/build)
 APPS = busybox
 APPS_DIR = $(addprefix apps/, $(APPS))
 
-.PHONY: rootfsimg $(APPS_DIR) clean
+.DEFAULT_GOAL = all
 
-rootfsimg: $(APPS_DIR)
+.PHONY: all $(APPS_DIR) clean
+
+all: $(APPS_DIR)
 
 $(APPS_DIR): %:
 	$(MAKE) -s -C $@ install
