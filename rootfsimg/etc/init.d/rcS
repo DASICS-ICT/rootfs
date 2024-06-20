@@ -3,6 +3,7 @@
 # Mount virtual file system
 mount -t proc proc /proc
 mount -t sysfs sysfs /sys
+mount -t tmpfs tmpfs /tmp
 
 # Configure the network
 ifconfig lo up

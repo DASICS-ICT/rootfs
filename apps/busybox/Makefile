@@ -4,7 +4,7 @@ include $(RISCV_ROOTFS_HOME)/Makefile.app
 
 DEFAULT_CONFIG = config
 
-BUSYBOX_REPO   = $(shell realpath repo)
+BUSYBOX_REPO   = $(abspath repo)
 BUSYBOX_CONFIG = $(BUSYBOX_REPO)/.config
 BUSYBOX_ELF    = $(BUSYBOX_REPO)/busybox
 
