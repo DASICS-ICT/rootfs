@@ -5,3 +5,4 @@
 [submodule "apps/bash/repo"]
 	path = apps/bash/repo
 	url = https://github.com/bminor/bash.git
+	ignore = all
