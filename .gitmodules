@@ -8,3 +8,4 @@
 [submodule "apps/zlib/repo"]
 	path = apps/zlib/repo
 	url = https://github.com/madler/zlib.git
+	ignore = all
