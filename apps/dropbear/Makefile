@@ -13,19 +13,13 @@ DROPBEAR_ELF    = $(DROPBEAR_REPO)/dropbear
 
 override IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/usr/sbin)
 
-.PHONY: init
-init:
-	@if [ ! -d "$(DROPBEAR_REPO)" ] || [ -z "$$(ls -A $(DROPBEAR_REPO))" ]; then \
-		git submodule update --init --depth 1 $(DROPBEAR_REPO); \
-    fi
-
 $(ZLIB_SO):
 	$(MAKE) -C $(ZLIB_APP)
 
 $(DROPBEAR_CONFIG): $(ZLIB_SO)
 	cd $(DROPBEAR_REPO) && ./configure --host=$(CROSS_COMPILE) --with-zlib=$(shell dirname $(ZLIB_SO))
 
-$(DROPBEAR_ELF): init $(DROPBEAR_CONFIG)
+$(DROPBEAR_ELF): $(DROPBEAR_CONFIG)
 	$(MAKE) -C $(DROPBEAR_REPO)
 
 $(APP): $(DROPBEAR_ELF)
