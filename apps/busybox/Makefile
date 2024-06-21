@@ -8,16 +8,10 @@ BUSYBOX_REPO   = $(abspath repo)
 BUSYBOX_CONFIG = $(BUSYBOX_REPO)/.config
 BUSYBOX_ELF    = $(BUSYBOX_REPO)/busybox
 
-.PHONY: init
-init:
-	@if [ ! -d "$(BUSYBOX_REPO)" ] || [ -z "$$(ls -A $(BUSYBOX_REPO))" ]; then \
-		git submodule update --init --depth 1 $(BUSYBOX_REPO); \
-    fi
-	@if [ ! -f "$(BUSYBOX_CONFIG)" ] || ! diff <(tail -n +5 "$(BUSYBOX_CONFIG)") <(tail -n +5 "$(DEFAULT_CONFIG)"); then \
-		cp $(DEFAULT_CONFIG) $(BUSYBOX_CONFIG); \
-    fi
+$(BUSYBOX_CONFIG): $(DEFAULT_CONFIG)
+	cp $(DEFAULT_CONFIG) $(BUSYBOX_CONFIG)
 
-$(BUSYBOX_ELF): init
+$(BUSYBOX_ELF): $(BUSYBOX_CONFIG)
 	$(MAKE) -C $(BUSYBOX_REPO)
 
 $(APP): $(BUSYBOX_ELF)

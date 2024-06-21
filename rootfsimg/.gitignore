@@ -1,0 +1,11 @@
+bin
+sbin
+lib
+usr
+root
+dev
+proc
+sys
+tmp
+mnt
+initramfs*.txt
