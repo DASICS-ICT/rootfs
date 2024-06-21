@@ -90,7 +90,7 @@ def import_files_to_initramfs(rootfsimg_path, f):
             f.write(f"file /{relative_path} {file_path} 755 0 0\n")
 
     # Add slink for busybox
-    f.write(f"slink /init /{relative_path} 755 0 0\n\n")
+    f.write(f"slink /init /bin/busybox 755 0 0\n\n")
 
 def write_device_nodes(f):
     f.write("# Create device nodes\n")
