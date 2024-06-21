@@ -1,5 +1,3 @@
-$(shell mkdir -p rootfsimg/build)
-
 APPS = busybox
 APPS_DIR = $(addprefix apps/, $(APPS))
 
@@ -17,4 +15,4 @@ $(APPS_DIR): %:
 
 clean:
 	$(foreach app, $(APPS_DIR), $(MAKE) -s -C $(app) clean ;)
-	rm -f rootfsimg/build/*
+	cd rootfsimg && rm -rf bin sbin lib usr root
