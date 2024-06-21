@@ -8,10 +8,13 @@ $(shell cd $(ROOTFSIMG_DIR) && \
 
 .DEFAULT_GOAL = all
 
-.PHONY: init all $(APPS_DIR) clean
+.PHONY: init deinit all $(APPS_DIR) clean
 
 init:
 	git submodule update --init --depth 1
+
+deinit:
+	git submodule deinit -f --all
 
 all: $(APPS_DIR)
 	python $(UTILS_DIR)/gen_initramfs.py
