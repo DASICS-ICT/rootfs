@@ -10,16 +10,10 @@ ZLIB_SO     = $(ZLIB_REPO)/libz.so.1.3.1
 
 override IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/usr/lib)
 
-.PHONY: init
-init:
-	@if [ ! -d "$(ZLIB_REPO)" ] || [ -z "$$(ls -A $(ZLIB_REPO))" ]; then \
-		git submodule update --init --depth 1 $(ZLIB_REPO); \
-    fi
-
 $(ZLIB_CONFIG):
 	cd $(ZLIB_REPO) && CHOST=$(CROSS_COMPILE) ./configure
 
-$(ZLIB_SO): init $(ZLIB_CONFIG)
+$(ZLIB_SO): $(ZLIB_CONFIG)
 	$(MAKE) -C $(ZLIB_REPO)
 
 $(APP): $(ZLIB_SO)
