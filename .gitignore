@@ -1,8 +1,3 @@
 .vscode
 .idea
 build
-rootfsimg/bin
-rootfsimg/sbin
-rootfsimg/lib
-rootfsimg/usr
-rootfsimg/root
