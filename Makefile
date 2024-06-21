@@ -5,7 +5,10 @@ APPS_DIR = $(addprefix apps/, $(APPS))
 
 .DEFAULT_GOAL = all
 
-.PHONY: all $(APPS_DIR) clean
+.PHONY: init all $(APPS_DIR) clean
+
+init:
+	git submodule update --init --depth 1
 
 all: $(APPS_DIR)
 
