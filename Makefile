@@ -3,8 +3,10 @@ APPS_DIR = $(addprefix apps/, $(APPS))
 ROOTFSIMG_DIR = $(abspath rootfsimg)
 UTILS_DIR = $(abspath utils)
 
+ifneq ($(MAKECMDGOALS),deinit)
 $(shell cd $(ROOTFSIMG_DIR) && \
 		mkdir -p bin dev lib proc sbin sys tmp mnt root usr usr/bin usr/sbin var)
+endif
 
 .DEFAULT_GOAL = all
 
