@@ -4,8 +4,7 @@ include $(RISCV_ROOTFS_HOME)/Makefile.app
 
 CROSS_COMPILE = riscv64-unknown-linux-gnu
 
-ZLIB_APP = $(RISCV_ROOTFS_HOME)/apps/zlib
-ZLIB_SO  = $(ZLIB_APP)/repo/libz.so.1.3.1
+ZLIB_REPO = $(RISCV_ROOTFS_HOME)/libs/zlib/repo
 
 DROPBEAR_REPO   = $(abspath repo)
 DROPBEAR_CONFIG = $(DROPBEAR_REPO)/config.status
@@ -13,11 +12,8 @@ DROPBEAR_ELF    = $(DROPBEAR_REPO)/dropbear
 
 override IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/usr/sbin)
 
-$(ZLIB_SO):
-	$(MAKE) -C $(ZLIB_APP)
-
-$(DROPBEAR_CONFIG): $(ZLIB_SO)
-	cd $(DROPBEAR_REPO) && ./configure --host=$(CROSS_COMPILE) --with-zlib=$(shell dirname $(ZLIB_SO))
+$(DROPBEAR_CONFIG):
+	cd $(DROPBEAR_REPO) && ./configure --host=$(CROSS_COMPILE) --with-zlib=$(ZLIB_REPO)
 
 $(DROPBEAR_ELF): $(DROPBEAR_CONFIG)
 	$(MAKE) -C $(DROPBEAR_REPO)

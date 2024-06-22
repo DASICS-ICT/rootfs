@@ -5,7 +5,7 @@
 [submodule "apps/dropbear/repo"]
 	path = apps/dropbear/repo
 	url = https://github.com/mkj/dropbear.git
-[submodule "apps/zlib/repo"]
-	path = apps/zlib/repo
+[submodule "libs/zlib/repo"]
+	path = libs/zlib/repo
 	url = https://github.com/madler/zlib.git
 	ignore = all

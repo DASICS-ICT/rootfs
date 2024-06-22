@@ -1,6 +1,6 @@
-APPS = busybox zlib dropbear
+APPS = busybox dropbear
 APPS_DIR = $(addprefix apps/, $(APPS))
-LIBS =
+LIBS = zlib
 LIBS_DIR = $(addprefix libs/, $(LIBS))
 ROOTFSIMG_DIR = $(abspath rootfsimg)
 UTILS_DIR = $(abspath utils)
