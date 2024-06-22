@@ -15,7 +15,7 @@ $(shell mkdir -p $(DST_DIR))
 .PHONY: install clean
 
 install:: $(APP)
-	ln -sf $(APP) $(IST_DIR)/$(shell basename $(APP))
+	@ln -sf $(APP) $(IST_DIR)/$(shell basename $(APP))
 
 clean:
 	rm -rf $(APP_DIR)/build/

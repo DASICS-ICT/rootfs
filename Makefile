@@ -1,7 +1,7 @@
-LIBS = openssl
-LIBS_DIR = $(addprefix libs/, $(LIBS))
 APPS = busybox hb-client hb-server
 APPS_DIR = $(addprefix apps/, $(APPS))
+LIBS = openssl
+LIBS_DIR = $(addprefix libs/, $(LIBS))
 ROOTFSIMG_DIR = $(abspath rootfsimg)
 UTILS_DIR = $(abspath utils)
 
