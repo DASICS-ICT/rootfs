@@ -1,0 +1,42 @@
+NAME = lib/libssl.so.1.0.0
+
+include $(RISCV_ROOTFS_HOME)/Makefile.app
+
+OPENSSL_REPO   = $(abspath repo)
+OPENSSL_BUILD  = $(abspath build)
+OPENSSL_CONFIG = $(OPENSSL_REPO)/Makefile.bak
+OPENSSL_SO     = $(OPENSSL_REPO)/libssl.so.1.0.0
+
+# For rsa_private.key and cert.crt
+OPENSSL_HOST   = openssl
+KEY_TARGET     = $(OPENSSL_BUILD)/rsa_private.key
+CRT_TARGET     = $(OPENSSL_BUILD)/cert.crt
+CRT_INFO       = "/C=NL/ST=Some-State/O=Lupo Corp./CN=Server"
+
+$(KEY_TARGET):
+	$(OPENSSL_HOST) genrsa -out $(KEY_TARGET) 2048
+
+$(CRT_TARGET): $(KEY_TARGET)
+	$(OPENSSL_HOST) req -new -x509 -key $(KEY_TARGET) -out $(CRT_TARGET) -subj $(CRT_INFO)
+
+# For libssl.so.1.0.0
+override IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/usr/lib)
+
+$(OPENSSL_CONFIG):
+	cd $(OPENSSL_REPO) && ./Configure linux-generic64 no-asm no-threads shared\
+		--cross-compile-prefix=riscv64-unknown-linux-gnu- \
+		--prefix=$(OPENSSL_BUILD) --openssldir=$(OPENSSL_BUILD)/openssl
+
+$(OPENSSL_SO): $(OPENSSL_CONFIG)
+	# NOTE: DO NOT use multiple-threading to 'make' due to issue https://github.com/bilibili/ijkplayer/issues/5113
+	$(MAKE) -C $(OPENSSL_REPO) -j1
+
+$(APP): $(OPENSSL_SO) $(KEY_TARGET) $(CRT_TARGET)
+	# NOTE: 'make install' will fail due to issue https://github.com/openssl/openssl/issues/57
+	$(MAKE) -C $(OPENSSL_REPO) install_sw
+
+# libssl.so.1.0.0 is installed in Makefile.app, thus here we install libcrypto.so.1.0.0 + key + crt
+install:: $(APP)
+	@ln -sf $(OPENSSL_BUILD)/lib/libcrypto.so.1.0.0 $(RISCV_ROOTFS_HOME)/rootfsimg/usr/lib/libcrypto.so.1.0.0
+	@ln -sf $(KEY_TARGET) $(RISCV_ROOTFS_HOME)/rootfsimg/root/$(shell basename $(KEY_TARGET))
+	@ln -sf $(CRT_TARGET) $(RISCV_ROOTFS_HOME)/rootfsimg/root/$(shell basename $(CRT_TARGET))

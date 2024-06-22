@@ -5,6 +5,10 @@ mount -t proc proc /proc
 mount -t sysfs sysfs /sys
 mount -t tmpfs tmpfs /tmp
 
+# Configure the network
+ifconfig lo 127.0.0.1
+route add -net 127.0.0.0 netmask 255.255.255.0 lo
+
 # Set environment variables
 export SHELL=/bin/sh  # set this explicitly
 

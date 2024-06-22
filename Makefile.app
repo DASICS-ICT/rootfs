@@ -3,8 +3,8 @@ ifeq ($(RISCV_ROOTFS_HOME),)
 endif
 
 APP_DIR ?= $(shell pwd)
-INC_DIR += $(APP_DIR)/include/
-DST_DIR ?= $(APP_DIR)/build/
+INC_DIR += $(APP_DIR)/include
+DST_DIR ?= $(APP_DIR)/build
 IST_DIR ?= $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/bin)
 APP     ?= $(APP_DIR)/build/$(NAME)
 
@@ -14,9 +14,8 @@ $(shell mkdir -p $(DST_DIR))
 
 .PHONY: install clean
 
-install: $(APP)
-	@mkdir -p $(IST_DIR)
-	@ln -sf $(APP) $(IST_DIR)/$(shell basename $(APP))
+install:: $(APP)
+	ln -sf $(APP) $(IST_DIR)/$(shell basename $(APP))
 
 clean:
 	rm -rf $(APP_DIR)/build/

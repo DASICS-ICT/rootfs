@@ -1,3 +1,7 @@
 #!/bin/sh
 
-true
+# Generate run-heartbleed.sh
+echo "/root/hb-client 127.0.0.1 -p 9878" > /root/run-heartbleed.sh
+
+# Launch hb-server as deamon process
+/root/hb-server 9878 /root/cert.crt /root/rsa_private.key &
