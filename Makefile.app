@@ -3,8 +3,8 @@ ifeq ($(RISCV_ROOTFS_HOME),)
 endif
 
 APP_DIR ?= $(shell pwd)
-INC_DIR += $(APP_DIR)/include/
-DST_DIR ?= $(APP_DIR)/build/
+INC_DIR += $(APP_DIR)/include
+DST_DIR ?= $(APP_DIR)/build
 IST_DIR ?= $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/bin)
 APP     ?= $(APP_DIR)/build/$(NAME)
 
