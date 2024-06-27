@@ -12,11 +12,15 @@ DROPBEAR_ELF    = $(DROPBEAR_REPO)/dropbear
 
 override IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/usr/sbin)
 
+.PHONY: dropbear
+
+dropbear: $(DROPBEAR_CONFIG)
+	$(MAKE) -C $(DROPBEAR_REPO)
+
 $(DROPBEAR_CONFIG):
 	cd $(DROPBEAR_REPO) && ./configure --host=$(CROSS_COMPILE) --with-zlib=$(ZLIB_REPO)
 
-$(DROPBEAR_ELF): $(DROPBEAR_CONFIG)
-	$(MAKE) -C $(DROPBEAR_REPO)
+$(DROPBEAR_ELF): dropbear
 
 $(APP): $(DROPBEAR_ELF)
 	ln -sf $(abspath $<) $@
