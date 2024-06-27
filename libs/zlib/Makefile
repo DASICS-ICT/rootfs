@@ -10,11 +10,15 @@ ZLIB_SO     = $(ZLIB_REPO)/libz.so.1.3.1
 
 override IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/usr/lib)
 
+.PHONY: zlib
+
+zlib: $(ZLIB_CONFIG)
+	$(MAKE) -C $(ZLIB_REPO)
+
 $(ZLIB_CONFIG):
 	cd $(ZLIB_REPO) && CHOST=$(CROSS_COMPILE) ./configure
 
-$(ZLIB_SO): $(ZLIB_CONFIG)
-	$(MAKE) -C $(ZLIB_REPO)
+$(ZLIB_SO): zlib
 
 $(APP): $(ZLIB_SO)
 	ln -sf $(abspath $<) $@
