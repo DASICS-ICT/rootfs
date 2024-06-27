@@ -8,11 +8,15 @@ BUSYBOX_REPO   = $(abspath repo)
 BUSYBOX_CONFIG = $(BUSYBOX_REPO)/.config
 BUSYBOX_ELF    = $(BUSYBOX_REPO)/busybox
 
+.PHONY: busybox
+
+busybox: $(BUSYBOX_CONFIG)
+	$(MAKE) -C $(BUSYBOX_REPO)
+
 $(BUSYBOX_CONFIG): $(DEFAULT_CONFIG)
 	cp $(DEFAULT_CONFIG) $(BUSYBOX_CONFIG)
 
-$(BUSYBOX_ELF): $(BUSYBOX_CONFIG)
-	$(MAKE) -C $(BUSYBOX_REPO)
+$(BUSYBOX_ELF): busybox
 
 $(APP): $(BUSYBOX_ELF)
 	ln -sf $(abspath $<) $@
