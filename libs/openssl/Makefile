@@ -22,14 +22,18 @@ $(CRT_TARGET): $(KEY_TARGET)
 # For libssl.so.1.0.0
 override IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/usr/lib)
 
+.PHONY: openssl
+
+openssl: $(OPENSSL_CONFIG)
+	# NOTE: DO NOT use multiple-threading to 'make' due to issue https://github.com/bilibili/ijkplayer/issues/5113
+	$(MAKE) -C $(OPENSSL_REPO) -j1
+
 $(OPENSSL_CONFIG):
 	cd $(OPENSSL_REPO) && ./Configure linux-generic64 no-asm no-threads shared\
 		--cross-compile-prefix=riscv64-unknown-linux-gnu- \
 		--prefix=$(OPENSSL_BUILD) --openssldir=$(OPENSSL_BUILD)/openssl
 
-$(OPENSSL_SO): $(OPENSSL_CONFIG)
-	# NOTE: DO NOT use multiple-threading to 'make' due to issue https://github.com/bilibili/ijkplayer/issues/5113
-	$(MAKE) -C $(OPENSSL_REPO) -j1
+$(OPENSSL_SO): openssl
 
 $(APP): $(OPENSSL_SO) $(KEY_TARGET) $(CRT_TARGET)
 	# NOTE: 'make install' will fail due to issue https://github.com/openssl/openssl/issues/57
