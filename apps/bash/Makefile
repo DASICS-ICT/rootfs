@@ -8,11 +8,15 @@ BASH_REPO   = $(abspath repo)
 BASH_CONFIG = $(BASH_REPO)/config.status
 BASH_ELF    = $(BASH_REPO)/bash
 
+.PHONY: bash
+
+bash: $(BASH_CONFIG)
+	$(MAKE) -C $(BASH_REPO) >/dev/null
+
 $(BASH_CONFIG):
 	cd $(BASH_REPO) && ./configure --host=$(CROSS_COMPILE)
 
-$(BASH_ELF): $(BASH_CONFIG)
-	$(MAKE) -C $(BASH_REPO) >/dev/null
+$(BASH_ELF): bash
 
 $(APP): $(BASH_ELF)
 	ln -sf $(abspath $<) $@
