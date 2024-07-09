@@ -2,7 +2,7 @@
 	path = apps/busybox/repo
 	url = https://github.com/mirror/busybox.git
 	branch = 1_32_stable
-[submodule "apps/dropbear/repo"]
+[submodule "dropbear-2024_85"]
 	path = apps/dropbear/repo
 	url = https://github.com/mkj/dropbear.git
 [submodule "libs/zlib/repo"]
