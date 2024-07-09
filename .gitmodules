@@ -2,7 +2,7 @@
 	path = apps/busybox/repo
 	url = https://github.com/mirror/busybox.git
 	branch = 1_32_stable
-[submodule "apps/bash/repo"]
+[submodule "bash-5_2"]
 	path = apps/bash/repo
 	url = https://github.com/bminor/bash.git
 	ignore = all
