@@ -90,12 +90,12 @@ def import_files_to_initramfs(rootfsimg_path, f):
             f.write(f"file /{relative_path} {file_path} 755 0 0\n")
 
     # Add slink for busybox
-    f.write(f"slink /init /bin/busybox 755 0 0\n\n")
+    f.write(f"slink /init /bin/busybox 755 0 0\n")
 
 def write_device_nodes(f):
     f.write("# Create device nodes\n")
     f.writelines(["nod /dev/console 644 0 0 c 5 1\n", \
-                  "nod /dev/null 644 0 0 c 1 3\n"])
+                  "nod /dev/null 644 0 0 c 1 3\n\n"])
 
 def generate_initramfs_txt(rootfsimg_path, sysroot_path, output_file):
     with open(output_file, 'w') as f:
@@ -105,14 +105,14 @@ def generate_initramfs_txt(rootfsimg_path, sysroot_path, output_file):
         # Import directories into initramfs
         import_dirs_to_initramfs(rootfsimg_path, f)
 
+        # Write device information
+        write_device_nodes(f)
+
         # Process dependencies and generate links
         link_dependencies_to_rootfsimg(rootfsimg_path, sysroot_path, f)
 
         # Import files into initramfs
         import_files_to_initramfs(rootfsimg_path, f)
-
-        # Write device information
-        write_device_nodes(f)
 
 if __name__ == "__main__":
     # Check environment variables
