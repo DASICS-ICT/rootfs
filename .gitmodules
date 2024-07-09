@@ -2,6 +2,6 @@
 	path = apps/busybox/repo
 	url = https://github.com/mirror/busybox.git
 	branch = 1_32_stable
-[submodule "libs/openssl/repo"]
+[submodule "openssl-1_0_1f"]
 	path = libs/openssl/repo
 	url = https://github.com/openssl/openssl.git
