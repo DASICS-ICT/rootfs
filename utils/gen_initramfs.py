@@ -87,7 +87,8 @@ def import_files_to_initramfs(rootfsimg_path, f):
                 continue
             file_path = os.path.join(root, file)
             relative_path = os.path.relpath(file_path, rootfsimg_path).replace(os.sep, '/')
-            f.write(f"file /{relative_path} {file_path} 755 0 0\n")
+            env_file_path = os.sep.join(["${RISCV_ROOTFS_HOME}", "rootfsimg", relative_path])
+            f.write(f"file /{relative_path} {env_file_path} 755 0 0\n")
 
     # Add slink for busybox
     f.write(f"slink /init /bin/busybox 755 0 0\n")
