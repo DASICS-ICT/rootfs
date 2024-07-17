@@ -1,4 +1,4 @@
-APPS = busybox mpk/pkey_mprotect mpk/nested
+APPS = busybox mpk/pkey_mprotect mpk/nested mpk/fasttlb
 APPS_DIR = $(addprefix apps/, $(APPS))
 LIBS =
 LIBS_DIR = $(addprefix libs/, $(LIBS))
