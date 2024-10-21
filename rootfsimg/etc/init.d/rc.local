@@ -1,3 +1,5 @@
 #!/bin/sh
 
-true
+echo "Starting CWE126_Buffer_Overread__CWE129_fgets_01 test ..."
+/root/CWE126_Buffer_Overread__CWE129_fgets_01
+echo "CWE126_Buffer_Overread__CWE129_fgets_01 test finished."

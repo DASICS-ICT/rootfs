@@ -1,4 +1,4 @@
-APPS = busybox
+APPS = busybox juliet-test/CWE126_Buffer_Overread__CWE129_fgets_01
 APPS_DIR = $(addprefix apps/, $(APPS))
 LIBS =
 LIBS_DIR = $(addprefix libs/, $(LIBS))
