@@ -11,8 +11,8 @@ LD  = $(CROSS_COMPILE)gcc
 
 INCLUDES  = $(addprefix -I, $(INC_DIR))
 
-CFLAGS   += -O2 -MMD $(INCLUDES)
-CXXFLAGS += -O2 -MMD $(INCLUDES)
+CFLAGS   += -O0 -MMD $(INCLUDES)
+CXXFLAGS += -O0 -MMD $(INCLUDES)
 
 # Files to be compiled
 OBJS = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(SRCS))))
