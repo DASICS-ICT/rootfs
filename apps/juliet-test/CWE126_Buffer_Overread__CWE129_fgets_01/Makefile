@@ -9,5 +9,3 @@ LDFLAGS += -lpthread -L$(DASICS_SUPPORT)/build -lDASICS -T$(DASICS_SUPPORT)/repo
 SRCS = $(NAME).c $(wildcard $(JULIET_SUPPORT)/*.c)
 
 include $(RISCV_ROOTFS_HOME)/Makefile.compile
-
-override IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/root)
