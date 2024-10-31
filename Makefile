@@ -12,7 +12,7 @@ endif
 
 .DEFAULT_GOAL = all
 
-.PHONY: init deinit all $(APPS_DIR) $(LIBS_DIR) clean
+.PHONY: init deinit all $(APPS_DIR) $(LIBS_DIR) clean repoclean
 
 init:
 	git submodule update --init --depth 1
@@ -41,3 +41,9 @@ clean:
 	$(foreach dir, $(LIBS_DIR) $(APPS_DIR), $(MAKE) -s -C $(dir) clean ;)
 	cd $(ROOTFSIMG_DIR) && rm -f initramfs*.txt && \
 		rm -rf bin dev lib proc sbin sys tmp mnt root usr var
+
+repoclean: clean
+	$(foreach dir, $(LIBS_DIR) $(APPS_DIR), \
+		$(if $(wildcard $(dir)/repo), \
+			$(MAKE) -s -C $(dir)/repo clean ;) \
+	)
