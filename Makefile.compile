@@ -4,10 +4,11 @@ include $(RISCV_ROOTFS_HOME)/Makefile.app
 
 CROSS_COMPILE ?= riscv64-unknown-linux-gnu-
 
-AS  = $(CROSS_COMPILE)gcc
-CC  = $(CROSS_COMPILE)gcc
-CXX = $(CROSS_COMPILE)g++
-LD  = $(CROSS_COMPILE)gcc
+AS      = $(CROSS_COMPILE)gcc
+CC      = $(CROSS_COMPILE)gcc
+CXX     = $(CROSS_COMPILE)g++
+LD      = $(CROSS_COMPILE)gcc
+OBJDUMP = $(CROSS_COMPILE)objdump
 
 INCLUDES  = $(addprefix -I, $(INC_DIR))
 
@@ -30,6 +31,7 @@ $(DST_DIR)/%.o: %.c
 $(APP): $(OBJS)
 	@echo + LD $@
 	@$(LD) $(LDFLAGS) -o $(APP) $(OBJS)
+	@$(OBJDUMP) -d $@ > $(patsubst %,%.txt,$@)
 
 # Dependencies
 DEPS = $(addprefix $(DST_DIR)/, $(addsuffix .d, $(basename $(SRCS))))

@@ -2,6 +2,8 @@ NAME = busybox
 
 include $(RISCV_ROOTFS_HOME)/Makefile.app
 
+override IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/bin)
+
 DEFAULT_CONFIG = config
 
 BUSYBOX_REPO   = $(abspath repo)
