@@ -196,7 +196,7 @@ int main(int argc, char * argv[])
 
     // Allocate jump bound for .ulibtext section
     extern char __ULIBTEXT_BEGIN__, __ULIBTEXT_END__;
-    dasics_jumpcfg_alloc((uint64_t)&__ULIBTEXT_BEGIN__, (uint64_t)&__ULIBTEXT_END__);
+    int idx_ulibtext = dasics_jumpcfg_alloc((uint64_t)&__ULIBTEXT_BEGIN__, (uint64_t)&__ULIBTEXT_END__);
 
     // Allocate stack permission for this bad function
     uint64_t frame_addr, badfunc_stack_top;
@@ -217,6 +217,7 @@ int main(int argc, char * argv[])
     // Release allocated permissions
     dasics_libcfg_free(idx_stdin);
     dasics_libcfg_free(idx_stack);
+    dasics_jumpcfg_free(idx_ulibtext);
 
     printLine("Finished bad()");
 #endif /* OMITBAD */
