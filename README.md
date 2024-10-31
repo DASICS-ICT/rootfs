@@ -48,7 +48,7 @@ This command cleans up the build directories of the specified applications and r
 To deinitialize and remove all git submodules, run:
 
 ```bash
-make deinit
+make distclean
 ```
 
 This command forcefully deinitializes all submodules, which is useful when you are about to switch git branches.

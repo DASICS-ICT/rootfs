@@ -12,7 +12,7 @@ endif
 
 .DEFAULT_GOAL = all
 
-.PHONY: init deinit all $(APPS_DIR) $(LIBS_DIR) clean repoclean
+.PHONY: init all $(APPS_DIR) $(LIBS_DIR) clean repoclean distclean
 
 init:
 	git submodule update --init --depth 1
@@ -24,9 +24,6 @@ init:
 			) \
 		) \
 	)
-
-deinit:
-	git submodule deinit -f --all
 
 all: $(APPS_DIR)
 	python $(UTILS_DIR)/gen_initramfs.py
@@ -47,3 +44,6 @@ repoclean: clean
 		$(if $(wildcard $(dir)/repo), \
 			$(MAKE) -s -C $(dir)/repo clean ;) \
 	)
+
+distclean: repoclean
+	git submodule deinit -f --all
