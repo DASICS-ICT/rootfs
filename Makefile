@@ -12,7 +12,7 @@ endif
 
 .DEFAULT_GOAL = all
 
-.PHONY: init deinit all $(APPS_DIR) $(LIBS_DIR) clean
+.PHONY: init all $(APPS_DIR) $(LIBS_DIR) clean repoclean distclean
 
 init:
 	git submodule update --init --depth 1
@@ -25,9 +25,6 @@ init:
 		) \
 	)
 
-deinit:
-	git submodule deinit -f --all
-
 all: $(APPS_DIR)
 	python $(UTILS_DIR)/gen_initramfs.py
 
@@ -38,7 +35,15 @@ $(LIBS_DIR): %:
 	$(MAKE) -s -C $@ install
 
 clean:
-	$(foreach lib, $(LIBS_DIR), $(MAKE) -s -C $(lib) clean ;)
-	$(foreach app, $(APPS_DIR), $(MAKE) -s -C $(app) clean ;)
+	$(foreach dir, $(LIBS_DIR) $(APPS_DIR), $(MAKE) -s -C $(dir) clean ;)
 	cd $(ROOTFSIMG_DIR) && rm -f initramfs*.txt && \
 		rm -rf bin dev lib proc sbin sys tmp mnt root usr var
+
+repoclean: clean
+	$(foreach dir, $(LIBS_DIR) $(APPS_DIR), \
+		$(if $(wildcard $(dir)/repo/Makefile), \
+			$(MAKE) -s -C $(dir)/repo clean ;) \
+	)
+
+distclean: repoclean
+	git submodule deinit -f --all
