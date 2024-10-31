@@ -16,6 +16,14 @@ endif
 
 init:
 	git submodule update --init --depth 1
+	@$(foreach dir,$(APPS_DIR) $(LIBS_DIR), \
+		$(if $(wildcard $(dir)/repo), \
+			$(if $(wildcard $(dir)/patchfile.patch), \
+				echo "Applying patch to $(dir)/repo"; \
+				git -C "$(dir)/repo" apply "../patchfile.patch", \
+			) \
+		) \
+	)
 
 deinit:
 	git submodule deinit -f --all
