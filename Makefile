@@ -41,7 +41,7 @@ clean:
 
 repoclean: clean
 	$(foreach dir, $(LIBS_DIR) $(APPS_DIR), \
-		$(if $(wildcard $(dir)/repo), \
+		$(if $(wildcard $(dir)/repo/Makefile), \
 			$(MAKE) -s -C $(dir)/repo clean ;) \
 	)
 
