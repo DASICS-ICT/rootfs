@@ -38,7 +38,6 @@ $(LIBS_DIR): %:
 	$(MAKE) -s -C $@ install
 
 clean:
-	$(foreach lib, $(LIBS_DIR), $(MAKE) -s -C $(lib) clean ;)
-	$(foreach app, $(APPS_DIR), $(MAKE) -s -C $(app) clean ;)
+	$(foreach dir, $(LIBS_DIR) $(APPS_DIR), $(MAKE) -s -C $(dir) clean ;)
 	cd $(ROOTFSIMG_DIR) && rm -f initramfs*.txt && \
 		rm -rf bin dev lib proc sbin sys tmp mnt root usr var
