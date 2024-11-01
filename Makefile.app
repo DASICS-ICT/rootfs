@@ -1,7 +1,3 @@
-ifeq ($(RISCV_ROOTFS_HOME),)
-	$(error RISCV_ROOTFS_HOME is not defined)
-endif
-
 APP_DIR ?= $(shell pwd)
 INC_DIR += $(APP_DIR)/include
 DST_DIR ?= $(APP_DIR)/build
