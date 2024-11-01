@@ -1,0 +1,7 @@
+ifeq ($(RISCV_ROOTFS_HOME),)
+$(error RISCV_ROOTFS_HOME is not defined)
+endif
+
+ifeq ($(RISCV),)
+$(error RISCV is not defined)
+endif

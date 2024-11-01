@@ -1,6 +1,10 @@
 NAME = busybox
 
+ifneq ($(RISCV_ROOTFS_HOME),)
 include $(RISCV_ROOTFS_HOME)/Makefile.app
+else
+$(error RISCV_ROOTFS_HOME is not defined)
+endif
 
 override IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/bin)
 

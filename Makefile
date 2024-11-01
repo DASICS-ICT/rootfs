@@ -1,3 +1,5 @@
+include Makefile.check
+
 APPS = busybox
 APPS_DIR = $(addprefix apps/, $(APPS))
 LIBS = LibDASICS
