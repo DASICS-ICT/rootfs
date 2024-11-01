@@ -1,0 +1,19 @@
+diff --git a/src/start/stage3.c b/src/start/stage3.c
+index cb09e1f..fbb8555 100644
+--- a/src/start/stage3.c
++++ b/src/start/stage3.c
+@@ -51,10 +51,10 @@ void _dasics_entry_stage3(uint64_t sp, rtld_fini fini)
+     original_libcfg_alloc(DASICS_LIBCFG_V | DASICS_LIBCFG_R, \
+                         (uint64_t)_umain_elf_table->got_begin, \
+                         (uint64_t)_umain_elf_table->got_begin + sizeof(uint64_t) * (_umain_elf_table->got_num + 2));
+-    original_libcfg_alloc(DASICS_LIBCFG_V | DASICS_LIBCFG_R | DASICS_LIBCFG_W, \
+-                0, \
+-                TASK_SIZE);
+-    original_jumpcfg_alloc(0, TASK_SIZE);
++    // original_libcfg_alloc(DASICS_LIBCFG_V | DASICS_LIBCFG_R | DASICS_LIBCFG_W, \
++    //             0, \
++    //             TASK_SIZE);
++    // original_jumpcfg_alloc(0, TASK_SIZE);
+ 
+     // setup user ufault handler 
+     csr_write(0x005, (uint64_t)dasics_ufault_entry);
