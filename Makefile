@@ -1,6 +1,6 @@
 include Makefile.check
 
-APPS = busybox
+APPS = busybox dasics-test/rwx
 APPS_DIR = $(addprefix apps/, $(APPS))
 LIBS = LibDASICS
 LIBS_DIR = $(addprefix libs/, $(LIBS))
