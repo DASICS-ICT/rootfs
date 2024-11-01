@@ -1,3 +1,5 @@
+include Makefile.check
+
 APPS = busybox hello
 APPS_DIR = $(addprefix apps/, $(APPS))
 LIBS =
