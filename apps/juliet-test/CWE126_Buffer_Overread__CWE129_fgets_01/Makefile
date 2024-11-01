@@ -8,4 +8,8 @@ LDFLAGS += -lpthread -L$(DASICS_SUPPORT)/build -lDASICS -T$(DASICS_SUPPORT)/repo
 
 SRCS = $(NAME).c $(wildcard $(JULIET_SUPPORT)/*.c)
 
+ifneq ($(RISCV_ROOTFS_HOME),)
 include $(RISCV_ROOTFS_HOME)/Makefile.compile
+else
+$(error RISCV_ROOTFS_HOME is not defined)
+endif
