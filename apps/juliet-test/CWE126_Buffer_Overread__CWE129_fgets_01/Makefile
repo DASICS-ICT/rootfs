@@ -2,7 +2,7 @@ NAME = CWE126_Buffer_Overread__CWE129_fgets_01
 
 JULIET_SUPPORT = $(abspath ../testcasesupport)
 INC_DIR += $(JULIET_SUPPORT)
-CFLAGS += -DINCLUDEMAIN
+CFLAGS += -DINCLUDEMAIN -DOMITGOOD
 LDFLAGS += -lpthread
 
 SRCS = $(NAME).c $(wildcard $(JULIET_SUPPORT)/*.c)
