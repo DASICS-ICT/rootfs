@@ -1,12 +1,8 @@
 #!/bin/sh
 
-cd /root
-echo "1" > good_data.txt
-echo "111" > bad_data.txt
-
 echo "Input good data to CWE126_Buffer_Overread__CWE129_fgets_01 test ..."
-./CWE126_Buffer_Overread__CWE129_fgets_01 -dasics < good_data.txt
+echo "1" | /root/CWE126_Buffer_Overread__CWE129_fgets_01 -dasics
 echo "-------------------------------------------------------------------"
 echo "Input bad data to CWE126_Buffer_Overread__CWE129_fgets_01 test ..."
-./CWE126_Buffer_Overread__CWE129_fgets_01 -dasics < bad_data.txt
+echo "111" | /root/CWE126_Buffer_Overread__CWE129_fgets_01 -dasics
 echo "CWE126_Buffer_Overread__CWE129_fgets_01 test finished."
