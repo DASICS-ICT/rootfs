@@ -3,3 +3,9 @@
 echo "Starting CWE126_Buffer_Overread__CWE129_fgets_01 test ..."
 echo "111" | /root/CWE126_Buffer_Overread__CWE129_fgets_01
 echo "CWE126_Buffer_Overread__CWE129_fgets_01 test finished."
+
+echo "-----------------------------------------------------------"
+
+echo "Starting CWE416_Use_After_Free__malloc_free_int_01 test ..."
+/root/CWE416_Use_After_Free__malloc_free_int_01
+echo "CWE416_Use_After_Free__malloc_free_int_01 test finished."
