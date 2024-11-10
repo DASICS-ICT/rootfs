@@ -17,7 +17,7 @@ REDIS_BENCH = $(REDIS_REPO)/src/redis-benchmark
 .PHONY: redis
 
 redis:
-	$(MAKE) -C $(REDIS_REPO) CC=$(CROSS_COMPILE)gcc CXX=$(CROSS_COMPILE)g++
+	$(MAKE) -C $(REDIS_REPO) CC=$(CROSS_COMPILE)gcc CXX=$(CROSS_COMPILE)g++ MALLOC=libc
 
 $(REDIS_SRV): redis
 
