@@ -1,0 +1,21 @@
+diff --git a/redis.conf b/redis.conf
+index a95e2ed37..1b49a08de 100644
+--- a/redis.conf
++++ b/redis.conf
+@@ -86,6 +86,7 @@
+ # mode.
+ # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ bind 127.0.0.1 -::1
++bind 0.0.0.0
+ 
+ # By default, outgoing connections (from replica to master, from Sentinel to
+ # instances, cluster bus, etc.) are not bound to a specific local address. In
+@@ -109,7 +110,7 @@ bind 127.0.0.1 -::1
+ # By default protected mode is enabled. You should disable it only if
+ # you are sure you want clients from other hosts to connect to Redis
+ # even if no authentication is configured.
+-protected-mode yes
++protected-mode no
+ 
+ # Redis uses default hardened security configuration directives to reduce the
+ # attack surface on innocent users. Therefore, several sensitive configuration
