@@ -2,3 +2,7 @@
 	path = apps/busybox/repo
 	url = https://github.com/mirror/busybox.git
 	branch = 1_32_stable
+[submodule "haveged-1_9_18"]
+	path = apps/haveged/repo
+	url = https://github.com/jirka-h/haveged.git
+	ignore = all
