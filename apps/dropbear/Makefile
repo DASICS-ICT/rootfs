@@ -1,6 +1,11 @@
-NAME = dropbear
+NAME    = dropbear
+IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/usr/sbin)
 
+ifneq ($(RISCV_ROOTFS_HOME),)
 include $(RISCV_ROOTFS_HOME)/Makefile.app
+else
+$(error RISCV_ROOTFS_HOME is not defined)
+endif
 
 CROSS_COMPILE = riscv64-unknown-linux-gnu
 
@@ -9,8 +14,6 @@ ZLIB_REPO = $(RISCV_ROOTFS_HOME)/libs/zlib/repo
 DROPBEAR_REPO   = $(abspath repo)
 DROPBEAR_CONFIG = $(DROPBEAR_REPO)/config.status
 DROPBEAR_ELF    = $(DROPBEAR_REPO)/dropbear
-
-override IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/usr/sbin)
 
 .PHONY: dropbear
 
