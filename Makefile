@@ -8,7 +8,8 @@ ROOTFSIMG_DIR = $(abspath rootfsimg)
 UTILS_DIR = $(abspath utils)
 
 ROOTFSIMG_NEW_DIRS = bin dev lib proc sbin sys tmp mnt root \
-	usr usr/bin usr/sbin usr/lib var var/run
+	usr usr/bin usr/sbin usr/lib var var/run \
+	etc/network/if-pre-up.d etc/network/if-up.d etc/network/if-down.d etc/network/if-post-down.d
 
 $(shell cd $(ROOTFSIMG_DIR) && mkdir -p $(ROOTFSIMG_NEW_DIRS))
 
