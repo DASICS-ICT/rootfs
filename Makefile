@@ -7,8 +7,10 @@ LIBS_DIR = $(addprefix libs/, $(LIBS))
 ROOTFSIMG_DIR = $(abspath rootfsimg)
 UTILS_DIR = $(abspath utils)
 
-$(shell cd $(ROOTFSIMG_DIR) && \
-	mkdir -p bin dev lib proc sbin sys tmp mnt root usr usr/bin usr/sbin usr/lib var)
+ROOTFSIMG_NEW_DIRS = bin dev lib proc sbin sys tmp mnt root \
+	usr usr/bin usr/sbin usr/lib var var/run
+
+$(shell cd $(ROOTFSIMG_DIR) && mkdir -p $(ROOTFSIMG_NEW_DIRS))
 
 .DEFAULT_GOAL = all
 
@@ -36,8 +38,7 @@ $(LIBS_DIR): %:
 
 clean:
 	$(foreach dir, $(LIBS_DIR) $(APPS_DIR), $(MAKE) -s -C $(dir) clean ;)
-	cd $(ROOTFSIMG_DIR) && rm -f initramfs*.txt && \
-		rm -rf bin dev lib proc sbin sys tmp mnt root usr var
+	cd $(ROOTFSIMG_DIR) && rm -f initramfs*.txt && rm -rf $(ROOTFSIMG_NEW_DIRS)
 
 repoclean: clean
 	$(foreach dir, $(LIBS_DIR) $(APPS_DIR), \
