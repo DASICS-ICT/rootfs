@@ -6,3 +6,7 @@
 	path = libs/LibDASICS/repo
 	url = https://github.com/DASICS-ICT/LibDASICS.git
 	branch = main
+[submodule "uthash-master"]
+	path = includes/uthash
+	url = https://github.com/troydhanson/uthash.git
+	branch = master
