@@ -1,7 +1,8 @@
 include Makefile.check
 
 APPS = busybox juliet-test/CWE126_Buffer_Overread__CWE129_fgets_01 \
-               juliet-test/CWE416_Use_After_Free__malloc_free_int_01
+               juliet-test/CWE416_Use_After_Free__malloc_free_int_01 \
+			   juliet-test/CWE122_Heap_Based_Buffer_Overflow__char_type_overrun_memcpy_01
 APPS_DIR = $(addprefix apps/, $(APPS))
 LIBS = LibDASICS
 LIBS_DIR = $(addprefix libs/, $(LIBS))

@@ -1,14 +1,27 @@
 #!/bin/sh
 
-echo "Input good data to CWE126_Buffer_Overread__CWE129_fgets_01 test ..."
+echo "-----------------------------------------------------------"
+
+echo "Starting CWE126_Buffer_Overread__CWE129_fgets_01 test (GOOD data) ..."
 echo "1" | /root/CWE126_Buffer_Overread__CWE129_fgets_01 -dasics
-echo "-------------------------------------------------------------------"
-echo "Input bad data to CWE126_Buffer_Overread__CWE129_fgets_01 test ..."
+echo "CWE126_Buffer_Overread__CWE129_fgets_01 test (GOOD data) finished."
+
+echo "-----------------------------------------------------------"
+
+echo "Starting CWE126_Buffer_Overread__CWE129_fgets_01 test (BAD data) ..."
 echo "111" | /root/CWE126_Buffer_Overread__CWE129_fgets_01 -dasics
-echo "CWE126_Buffer_Overread__CWE129_fgets_01 test finished."
+echo "CWE126_Buffer_Overread__CWE129_fgets_01 test (BAD data) finished."
 
 echo "-----------------------------------------------------------"
 
 echo "Starting CWE416_Use_After_Free__malloc_free_int_01 test ..."
 /root/CWE416_Use_After_Free__malloc_free_int_01 -dasics
 echo "CWE416_Use_After_Free__malloc_free_int_01 test finished."
+
+echo "-----------------------------------------------------------"
+
+echo "Starting CWE122_Heap_Based_Buffer_Overflow__char_type_overrun_memcpy_01 test ..."
+/root/CWE122_Heap_Based_Buffer_Overflow__char_type_overrun_memcpy_01
+echo "CWE122_Heap_Based_Buffer_Overflow__char_type_overrun_memcpy_01 test finished."
+
+echo "-----------------------------------------------------------"
