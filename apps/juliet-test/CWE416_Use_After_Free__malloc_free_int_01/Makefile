@@ -1,9 +1,10 @@
 NAME = CWE416_Use_After_Free__malloc_free_int_01
 
 JULIET_SUPPORT = $(abspath ../testcasesupport)
-INC_DIR += $(JULIET_SUPPORT)
+DASICS_SUPPORT = $(abspath $(RISCV_ROOTFS_HOME)/libs/LibDASICS)
+INC_DIR += $(JULIET_SUPPORT) $(DASICS_SUPPORT)/repo/include
 CFLAGS += -DINCLUDEMAIN -DOMITGOOD
-LDFLAGS += -lpthread
+LDFLAGS += -lpthread -L$(DASICS_SUPPORT)/build -lDASICS -T$(DASICS_SUPPORT)/repo/ld.lds
 
 SRCS = $(NAME).c $(wildcard $(JULIET_SUPPORT)/*.c)
 
