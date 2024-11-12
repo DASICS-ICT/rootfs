@@ -1,5 +1,7 @@
 #!/bin/sh
 
+echo "-----------------------------------------------------------"
+
 echo "Starting CWE126_Buffer_Overread__CWE129_fgets_01 test ..."
 echo "111" | /root/CWE126_Buffer_Overread__CWE129_fgets_01
 echo "CWE126_Buffer_Overread__CWE129_fgets_01 test finished."
@@ -15,3 +17,5 @@ echo "-----------------------------------------------------------"
 echo "Starting CWE122_Heap_Based_Buffer_Overflow__char_type_overrun_memcpy_01 test ..."
 /root/CWE122_Heap_Based_Buffer_Overflow__char_type_overrun_memcpy_01
 echo "CWE122_Heap_Based_Buffer_Overflow__char_type_overrun_memcpy_01 test finished."
+
+echo "-----------------------------------------------------------"
