@@ -9,3 +9,9 @@ echo "-----------------------------------------------------------"
 echo "Starting CWE416_Use_After_Free__malloc_free_int_01 test ..."
 /root/CWE416_Use_After_Free__malloc_free_int_01
 echo "CWE416_Use_After_Free__malloc_free_int_01 test finished."
+
+echo "-----------------------------------------------------------"
+
+echo "Starting CWE122_Heap_Based_Buffer_Overflow__char_type_overrun_memcpy_01 test ..."
+/root/CWE122_Heap_Based_Buffer_Overflow__char_type_overrun_memcpy_01
+echo "CWE122_Heap_Based_Buffer_Overflow__char_type_overrun_memcpy_01 test finished."
