@@ -2,7 +2,11 @@ NAME    = libssl.so.1.0.0
 IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/usr/lib)
 APP     = $(DST_DIR)/lib/$(NAME)
 
+ifneq ($(RISCV_ROOTFS_HOME),)
 include $(RISCV_ROOTFS_HOME)/Makefile.app
+else
+$(error RISCV_ROOTFS_HOME is not defined)
+endif
 
 OPENSSL_REPO   = $(abspath repo)
 OPENSSL_CONFIG = $(OPENSSL_REPO)/Makefile.bak
