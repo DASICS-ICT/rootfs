@@ -10,5 +10,5 @@ echo "CWE126_Buffer_Overread__CWE129_fgets_01 test finished."
 echo "-----------------------------------------------------------"
 
 echo "Starting CWE416_Use_After_Free__malloc_free_int_01 test ..."
-/root/CWE416_Use_After_Free__malloc_free_int_01
+/root/CWE416_Use_After_Free__malloc_free_int_01 -dasics
 echo "CWE416_Use_After_Free__malloc_free_int_01 test finished."
