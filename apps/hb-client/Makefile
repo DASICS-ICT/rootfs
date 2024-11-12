@@ -1,6 +1,8 @@
 NAME = hb-client
 SRCS = hb-client.c
 
+ifneq ($(RISCV_ROOTFS_HOME),)
 include $(RISCV_ROOTFS_HOME)/Makefile.compile
-
-override IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/root)
+else
+$(error RISCV_ROOTFS_HOME is not defined)
+endif
