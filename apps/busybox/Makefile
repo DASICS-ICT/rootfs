@@ -1,6 +1,11 @@
-NAME = busybox
+NAME    = busybox
+IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/bin)
 
+ifneq ($(RISCV_ROOTFS_HOME),)
 include $(RISCV_ROOTFS_HOME)/Makefile.app
+else
+$(error RISCV_ROOTFS_HOME is not defined)
+endif
 
 DEFAULT_CONFIG = config
 
