@@ -3,5 +3,8 @@
 # Start haveged daemon process
 haveged -F -d 32 -w 1024 --verbose=1 &
 
+# Create empty lastlog file
+touch /var/log/lastlog
+
 # Start the SSH server
 dropbear -E
