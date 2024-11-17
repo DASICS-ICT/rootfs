@@ -22,3 +22,6 @@
 [submodule "libatomic_ops-7_8_2"]
 	path = libs/libatomic_ops/repo
 	url = https://github.com/ivmai/libatomic_ops.git
+[submodule "openssl-1_0_1f"]
+	path = libs/openssl/repo
+	url = https://github.com/openssl/openssl.git
