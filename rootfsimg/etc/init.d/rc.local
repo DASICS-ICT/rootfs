@@ -6,5 +6,9 @@ haveged -F -d 32 -w 1024 --verbose=1 &
 # Create empty lastlog file
 touch /var/log/lastlog
 
+# Create dropbear rsa host key
+mkdir -p /etc/dropbear
+dropbearkey -t rsa -f /etc/dropbear/dropbear_rsa_host_key
+
 # Start the SSH server
 dropbear -E
