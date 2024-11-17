@@ -1,3 +1,4 @@
 #!/bin/sh
 
-true
+# Start haveged daemon process
+haveged -F -d 32 -w 1024 --verbose=1 &
