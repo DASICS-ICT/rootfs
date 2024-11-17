@@ -1,6 +1,6 @@
 include Makefile.check
 
-APPS = busybox dropbear
+APPS = busybox haveged dropbear
 APPS_DIR = $(addprefix apps/, $(APPS))
 LIBS = zlib
 LIBS_DIR = $(addprefix libs/, $(LIBS))
