@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Start haveged daemon process
+haveged -F -d 32 -w 1024 --verbose=1 &
+
 # Generate run-heartbleed.sh
 echo "/root/hb-client 127.0.0.1 -p 9878" > /root/run-heartbleed.sh
 chmod +x /root/run-heartbleed.sh
