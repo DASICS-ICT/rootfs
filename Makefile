@@ -1,6 +1,6 @@
 include Makefile.check
 
-APPS = busybox hb-client hb-server
+APPS = busybox haveged hb-client hb-server
 APPS_DIR = $(addprefix apps/, $(APPS))
 LIBS = openssl
 LIBS_DIR = $(addprefix libs/, $(LIBS))
