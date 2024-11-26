@@ -1,6 +1,10 @@
 NAME = bash
 
+ifneq ($(RISCV_ROOTFS_HOME),)
 include $(RISCV_ROOTFS_HOME)/Makefile.app
+else
+$(error RISCV_ROOTFS_HOME is not defined)
+endif
 
 CROSS_COMPILE = riscv64-unknown-linux-gnu
 
