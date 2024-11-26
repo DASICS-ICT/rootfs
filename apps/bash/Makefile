@@ -1,4 +1,5 @@
-NAME = bash
+NAME    = bash
+IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/bin)
 
 ifneq ($(RISCV_ROOTFS_HOME),)
 include $(RISCV_ROOTFS_HOME)/Makefile.app
