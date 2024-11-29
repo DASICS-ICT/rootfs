@@ -5,7 +5,7 @@ mount -t proc proc /proc
 mount -t sysfs sysfs /sys
 mount -t tmpfs tmpfs /tmp
 
-# Set environment varuables
+# Set environment variables
 export SHELL=/bin/bash
 
 # Execute the customized script
