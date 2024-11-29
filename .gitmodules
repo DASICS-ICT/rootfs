@@ -2,3 +2,7 @@
 	path = apps/busybox/repo
 	url = https://github.com/mirror/busybox.git
 	branch = 1_32_stable
+[submodule "zlib-1_3_1"]
+	path = libs/zlib/repo
+	url = https://github.com/madler/zlib.git
+	ignore = all
