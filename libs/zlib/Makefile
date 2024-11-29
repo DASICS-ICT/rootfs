@@ -1,5 +1,6 @@
 NAME    = libz.so.1
 IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/usr/lib)
+APP     = $(DST_DIR)/lib/$(NAME)
 
 ifneq ($(RISCV_ROOTFS_HOME),)
 include $(RISCV_ROOTFS_HOME)/Makefile.app
@@ -19,9 +20,9 @@ zlib: $(ZLIB_CONFIG)
 	$(MAKE) -C $(ZLIB_REPO)
 
 $(ZLIB_CONFIG):
-	cd $(ZLIB_REPO) && CHOST=$(CROSS_COMPILE) ./configure
+	cd $(ZLIB_REPO) && CHOST=$(CROSS_COMPILE) ./configure --prefix=$(DST_DIR)
 
 $(ZLIB_SO): zlib
 
 $(APP): $(ZLIB_SO)
-	ln -sf $(abspath $<) $@
+	$(MAKE) -C $(ZLIB_REPO) install
