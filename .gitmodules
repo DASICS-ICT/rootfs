@@ -5,3 +5,7 @@
 [submodule "openssl-3_4_0"]
 	path = libs/openssl/repo
 	url = https://github.com/openssl/openssl.git
+[submodule "zlib-1_3_1"]
+	path = libs/zlib/repo
+	url = https://github.com/madler/zlib.git
+	ignore = all
