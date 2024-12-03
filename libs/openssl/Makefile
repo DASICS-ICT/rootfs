@@ -9,7 +9,7 @@ $(error RISCV_ROOTFS_HOME is not defined)
 endif
 
 OPENSSL_REPO   = $(abspath repo)
-OPENSSL_CONFIG = $(OPENSSL_REPO)/Makefile.bak
+OPENSSL_CONFIG = $(OPENSSL_REPO)/configdata.pm
 OPENSSL_SO     = $(OPENSSL_REPO)/libssl.so.3
 
 # For rsa_private.key and cert.crt
