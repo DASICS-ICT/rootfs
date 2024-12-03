@@ -1,5 +1,5 @@
 NAME    = ssh
-IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/usr/bin)
+IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/usr/local/bin)
 
 ifneq ($(RISCV_ROOTFS_HOME),)
 include $(RISCV_ROOTFS_HOME)/Makefile.app
@@ -36,9 +36,12 @@ $(APP): $(OPENSSH_ELF)
 	@ln -sf $(abspath $<) $@
 
 install:: $(APP)
-	@ln -sf $(OPENSSH_REPO)/sshd $(RISCV_ROOTFS_HOME)/rootfsimg/usr/sbin/sshd
+	@ln -sf $(OPENSSH_REPO)/sshd $(RISCV_ROOTFS_HOME)/rootfsimg/usr/local/sbin/sshd
 	@ln -sf $(OPENSSH_REPO)/scp $(IST_DIR)/scp
 	@ln -sf $(OPENSSH_REPO)/ssh-add $(IST_DIR)/ssh-add
 	@ln -sf $(OPENSSH_REPO)/ssh-agent $(IST_DIR)/ssh-agent
 	@ln -sf $(OPENSSH_REPO)/ssh-keygen $(IST_DIR)/ssh-keygen
 	@ln -sf $(OPENSSH_REPO)/ssh-keyscan $(IST_DIR)/ssh-keyscan
+	@ln -sf $(OPENSSH_REPO)/sftp $(IST_DIR)/sftp
+	@ln -sf $(OPENSSH_REPO)/sshd-session $(RISCV_ROOTFS_HOME)/rootfsimg/usr/local/libexec/sshd-session
+	@ln -sf $(OPENSSH_REPO)/sftp-server $(RISCV_ROOTFS_HOME)/rootfsimg/usr/local/libexec/sftp-server
