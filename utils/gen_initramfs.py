@@ -49,7 +49,7 @@ def link_dependencies_to_rootfsimg(rootfsimg_path, sysroot_path, f):
     if not os.path.exists(ld_linux_dst):
         os.symlink(ld_linux_src, ld_linux_dst)
 
-    for subdir in ['bin', 'sbin', 'usr/bin', 'usr/sbin', 'root']:
+    for subdir in ['bin', 'sbin', 'usr/bin', 'usr/sbin', 'usr/local/bin', 'usr/local/sbin', 'root']:
         full_dir_path = os.path.join(rootfsimg_path, subdir)
         if os.path.exists(full_dir_path):
             for file in os.listdir(full_dir_path):
