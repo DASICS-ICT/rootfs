@@ -9,3 +9,7 @@
 	path = libs/zlib/repo
 	url = https://github.com/madler/zlib.git
 	ignore = all
+[submodule "openssh-9_9_p1"]
+	path = apps/openssh/repo
+	url = https://github.com/openssh/openssh-portable.git
+	ignore = all

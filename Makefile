@@ -1,6 +1,6 @@
 include Makefile.check
 
-APPS = busybox
+APPS = busybox openssh
 APPS_DIR = $(addprefix apps/, $(APPS))
 LIBS = openssl zlib
 LIBS_DIR = $(addprefix libs/, $(LIBS))

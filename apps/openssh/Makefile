@@ -1,0 +1,45 @@
+NAME    = ssh
+IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/usr/bin)
+APP     = $(DST_DIR)/bin/$(NAME)
+
+ifneq ($(RISCV_ROOTFS_HOME),)
+include $(RISCV_ROOTFS_HOME)/Makefile.app
+else
+$(error RISCV_ROOTFS_HOME is not defined)
+endif
+
+CROSS_COMPILE = riscv64-unknown-linux-gnu
+
+LIBS_DIR       = $(abspath $(RISCV_ROOTFS_HOME)/libs)
+ZLIB_DIR       = $(LIBS_DIR)/zlib/build
+OPENSSL_DIR    = $(LIBS_DIR)/openssl/build
+
+OPENSSH_REPO   = $(abspath repo)
+OPENSSH_CONFIG = $(OPENSSH_REPO)/config.h
+OPENSSH_ELF    = $(OPENSSH_REPO)/ssh
+
+.PHONY: openssh
+
+openssh: $(OPENSSH_CONFIG)
+	$(MAKE) -C $(OPENSSH_REPO)
+
+$(OPENSSH_CONFIG):
+	cd $(OPENSSH_REPO) && autoreconf && \
+		./configure --host=$(CROSS_COMPILE) --prefix=$(DST_DIR) \
+			--with-libs --with-zlib=$(ZLIB_DIR) --with-ssl-dir=$(OPENSSL_DIR) \
+			--disable-etc-default-login
+
+$(OPENSSH_ELF): openssh
+	# FIXME: Deleting the following command will cause a fucking compiler error.
+	@$(shell true)
+
+$(APP): $(OPENSSH_ELF)
+	$(MAKE) -C $(OPENSSH_REPO) install-files STRIP_OPT="-s --strip-program=$(CROSS_COMPILE)-strip"
+
+install:: $(APP)
+	@ln -sf $(OPENSSH_REPO)/sshd $(RISCV_ROOTFS_HOME)/rootfsimg/usr/sbin/sshd
+	@ln -sf $(OPENSSH_REPO)/scp $(IST_DIR)/scp
+	@ln -sf $(OPENSSH_REPO)/ssh-add $(IST_DIR)/ssh-add
+	@ln -sf $(OPENSSH_REPO)/ssh-agent $(IST_DIR)/ssh-agent
+	@ln -sf $(OPENSSH_REPO)/ssh-keygen $(IST_DIR)/ssh-keygen
+	@ln -sf $(OPENSSH_REPO)/ssh-keyscan $(IST_DIR)/ssh-keyscan
