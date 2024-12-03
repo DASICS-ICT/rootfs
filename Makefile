@@ -1,6 +1,6 @@
 include Makefile.check
 
-APPS = busybox
+APPS = busybox curl-client
 APPS_DIR = $(addprefix apps/, $(APPS))
 LIBS = curl
 LIBS_DIR = $(addprefix libs/, $(LIBS))
