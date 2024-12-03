@@ -1,6 +1,5 @@
 NAME    = ssh
 IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/usr/bin)
-APP     = $(DST_DIR)/bin/$(NAME)
 
 ifneq ($(RISCV_ROOTFS_HOME),)
 include $(RISCV_ROOTFS_HOME)/Makefile.app
@@ -25,7 +24,7 @@ openssh: $(OPENSSH_CONFIG)
 
 $(OPENSSH_CONFIG):
 	cd $(OPENSSH_REPO) && autoreconf && \
-		./configure --host=$(CROSS_COMPILE) --prefix=$(DST_DIR) \
+		./configure --host=$(CROSS_COMPILE) \
 			--with-libs --with-zlib=$(ZLIB_DIR) --with-ssl-dir=$(OPENSSL_DIR) \
 			--disable-etc-default-login
 
@@ -34,7 +33,7 @@ $(OPENSSH_ELF): openssh
 	@$(shell true)
 
 $(APP): $(OPENSSH_ELF)
-	$(MAKE) -C $(OPENSSH_REPO) install-files STRIP_OPT="-s --strip-program=$(CROSS_COMPILE)-strip"
+	@ln -sf $(abspath $<) $@
 
 install:: $(APP)
 	@ln -sf $(OPENSSH_REPO)/sshd $(RISCV_ROOTFS_HOME)/rootfsimg/usr/sbin/sshd
