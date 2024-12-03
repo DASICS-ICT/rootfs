@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Start haveged daemon process
+haveged -F -d 32 -w 1024 --verbose=1 &
+
 # Set permissions for pre-loaded ssh key
 chmod 600 /etc/ssh/ssh_host_rsa_key
 chmod 644 /etc/ssh/ssh_host_rsa_key.pub

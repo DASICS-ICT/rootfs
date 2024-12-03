@@ -13,3 +13,7 @@
 	path = apps/openssh/repo
 	url = https://github.com/openssh/openssh-portable.git
 	ignore = all
+[submodule "haveged-1_9_18"]
+	path = apps/haveged/repo
+	url = https://github.com/jirka-h/haveged.git
+	ignore = all
