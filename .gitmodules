@@ -13,3 +13,6 @@
 [submodule "openssl-3_4_0"]
 	path = libs/openssl/repo
 	url = https://github.com/openssl/openssl.git
+[submodule "lighttpd-1_4_76"]
+	path = apps/lighttpd/repo
+	url = https://github.com/lighttpd/lighttpd1.4.git

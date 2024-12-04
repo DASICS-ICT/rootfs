@@ -1,6 +1,6 @@
 include Makefile.check
 
-APPS = busybox haveged
+APPS = busybox haveged lighttpd
 APPS_DIR = $(addprefix apps/, $(APPS))
 LIBS = pcre openssl
 LIBS_DIR = $(addprefix libs/, $(LIBS))
@@ -8,7 +8,7 @@ ROOTFSIMG_DIR = $(abspath rootfsimg)
 UTILS_DIR = $(abspath utils)
 
 ROOTFSIMG_NEW_DIRS = bin dev lib proc sbin sys tmp mnt root \
-	usr usr/bin usr/sbin usr/lib var var/run
+	usr usr/bin usr/sbin usr/lib var var/run var/tmp var/http
 
 $(shell cd $(ROOTFSIMG_DIR) && mkdir -p $(ROOTFSIMG_NEW_DIRS))
 
