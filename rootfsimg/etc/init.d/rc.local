@@ -2,3 +2,6 @@
 
 # Start haveged daemon process
 haveged -F -d 32 -w 1024 --verbose=1 &
+
+# Set local time to activate SSL certificate
+date -s "2024-12-04 14:15:00"
