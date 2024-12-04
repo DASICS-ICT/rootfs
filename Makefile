@@ -2,7 +2,7 @@ include Makefile.check
 
 APPS = busybox haveged
 APPS_DIR = $(addprefix apps/, $(APPS))
-LIBS =
+LIBS = pcre
 LIBS_DIR = $(addprefix libs/, $(LIBS))
 ROOTFSIMG_DIR = $(abspath rootfsimg)
 UTILS_DIR = $(abspath utils)

@@ -5,4 +5,8 @@
 [submodule "haveged-1_9_18"]
 	path = apps/haveged/repo
 	url = https://github.com/jirka-h/haveged.git
+[submodule "pcre-8_45"]
+	path = libs/pcre/repo
+	url = https://github.com/xuyb1999/pcre.git
+	branch = pcre-8.45
 	ignore = all
