@@ -7,3 +7,6 @@
 	url = https://github.com/xuyb1999/pcre.git
 	branch = pcre-8.45
 	ignore = all
+[submodule "openssl-3_4_0"]
+	path = libs/openssl/repo
+	url = https://github.com/openssl/openssl.git
