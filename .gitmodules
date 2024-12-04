@@ -25,3 +25,4 @@
 [submodule "openssl-1_0_1f"]
 	path = libs/openssl/repo
 	url = https://github.com/openssl/openssl.git
+	ignore = all
