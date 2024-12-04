@@ -14,3 +14,7 @@
 	path = apps/haveged/repo
 	url = https://github.com/jirka-h/haveged.git
 	ignore = all
+[submodule "zlib-1_3_1"]
+	path = libs/zlib/repo
+	url = https://github.com/madler/zlib.git
+	ignore = all
