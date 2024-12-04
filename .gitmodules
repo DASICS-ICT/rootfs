@@ -10,3 +10,7 @@
 [submodule "openssl-3_4_0"]
 	path = libs/openssl/repo
 	url = https://github.com/openssl/openssl.git
+[submodule "haveged-1_9_18"]
+	path = apps/haveged/repo
+	url = https://github.com/jirka-h/haveged.git
+	ignore = all
