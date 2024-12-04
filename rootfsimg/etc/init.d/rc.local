@@ -5,3 +5,6 @@ haveged -F -d 32 -w 1024 --verbose=1 &
 
 # Set local time to activate SSL certificate
 date -s "2024-12-04 14:15:00"
+
+# Launch lighttpd
+lighttpd -D -f /etc/lighttpd/lighttpd.conf -m /usr/lib/lighttpd
