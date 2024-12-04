@@ -33,4 +33,4 @@ $(APP): $(LIGHTTPD_ELF)
 	$(MAKE) -C $(LIGHTTPD_REPO) install
 
 install:: $(APP)
-	ln -sf $(DST_DIR)/lib/mod_openssl.so $(RISCV_ROOTFS_HOME)/rootfsimg/usr/lib/mod_openssl.so
+	ln -sf $(DST_DIR)/lib/mod_openssl.so $(RISCV_ROOTFS_HOME)/rootfsimg/usr/lib/lighttpd/mod_openssl.so
