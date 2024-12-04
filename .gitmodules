@@ -2,3 +2,8 @@
 	path = apps/busybox/repo
 	url = https://github.com/mirror/busybox.git
 	branch = 1_32_stable
+[submodule "pcre-8_45"]
+	path = libs/pcre/repo
+	url = https://github.com/xuyb1999/pcre.git
+	branch = pcre-8.45
+	ignore = all
