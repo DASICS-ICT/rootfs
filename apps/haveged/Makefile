@@ -20,7 +20,7 @@ haveged: $(HAVEGED_CONFIG)
 	$(MAKE) -C $(HAVEGED_REPO)
 
 $(HAVEGED_CONFIG):
-	cd $(HAVEGED_REPO) && ./configure --host=$(CROSS_COMPILE) --prefix=$(DST_DIR)
+	cd $(HAVEGED_REPO) && autoreconf && ./configure --host=$(CROSS_COMPILE) --prefix=$(DST_DIR)
 
 $(HAVEGED_ELF): haveged
 
