@@ -22,3 +22,6 @@
 	path = apps/nginx/repo
 	url = https://github.com/nginx/nginx.git
 	ignore = all
+[submodule "libatomic_ops-7_8_2"]
+	path = libs/libatomic_ops/repo
+	url = https://github.com/ivmai/libatomic_ops.git
