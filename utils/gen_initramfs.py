@@ -21,7 +21,7 @@ def find_dependencies(executable, sysroot, rootfsimg):
         readelf_output = subprocess.check_output(['readelf', '-d', executable]).decode('utf-8')
         dependencies = []
         for line in readelf_output.splitlines():
-            if 'Shared library:' in line:
+            if '(NEEDED)' in line:
                 lib_name = line.split('[')[1].split(']')[0]
                 lib_path = find_library_path(lib_name, sysroot, rootfsimg)
                 if lib_path:
