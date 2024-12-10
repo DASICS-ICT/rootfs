@@ -21,3 +21,4 @@
 [submodule "nginx-1_27_1"]
 	path = apps/nginx/repo
 	url = https://github.com/nginx/nginx.git
+	ignore = all
