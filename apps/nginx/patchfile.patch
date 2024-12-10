@@ -11,11 +11,30 @@ index ded93f5bc..d6ab27a6a 100644
      ngx_feature_incs=
      ngx_feature_path=
      ngx_feature_libs=
+diff --git a/auto/lib/libatomic/conf b/auto/lib/libatomic/conf
+index 8c8cb438b..fe6e924cd 100644
+--- a/auto/lib/libatomic/conf
++++ b/auto/lib/libatomic/conf
+@@ -6,9 +6,11 @@
+ if [ $NGX_LIBATOMIC != YES ]; then
+ 
+     have=NGX_HAVE_LIBATOMIC . auto/have
+-    CORE_INCS="$CORE_INCS $NGX_LIBATOMIC/src"
+-    LINK_DEPS="$LINK_DEPS $NGX_LIBATOMIC/src/libatomic_ops.a"
+-    CORE_LIBS="$CORE_LIBS $NGX_LIBATOMIC/src/libatomic_ops.a"
++    CORE_INCS="$CORE_INCS $NGX_LIBATOMIC/include"
++    LINK_DEPS="$LINK_DEPS $NGX_LIBATOMIC/lib/libatomic_ops.a"
++    CORE_LIBS="$CORE_LIBS $NGX_LIBATOMIC/lib/libatomic_ops.a"
++    NGX_LIBATOMIC_ROOTFS=$NGX_LIBATOMIC
++    NGX_LIBATOMIC=ROOTFS
+ 
+ else
+ 
 diff --git a/auto/lib/make b/auto/lib/make
-index b64e32908..2f2630561 100644
+index b64e32908..24d48570a 100644
 --- a/auto/lib/make
 +++ b/auto/lib/make
-@@ -3,15 +3,15 @@
+@@ -3,19 +3,19 @@
  # Copyright (C) Nginx, Inc.
  
  
@@ -32,6 +51,11 @@ index b64e32908..2f2630561 100644
 -if [ $ZLIB != NONE -a $ZLIB != NO -a $ZLIB != YES ]; then
 +if [ $ZLIB != NONE -a $ZLIB != NO -a $ZLIB != YES -a $ZLIB != ROOTFS ]; then
      . auto/lib/zlib/make
+ fi
+ 
+-if [ $NGX_LIBATOMIC != NO -a $NGX_LIBATOMIC != YES ]; then
++if [ $NGX_LIBATOMIC != NO -a $NGX_LIBATOMIC != YES -a $NGX_LIBATOMIC != ROOTFS ]; then
+     . auto/lib/libatomic/make
  fi
  
 diff --git a/auto/lib/openssl/conf b/auto/lib/openssl/conf
