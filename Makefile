@@ -8,7 +8,11 @@ ROOTFSIMG_DIR = $(abspath rootfsimg)
 UTILS_DIR = $(abspath utils)
 
 ROOTFSIMG_NEW_DIRS = bin dev lib proc sbin sys tmp mnt root \
-	usr usr/bin usr/sbin usr/lib var var/run
+	usr usr/bin usr/sbin usr/lib \
+	var var/run var/log var/log/nginx var/lib/nginx var/empty/nginx \
+	var/lib/nginx/tmp/client_body var/lib/nginx/tmp/fastcgi \
+	var/lib/nginx/tmp/proxy var/lib/nginx/tmp/scgi var/lib/nginx/tmp/uwsgi \
+	var/run/lock/subsys
 
 $(shell cd $(ROOTFSIMG_DIR) && mkdir -p $(ROOTFSIMG_NEW_DIRS))
 
