@@ -1,4 +1,7 @@
 #!/bin/sh
 
+# Set local time to activate SSL keys
+date -s "2024-12-15 12:00:00"
+
 # Start haveged daemon process
 haveged -F -d 32 -w 1024 --verbose=1 &
