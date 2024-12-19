@@ -2,7 +2,7 @@ ifeq ($(RISCV_ROOTFS_HOME),)
 $(error RISCV_ROOTFS_HOME is not defined)
 endif
 
-NETWORK ?=
+NETWORK ?= dhcp
 ifneq ($(NETWORK),)
 ifeq ($(findstring $(NETWORK),dhcp localhost),)
 $(error NETWORK must be dhcp or localhost)
