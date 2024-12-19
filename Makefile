@@ -16,7 +16,7 @@ $(shell cd $(ROOTFSIMG_DIR) && mkdir -p $(ROOTFSIMG_NEW_DIRS))
 
 .DEFAULT_GOAL = all
 
-.PHONY: init all $(APPS_DIR) $(LIBS_DIR) clean repoclean distclean
+.PHONY: init all $(APPS_DIR) $(LIBS_DIR) network initramfs clean repoclean distclean
 
 init:
 	git submodule update --init --depth 1
@@ -29,15 +29,20 @@ init:
 		) \
 	)
 
-all: $(APPS_DIR)
-	$(MAKE) -s -C $(NETWORK_DIR) NETWORK=$(NETWORK)
-	python $(UTILS_DIR)/gen_initramfs.py
+all: $(APPS_DIR) network
+	$(MAKE) -s -C $(RISCV_ROOTFS_HOME) initramfs
 
 $(APPS_DIR): %: $(LIBS_DIR)
 	$(MAKE) -s -C $@ install
 
 $(LIBS_DIR): %:
 	$(MAKE) -s -C $@ install
+
+network:
+	$(MAKE) -s -C $(NETWORK_DIR) NETWORK=$(NETWORK)
+
+initramfs:
+	python $(UTILS_DIR)/gen_initramfs.py
 
 clean:
 	$(MAKE) -s -C $(NETWORK_DIR) clean
