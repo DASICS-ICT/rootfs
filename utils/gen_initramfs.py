@@ -21,7 +21,7 @@ def find_dependencies(executable, sysroot, rootfsimg):
         readelf_output = subprocess.check_output(['readelf', '-d', executable]).decode('utf-8')
         dependencies = []
         for line in readelf_output.splitlines():
-            if 'Shared library:' in line:
+            if '(NEEDED)' in line:
                 lib_name = line.split('[')[1].split(']')[0]
                 lib_path = find_library_path(lib_name, sysroot, rootfsimg)
                 if lib_path:
@@ -83,7 +83,7 @@ def import_files_to_initramfs(rootfsimg_path, f):
     f.write("# Import initramfs files\n")
     for root, _, files in os.walk(rootfsimg_path):
         for file in files:
-            if fnmatch.fnmatch(file, 'initramfs*.txt') or fnmatch.fnmatch(file, '.gitignore'):
+            if fnmatch.fnmatch(file, 'initramfs*.txt') or fnmatch.fnmatch(file, '.git*'):
                 continue
             file_path = os.path.join(root, file)
             relative_path = os.path.relpath(file_path, rootfsimg_path).replace(os.sep, '/')
