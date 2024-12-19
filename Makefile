@@ -11,7 +11,7 @@ NETWORK_DIR = $(abspath network)
 
 ROOTFSIMG_NEW_DIRS = bin dev lib proc sbin sys tmp mnt root \
 	usr usr/bin usr/sbin usr/lib usr/lib/lighttpd \
-	var var/run var/tmp var/http
+	var var/run var/tmp
 
 $(shell cd $(ROOTFSIMG_DIR) && mkdir -p $(ROOTFSIMG_NEW_DIRS))
 
