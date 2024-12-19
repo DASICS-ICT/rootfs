@@ -6,8 +6,8 @@ LIBS =
 LIBS_DIR = $(addprefix libs/, $(LIBS))
 ROOTFSIMG_DIR = $(abspath rootfsimg)
 UTILS_DIR = $(abspath utils)
-PLATFORM ?= qemu
-PLATFORM_DIR = $(abspath platform)
+NETWORK ?=
+NETWORK_DIR = $(abspath network)
 
 ROOTFSIMG_NEW_DIRS = bin dev lib proc sbin sys tmp mnt root \
 	usr usr/bin usr/sbin usr/lib var var/run
@@ -30,7 +30,7 @@ init:
 	)
 
 all: $(APPS_DIR)
-	$(MAKE) -C $(PLATFORM_DIR) PLATFORM=$(PLATFORM)
+	$(MAKE) -s -C $(NETWORK_DIR) NETWORK=$(NETWORK)
 	python $(UTILS_DIR)/gen_initramfs.py
 
 $(APPS_DIR): %: $(LIBS_DIR)
@@ -40,9 +40,9 @@ $(LIBS_DIR): %:
 	$(MAKE) -s -C $@ install
 
 clean:
+	$(MAKE) -s -C $(NETWORK_DIR) clean
 	$(foreach dir, $(LIBS_DIR) $(APPS_DIR), $(MAKE) -s -C $(dir) clean ;)
 	cd $(ROOTFSIMG_DIR) && rm -f initramfs*.txt && rm -rf $(ROOTFSIMG_NEW_DIRS)
-	$(MAKE) -C $(PLATFORM_DIR) clean
 
 repoclean: clean
 	$(foreach dir, $(LIBS_DIR) $(APPS_DIR), \
