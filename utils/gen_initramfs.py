@@ -83,7 +83,7 @@ def import_files_to_initramfs(rootfsimg_path, f):
     f.write("# Import initramfs files\n")
     for root, _, files in os.walk(rootfsimg_path):
         for file in files:
-            if fnmatch.fnmatch(file, 'initramfs*.txt') or fnmatch.fnmatch(file, '.git*'):
+            if fnmatch.fnmatch(file, 'initramfs*.txt') or fnmatch.fnmatch(file, '.gitignore'):
                 continue
             file_path = os.path.join(root, file)
             relative_path = os.path.relpath(file_path, rootfsimg_path).replace(os.sep, '/')
