@@ -5,3 +5,4 @@
 [submodule "redis-7.4.1"]
 	path = apps/redis/repo
 	url = https://github.com/redis/redis.git
+	ignore = all
