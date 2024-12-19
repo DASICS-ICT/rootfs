@@ -6,6 +6,8 @@ LIBS = pcre openssl
 LIBS_DIR = $(addprefix libs/, $(LIBS))
 ROOTFSIMG_DIR = $(abspath rootfsimg)
 UTILS_DIR = $(abspath utils)
+NETWORK ?=
+NETWORK_DIR = $(abspath network)
 
 ROOTFSIMG_NEW_DIRS = bin dev lib proc sbin sys tmp mnt root \
 	usr usr/bin usr/sbin usr/lib usr/lib/lighttpd \
@@ -15,7 +17,7 @@ $(shell cd $(ROOTFSIMG_DIR) && mkdir -p $(ROOTFSIMG_NEW_DIRS))
 
 .DEFAULT_GOAL = all
 
-.PHONY: init all $(APPS_DIR) $(LIBS_DIR) clean repoclean distclean
+.PHONY: init all $(APPS_DIR) $(LIBS_DIR) network initramfs clean repoclean distclean
 
 init:
 	git submodule update --init --depth 1
@@ -28,8 +30,8 @@ init:
 		) \
 	)
 
-all: $(APPS_DIR)
-	python $(UTILS_DIR)/gen_initramfs.py
+all: $(APPS_DIR) network
+	$(MAKE) -s -C $(RISCV_ROOTFS_HOME) initramfs
 
 $(APPS_DIR): %: $(LIBS_DIR)
 	$(MAKE) -s -C $@ install
@@ -37,7 +39,14 @@ $(APPS_DIR): %: $(LIBS_DIR)
 $(LIBS_DIR): %:
 	$(MAKE) -s -C $@ install
 
+network:
+	$(MAKE) -s -C $(NETWORK_DIR) NETWORK=$(NETWORK)
+
+initramfs:
+	python $(UTILS_DIR)/gen_initramfs.py
+
 clean:
+	$(MAKE) -s -C $(NETWORK_DIR) clean
 	$(foreach dir, $(LIBS_DIR) $(APPS_DIR), $(MAKE) -s -C $(dir) clean ;)
 	cd $(ROOTFSIMG_DIR) && rm -f initramfs*.txt && rm -rf $(ROOTFSIMG_NEW_DIRS)
 
