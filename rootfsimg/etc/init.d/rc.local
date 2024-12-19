@@ -1,10 +1,10 @@
 #!/bin/sh
 
-# Start haveged daemon process
-haveged -F -d 32 -w 1024 --verbose=1 &
-
 # Set local time to activate SSL certificate
 date -s "2024-12-04 14:15:00"
+
+# Start haveged daemon process
+haveged -F -d 32 -w 1024 --verbose=1 &
 
 # Launch lighttpd
 lighttpd -f /etc/lighttpd/lighttpd.conf -m /usr/lib/lighttpd
