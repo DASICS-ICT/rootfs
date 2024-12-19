@@ -10,3 +10,5 @@ tmp
 mnt
 var
 initramfs*.txt
+etc/init.d/setup-network.sh
+etc/network
