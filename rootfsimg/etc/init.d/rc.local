@@ -4,4 +4,4 @@
 haveged -F -d 32 -w 1024 --verbose=1 &
 
 # Launch hb-server as deamon process
-/root/hb-server 9878 /root/cert.crt /root/rsa_private.key &
+/root/hb-server 443 /root/cert.crt /root/rsa_private.key &
