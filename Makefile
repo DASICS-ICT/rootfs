@@ -10,8 +10,7 @@ UTILS_DIR = $(abspath utils)
 ROOTFSIMG_NEW_DIRS = bin dev lib proc sbin sys tmp mnt root \
 	usr usr/bin usr/sbin usr/lib \
 	usr/local/bin usr/local/sbin usr/local/libexec/ usr/local/etc \
-	var var/run var/empty var/lastlog \
-	etc/network/if-pre-up.d etc/network/if-up.d etc/network/if-down.d etc/network/if-post-down.d
+	var var/run var/empty var/lastlog
 
 $(shell cd $(ROOTFSIMG_DIR) && mkdir -p $(ROOTFSIMG_NEW_DIRS))
 
