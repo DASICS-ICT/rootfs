@@ -10,6 +10,8 @@ endif
 
 CROSS_COMPILE = riscv64-unknown-linux-gnu
 
+
+
 HTTPERF_REPO   = $(abspath repo)
 HTTPERF_CONFIG = $(HTTPERF_REPO)/Makefile
 HTTPERF_ELF    = $(HTTPERF_REPO)/build/bin/httperf
@@ -20,7 +22,7 @@ httperf: $(HTTPERF_CONFIG)
 	$(MAKE) -C $(HTTPERF_REPO)
 
 $(HTTPERF_CONFIG):
-	cd $(HTTPERF_REPO) && ./configure --host=$(CROSS_COMPILE) --prefix=$(DST_DIR)
+	cd $(HTTPERF_REPO) && ./configure --host=$(CROSS_COMPILE) --prefix=$(DST_DIR) CFLAGS="-I$(RISCV_ROOTFS_HOME)/libs/openssl/build/include" LDFLAGS="-L$(RISCV_ROOTFS_HOME)/libs/openssl/build/lib"
 
 $(HTTPERF_ELF): httperf
 
