@@ -25,3 +25,6 @@
 [submodule "libatomic_ops-7_8_2"]
 	path = libs/libatomic_ops/repo
 	url = https://github.com/ivmai/libatomic_ops.git
+[submodule "httperf"]
+	path = apps/httperf/repo
+	url = git@github.com:httperf/httperf.git

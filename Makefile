@@ -1,6 +1,6 @@
 include Makefile.check
 
-APPS = busybox haveged nginx
+APPS = busybox haveged httperf nginx
 APPS_DIR = $(addprefix apps/, $(APPS))
 LIBS = pcre openssl zlib libatomic_ops
 LIBS_DIR = $(addprefix libs/, $(LIBS))
