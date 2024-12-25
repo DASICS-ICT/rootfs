@@ -9,7 +9,7 @@ UTILS_DIR = $(abspath utils)
 NETWORK ?=
 NETWORK_DIR = $(abspath network)
 
-ROOTFSIMG_NEW_DIRS = bin dev lib proc sbin sys tmp mnt root \
+ROOTFSIMG_NEW_DIRS = bin dev dev/pts lib proc sbin sys tmp mnt root \
 	usr usr/bin usr/sbin usr/lib var var/run
 
 $(shell cd $(ROOTFSIMG_DIR) && mkdir -p $(ROOTFSIMG_NEW_DIRS))
