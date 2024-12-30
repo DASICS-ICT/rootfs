@@ -23,7 +23,7 @@ $(CURL_CONFIG):
 	cd $(CURL_REPO) && aclocal && autoconf && autoheader && \
 		libtoolize --automake --copy --debug --force && \
 		automake --add-missing && \
-		./configure --prefix=$(DST_DIR) --host=$(CROSS_COMPILE) --without-ssl --without-libpsl
+		./configure --prefix=$(DST_DIR) --host=$(CROSS_COMPILE) --without-ssl --without-libpsl --enable-debug
 
 $(CURL_SO): curl
 
