@@ -9,7 +9,7 @@ UTILS_DIR = $(abspath utils)
 NETWORK ?= dhcp
 NETWORK_DIR = $(abspath network)
 
-ROOTFSIMG_NEW_DIRS = bin dev lib proc sbin sys tmp mnt root \
+ROOTFSIMG_NEW_DIRS = bin dev dev/pts lib proc sbin sys tmp mnt root \
 	usr usr/bin usr/sbin usr/lib \
 	var var/run var/log var/log/nginx var/lib/nginx var/empty/nginx \
 	var/lib/nginx/tmp/client_body var/lib/nginx/tmp/fastcgi \
