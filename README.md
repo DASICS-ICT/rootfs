@@ -82,3 +82,8 @@ To reproduce the vulnerability identified as CVE-2023-38545, follow these detail
      ![segfault-output](./images/segfault-output.png)
 
    - This crash indicates that the vulnerability has been successfully triggered.
+
+## References
+
+* The socks proxy and the malicious HTTP server are not self-made. The original code can be found in https://github.com/vanigori/CVE-2023-38545-sample
+* The hackerone report, which saved tons of research time. Give this a read through if you want to understand how this exploit occurs: https://hackerone.com/reports/2187833
