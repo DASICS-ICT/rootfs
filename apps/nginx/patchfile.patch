@@ -114,10 +114,44 @@ index fdf430dff..761483b50 100644
              if [ "$NGX_PLATFORM" = win32 ]; then
                  CORE_LIBS="$CORE_LIBS -lgdi32 -lcrypt32 -lws2_32"
 diff --git a/auto/lib/pcre/conf b/auto/lib/pcre/conf
-index cdf1809f5..d3a7dc0c1 100644
+index cdf1809f5..c73d70857 100644
 --- a/auto/lib/pcre/conf
 +++ b/auto/lib/pcre/conf
-@@ -43,8 +43,8 @@ if [ $PCRE != NONE ]; then
+@@ -5,7 +5,7 @@
+ 
+ if [ $PCRE != NONE ]; then
+ 
+-    if [ -f $PCRE/src/pcre2.h.generic ]; then
++    if [ -f $PCRE/include/pcre2.h ]; then
+ 
+         PCRE_LIBRARY=PCRE2
+ 
+@@ -16,8 +16,8 @@ if [ $PCRE != NONE ]; then
+             have=PCRE2_STATIC . auto/have
+         fi
+ 
+-        CORE_INCS="$CORE_INCS $PCRE/src/"
+-        CORE_DEPS="$CORE_DEPS $PCRE/src/pcre2.h"
++        CORE_INCS="$CORE_INCS $PCRE/include/"
++        CORE_DEPS="$CORE_DEPS $PCRE/include/pcre2.h"
+ 
+         case "$NGX_CC_NAME" in
+ 
+@@ -27,8 +27,11 @@ if [ $PCRE != NONE ]; then
+             ;;
+ 
+             *)
+-                LINK_DEPS="$LINK_DEPS $PCRE/.libs/libpcre2-8.a"
+-                CORE_LIBS="$CORE_LIBS $PCRE/.libs/libpcre2-8.a"
++                #LINK_DEPS="$LINK_DEPS $PCRE/.libs/libpcre2-8.a"
++                #CORE_LIBS="$CORE_LIBS $PCRE/.libs/libpcre2-8.a"
++                CORE_LIBS="$CORE_LIBS -L $PCRE/lib -lpcre2-8"
++                PCRE_ROOTFS=$PCRE
++                PCRE=ROOTFS
+             ;;
+ 
+         esac
+@@ -43,8 +46,8 @@ if [ $PCRE != NONE ]; then
              have=PCRE_STATIC . auto/have
          fi
  
@@ -128,7 +162,7 @@ index cdf1809f5..d3a7dc0c1 100644
  
          case "$NGX_CC_NAME" in
  
-@@ -54,8 +54,11 @@ if [ $PCRE != NONE ]; then
+@@ -54,8 +57,11 @@ if [ $PCRE != NONE ]; then
              ;;
  
              *)

@@ -16,7 +16,7 @@ NGINX_FLAGS  = --prefix=$(DST_DIR) --builddir=$(NGINX_REPO)/build \
 	--user=nginx --group=nginx \
 	--with-cc=$(shell which $(CROSS_COMPILE)-gcc) --with-cpp=$(shell which $(CROSS_COMPILE)-g++) \
 	--with-http_ssl_module \
-	--with-pcre=$(RISCV_ROOTFS_HOME)/libs/pcre/build \
+	--with-pcre=$(RISCV_ROOTFS_HOME)/libs/pcre2/build \
 	--with-openssl=$(RISCV_ROOTFS_HOME)/libs/openssl/build \
 	--with-zlib=$(RISCV_ROOTFS_HOME)/libs/zlib/build \
 	--with-libatomic=$(RISCV_ROOTFS_HOME)/libs/libatomic_ops/build \
