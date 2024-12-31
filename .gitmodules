@@ -26,3 +26,6 @@
 	path = libs/openssl/repo
 	url = https://github.com/openssl/openssl.git
 	ignore = all
+[submodule "pcre2"]
+	path = libs/pcre2/repo
+	url = https://github.com/PCRE2Project/pcre2.git
