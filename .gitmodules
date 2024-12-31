@@ -2,11 +2,6 @@
 	path = apps/busybox/repo
 	url = https://github.com/mirror/busybox.git
 	branch = 1_32_stable
-[submodule "pcre-8_45"]
-	path = libs/pcre/repo
-	url = https://github.com/xuyb1999/pcre.git
-	branch = pcre-8.45
-	ignore = all
 [submodule "openssl-3_4_0"]
 	path = libs/openssl/repo
 	url = https://github.com/openssl/openssl.git
@@ -25,3 +20,6 @@
 [submodule "libatomic_ops-7_8_2"]
 	path = libs/libatomic_ops/repo
 	url = https://github.com/ivmai/libatomic_ops.git
+[submodule "pcre2"]
+	path = libs/pcre2/repo
+	url = https://github.com/PCRE2Project/pcre2.git
