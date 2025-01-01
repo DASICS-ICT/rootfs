@@ -24,7 +24,7 @@ init:
 		$(if $(wildcard $(dir)/repo), \
 			$(if $(wildcard $(dir)/patchfile.patch), \
 				echo "Applying patch to $(dir)/repo"; \
-				git -C "$(dir)/repo" apply "../patchfile.patch", \
+				git -C "$(dir)/repo" apply "../patchfile.patch"; \
 			) \
 		) \
 	)
