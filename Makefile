@@ -1,13 +1,15 @@
 include Makefile.check
 
-APPS = busybox haveged nginx
+APPS = busybox haveged nginx php
 APPS_DIR = $(addprefix apps/, $(APPS))
-LIBS = pcre2 openssl zlib libatomic_ops
+LIBS = pcre pcre2 openssl zlib libatomic_ops
 LIBS_DIR = $(addprefix libs/, $(LIBS))
 ROOTFSIMG_DIR = $(abspath rootfsimg)
 UTILS_DIR = $(abspath utils)
 NETWORK ?= dhcp
 NETWORK_DIR = $(abspath network)
+NGINX = $(addprefix apps/, nginx)
+PHP = $(addprefix apps/, php)
 
 ROOTFSIMG_NEW_DIRS = bin dev lib proc sbin sys tmp mnt root \
 	usr usr/bin usr/sbin usr/lib \
@@ -37,6 +39,9 @@ all: $(APPS_DIR) network
 	$(MAKE) -s -C $(RISCV_ROOTFS_HOME) initramfs
 
 $(APPS_DIR): %: $(LIBS_DIR)
+	$(MAKE) -s -C $@ install
+
+$(NGINX): $(PHP) $(LIBS_DIR)
 	$(MAKE) -s -C $@ install
 
 $(LIBS_DIR): %:

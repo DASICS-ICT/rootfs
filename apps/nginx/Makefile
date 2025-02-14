@@ -7,6 +7,12 @@ else
 $(error RISCV_ROOTFS_HOME is not defined)
 endif
 
+export PHP=$(RISCV_ROOTFS_HOME)/apps/php/build
+export PHP_CONFIG=$(PHP)/bin/php-config
+export PHP_BIN=$(PHP)/bin
+export PHP_INC=$(PHP)/include/php
+export PHP_LIB=$(PHP)/lib
+
 CROSS_COMPILE = riscv64-unknown-linux-gnu
 
 NGINX_REPO   = $(abspath repo)
@@ -28,9 +34,11 @@ NGINX_FLAGS  = --prefix=$(DST_DIR) --builddir=$(NGINX_REPO)/build \
 	--http-scgi-temp-path=/var/lib/nginx/tmp/scgi \
 	--http-uwsgi-temp-path=/var/lib/nginx/tmp/uwsgi \
 	--pid-path=/var/run/nginx.pid \
-	--lock-path=/var/run/lock/subsys/nginx
+	--lock-path=/var/run/lock/subsys/nginxi \
+	--add-module=$(APP_DIR)/ngx-php/third_party/ngx_devel_kit \
+	--add-module=$(APP_DIR)/ngx-php
 
-.PHONY: nginx
+.PHONY: nginx distclean
 
 nginx: $(NGINX_CONFIG)
 	$(MAKE) -C $(NGINX_REPO)
@@ -42,3 +50,6 @@ $(NGINX_ELF): nginx
 
 $(APP): $(NGINX_ELF)
 	ln -sf $(abspath $<) $@
+
+clean:
+	$(MAKE) -C $(NGINX_REPO) clean

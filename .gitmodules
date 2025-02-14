@@ -24,3 +24,14 @@
 	path = libs/pcre2/repo
 	url = https://github.com/PCRE2Project/pcre2.git
 	ignore = all
+[submodule "php"]
+	path = apps/php/repo
+	url = https://github.com/php/php-src.git
+	ignore = all
+[submodule "pcre"]
+	path = libs/pcre/repo
+	url = https://github.com/DASICS-ICT/pcre.git
+	ignore = all
+[submodule "apps/nginx/ngx-php"]
+	path = apps/nginx/ngx-php
+	url = https://github.com/rryqszq4/ngx-php.git
