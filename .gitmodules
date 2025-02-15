@@ -2,3 +2,7 @@
 	path = apps/busybox/repo
 	url = https://github.com/mirror/busybox.git
 	branch = 1_32_stable
+[submodule "apr-1.7.5"]
+	path = libs/apr/repo
+	url = https://github.com/apache/apr.git
+	ignore = all
