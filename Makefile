@@ -1,6 +1,6 @@
 include Makefile.check
 
-APPS = busybox
+APPS = busybox ab
 APPS_DIR = $(addprefix apps/, $(APPS))
 LIBS = apr libexpat
 LIBS_DIR = $(addprefix libs/, $(LIBS))
