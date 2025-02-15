@@ -6,3 +6,6 @@
 	path = libs/apr/repo
 	url = https://github.com/apache/apr.git
 	ignore = all
+[submodule "libexpat-2.6.4"]
+	path = libs/libexpat/repo
+	url = https://github.com/libexpat/libexpat.git
