@@ -9,3 +9,8 @@
 [submodule "libexpat-2.6.4"]
 	path = libs/libexpat/repo
 	url = https://github.com/libexpat/libexpat.git
+[submodule "apr-util-1.7.x"]
+	path = libs/apr-util/repo
+	url = https://github.com/apache/apr-util.git
+	branch = 1.7.x
+	ignore = all
