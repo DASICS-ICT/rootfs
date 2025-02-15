@@ -1,5 +1,6 @@
 NAME = ab
 SRCS = $(NAME).c
+IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/usr/bin)
 
 LIBS_DIR      = $(abspath $(RISCV_ROOTFS_HOME)/libs)
 APR_BUILD     = $(LIBS_DIR)/apr/build
