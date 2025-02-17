@@ -17,7 +17,7 @@ PHP_REPO = $(abspath repo)
 PHP_CONFIG = $(PHP_REPO)/Makefile
 PHP_FLAGS = --prefix=$(DST_DIR) --host=$(CROSS_COMPILE) --enable-embed \
 	--without-pcre-jit --with-pcre-regex=$(PCRE_DST) \
-	--disable-all
+	--disable-all --without-valgrind
 
 
 $(PHP_CONFIG):
