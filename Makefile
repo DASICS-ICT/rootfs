@@ -1,8 +1,8 @@
 include Makefile.check
 
-APPS = busybox
+APPS = busybox pcredemo
 APPS_DIR = $(addprefix apps/, $(APPS))
-LIBS =
+LIBS = LibDASICS pcre
 LIBS_DIR = $(addprefix libs/, $(LIBS))
 ROOTFSIMG_DIR = $(abspath rootfsimg)
 UTILS_DIR = $(abspath utils)
