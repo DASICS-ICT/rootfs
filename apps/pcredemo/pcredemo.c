@@ -133,7 +133,7 @@ printf("PCRE compilation ok\n");
 * further matching is needed, it will be done below.                     *
 *************************************************************************/
 
-idx0 = (int)LIBCFG_ALLOC(DASICS_LIBCFG_R | DASICS_LIBCFG_V, re, 80UL);
+idx0 = (int)LIBCFG_ALLOC(DASICS_LIBCFG_R | DASICS_LIBCFG_V, re, 0x70UL);
 idx1 = (int)LIBCFG_ALLOC(DASICS_LIBCFG_R | DASICS_LIBCFG_V, subject, subject_length + 1);
 idx2 = (int)LIBCFG_ALLOC(DASICS_LIBCFG_R | DASICS_LIBCFG_V | DASICS_LIBCFG_W, ovector, sizeof(ovector));
 
@@ -207,7 +207,7 @@ for (i = 0; i < rc; i++)
 /* See if there are any named substrings, and if so, show them by name. First
 we have to extract the count of named parentheses from the pattern. */
 
-idx0 = (int)LIBCFG_ALLOC(DASICS_LIBCFG_R | DASICS_LIBCFG_V, re, 80UL);
+idx0 = (int)LIBCFG_ALLOC(DASICS_LIBCFG_R | DASICS_LIBCFG_V, re, 0x70UL);
 idx1 = (int)LIBCFG_ALLOC(DASICS_LIBCFG_R | DASICS_LIBCFG_W |DASICS_LIBCFG_V, &namecount, sizeof(namecount));
 
 (void)pcre_fullinfo(
@@ -227,7 +227,7 @@ if (namecount <= 0) printf("No named substrings\n"); else
   /* Before we can access the substrings, we must extract the table for
   translating names to numbers, and the size of each entry in the table. */
 
-  idx0 = (int)LIBCFG_ALLOC(DASICS_LIBCFG_R | DASICS_LIBCFG_V, re, 80UL);
+  idx0 = (int)LIBCFG_ALLOC(DASICS_LIBCFG_R | DASICS_LIBCFG_V, re, 0x70UL);
   idx1 = (int)LIBCFG_ALLOC(DASICS_LIBCFG_R | DASICS_LIBCFG_W |DASICS_LIBCFG_V, &name_table, sizeof(name_table))
   (void)pcre_fullinfo(
     re,                       /* the compiled pattern */
@@ -237,7 +237,7 @@ if (namecount <= 0) printf("No named substrings\n"); else
   dasics_libcfg_free(idx0);
   dasics_libcfg_free(idx1);
 
-  idx0 = (int)LIBCFG_ALLOC(DASICS_LIBCFG_R | DASICS_LIBCFG_V, re, 80UL);
+  idx0 = (int)LIBCFG_ALLOC(DASICS_LIBCFG_R | DASICS_LIBCFG_V, re, 0x70UL);
   idx1 = (int)LIBCFG_ALLOC(DASICS_LIBCFG_R | DASICS_LIBCFG_W |DASICS_LIBCFG_V, &name_entry_size, sizeof(name_entry_size))
   (void)pcre_fullinfo(
     re,                       /* the compiled pattern */
@@ -300,7 +300,7 @@ if (!find_all)     /* Check for -g */
 sequence. First, find the options with which the regex was compiled; extract
 the UTF-8 state, and mask off all but the newline options. */
 
-idx0 = (int)LIBCFG_ALLOC(DASICS_LIBCFG_R | DASICS_LIBCFG_V, re, 80UL);
+idx0 = (int)LIBCFG_ALLOC(DASICS_LIBCFG_R | DASICS_LIBCFG_V, re, 0x70UL);
 idx1 = (int)LIBCFG_ALLOC(DASICS_LIBCFG_R | DASICS_LIBCFG_W |DASICS_LIBCFG_V, &option_bits, sizeof(option_bits))
 (void)pcre_fullinfo(re, NULL, PCRE_INFO_OPTIONS, &option_bits);
 dasics_libcfg_free(idx0);
@@ -356,7 +356,7 @@ for (;;)
 
   /* Run the next matching operation */
 
-  idx0 = (int)LIBCFG_ALLOC(DASICS_LIBCFG_R | DASICS_LIBCFG_V, re, 80UL);
+  idx0 = (int)LIBCFG_ALLOC(DASICS_LIBCFG_R | DASICS_LIBCFG_V, re, 0x70UL);
   idx1 = (int)LIBCFG_ALLOC(DASICS_LIBCFG_R | DASICS_LIBCFG_V, subject, subject_length + 1);
   idx2 = (int)LIBCFG_ALLOC(DASICS_LIBCFG_R | DASICS_LIBCFG_V | DASICS_LIBCFG_W, ovector, sizeof(ovector));
   rc = pcre_exec(
@@ -371,7 +371,7 @@ for (;;)
   dasics_libcfg_free(idx0);
   dasics_libcfg_free(idx1);
   dasics_libcfg_free(idx2);
-  
+
   /* This time, a result of NOMATCH isn't an error. If the value in "options"
   is zero, it just means we have found all possible matches, so the loop ends.
   Otherwise, it means we have failed to find a non-empty-string match at a
