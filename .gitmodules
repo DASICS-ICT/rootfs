@@ -35,3 +35,6 @@
 [submodule "apps/nginx/ngx-php"]
 	path = apps/nginx/ngx-php
 	url = https://github.com/rryqszq4/ngx-php.git
+[submodule "libs/LibDASICS/repo"]
+	path = libs/LibDASICS/repo
+	url = https://github.com/Chengyuan-artist/LibDASICS.git
