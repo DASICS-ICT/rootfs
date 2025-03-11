@@ -1,0 +1,299 @@
+diff --color -urN code/pcre-8.37/pcre_compile.c pcre-pcre-8.37-fix/pcre_compile.c
+--- code/pcre-8.37/pcre_compile.c	2015-04-13 15:54:01.000000000 +0000
++++ pcre-pcre-8.37-fix/pcre_compile.c	2025-02-27 12:09:28.000000000 +0000
+@@ -918,12 +918,12 @@
+     newsize - cd->workspace_size < WORK_SIZE_SAFETY_MARGIN)
+  return ERR72;
+ 
+-newspace = (PUBL(malloc))(IN_UCHARS(newsize));
++newspace = (malloc)(IN_UCHARS(newsize));
+ if (newspace == NULL) return ERR21;
+ memcpy(newspace, cd->start_workspace, cd->workspace_size * sizeof(pcre_uchar));
+ cd->hwm = (pcre_uchar *)newspace + (cd->hwm - cd->start_workspace);
+ if (cd->workspace_size > COMPILE_WORK_SIZE)
+-  (PUBL(free))((void *)cd->start_workspace);
++  (free)((void *)cd->start_workspace);
+ cd->start_workspace = newspace;
+ cd->workspace_size = newsize;
+ return 0;
+@@ -7091,7 +7091,7 @@
+             if (cd->names_found >= cd->named_group_list_size)
+               {
+               int newsize = cd->named_group_list_size * 2;
+-              named_group *newspace = (PUBL(malloc))
++              named_group *newspace = (malloc)
+                 (newsize * sizeof(named_group));
+ 
+               if (newspace == NULL)
+@@ -7103,7 +7103,7 @@
+               memcpy(newspace, cd->named_groups,
+                 cd->named_group_list_size * sizeof(named_group));
+               if (cd->named_group_list_size > NAMED_GROUP_LIST_SIZE)
+-                (PUBL(free))((void *)cd->named_groups);
++                (free)((void *)cd->named_groups);
+               cd->named_groups = newspace;
+               cd->named_group_list_size = newsize;
+               }
+@@ -9214,7 +9214,7 @@
+ 
+ /* Get the memory. */
+ 
+-re = (REAL_PCRE *)(PUBL(malloc))(size);
++re = (REAL_PCRE *)(malloc)(size);
+ if (re == NULL)
+   {
+   errorcode = ERR21;
+@@ -9281,7 +9281,7 @@
+   for (; i > 0; i--, ng++)
+     add_name(cd, ng->name, ng->length, ng->number);
+   if (cd->named_group_list_size > NAMED_GROUP_LIST_SIZE)
+-    (PUBL(free))((void *)cd->named_groups);
++    (free)((void *)cd->named_groups);
+   }
+ 
+ /* Set up a starting, non-extracting bracket, then compile the expression. On
+@@ -9351,7 +9351,7 @@
+ NULL to indicate that forward references have been filled in. */
+ 
+ if (cd->workspace_size > COMPILE_WORK_SIZE)
+-  (PUBL(free))((void *)cd->start_workspace);
++  (free)((void *)cd->start_workspace);
+ cd->start_workspace = NULL;
+ 
+ /* Give an error if there's back reference to a non-existent capturing
+@@ -9420,7 +9420,7 @@
+ 
+ if (errorcode != 0)
+   {
+-  (PUBL(free))(re);
++  (free)(re);
+   PCRE_EARLY_ERROR_RETURN:
+   *erroroffset = (int)(ptr - (const pcre_uchar *)pattern);
+   PCRE_EARLY_ERROR_RETURN2:
+@@ -9561,7 +9561,7 @@
+ 
+ if (code - codestart > length)
+   {
+-  (PUBL(free))(re);
++  (free)(re);
+   *errorptr = find_error_text(ERR23);
+   *erroroffset = ptr - (pcre_uchar *)pattern;
+   if (errorcodeptr != NULL) *errorcodeptr = ERR23;
+diff --color -urN code/pcre-8.37/pcre_exec.c pcre-pcre-8.37-fix/pcre_exec.c
+--- code/pcre-8.37/pcre_exec.c	2015-04-08 16:59:58.000000000 +0000
++++ pcre-pcre-8.37-fix/pcre_exec.c	2025-02-27 12:09:28.000000000 +0000
+@@ -351,7 +351,7 @@
+   heapframe *newframe = frame->Xnextframe;\
+   if (newframe == NULL)\
+     {\
+-    newframe = (heapframe *)(PUBL(stack_malloc))(sizeof(heapframe));\
++    newframe = (heapframe *)(malloc)(sizeof(heapframe));\
+     if (newframe == NULL) RRETURN(PCRE_ERROR_NOMEMORY);\
+     newframe->Xnextframe = NULL;\
+     frame->Xnextframe = newframe;\
+@@ -1787,7 +1787,7 @@
+       else
+         {
+         new_recursive.offset_save =
+-          (int *)(PUBL(malloc))(new_recursive.saved_max * sizeof(int));
++          (int *)(malloc)(new_recursive.saved_max * sizeof(int));
+         if (new_recursive.offset_save == NULL) RRETURN(PCRE_ERROR_NOMEMORY);
+         }
+       memcpy(new_recursive.offset_save, md->offset_vector,
+@@ -1813,7 +1813,7 @@
+           {
+           DPRINTF(("Recursion matched\n"));
+           if (new_recursive.offset_save != stacksave)
+-            (PUBL(free))(new_recursive.offset_save);
++            (free)(new_recursive.offset_save);
+ 
+           /* Set where we got to in the subject, and reset the start in case
+           it was changed by \K. This *is* propagated back out of a recursion,
+@@ -1831,7 +1831,7 @@
+         if (rrc >= MATCH_BACKTRACK_MIN && rrc <= MATCH_BACKTRACK_MAX)
+           {
+           if (new_recursive.offset_save != stacksave)
+-            (PUBL(free))(new_recursive.offset_save);
++            (free)(new_recursive.offset_save);
+           RRETURN(MATCH_NOMATCH);
+           }
+ 
+@@ -1841,7 +1841,7 @@
+           {
+           DPRINTF(("Recursion gave error %d\n", rrc));
+           if (new_recursive.offset_save != stacksave)
+-            (PUBL(free))(new_recursive.offset_save);
++            (free)(new_recursive.offset_save);
+           RRETURN(rrc);
+           }
+ 
+@@ -1853,7 +1853,7 @@
+       DPRINTF(("Recursion didn't match\n"));
+       md->recursive = new_recursive.prevrec;
+       if (new_recursive.offset_save != stacksave)
+-        (PUBL(free))(new_recursive.offset_save);
++        (free)(new_recursive.offset_save);
+       RRETURN(MATCH_NOMATCH);
+       }
+ 
+@@ -6312,7 +6312,7 @@
+   {
+   heapframe *oldframe = nextframe;
+   nextframe = nextframe->Xnextframe;
+-  (PUBL(stack_free))(oldframe);
++  (free)(oldframe);
+   }
+ }
+ #endif
+@@ -6663,7 +6663,7 @@
+ if (re->top_backref > 0 && re->top_backref >= ocount/3)
+   {
+   ocount = re->top_backref * 3 + 3;
+-  md->offset_vector = (int *)(PUBL(malloc))(ocount * sizeof(int));
++  md->offset_vector = (int *)(malloc)(ocount * sizeof(int));
+   if (md->offset_vector == NULL) return PCRE_ERROR_NOMEMORY;
+   using_temporary_offsets = TRUE;
+   DPRINTF(("Got memory to hold back references\n"));
+@@ -7065,7 +7065,7 @@
+       }
+     if (md->end_offset_top > arg_offset_max) md->capture_last |= OVFLBIT;
+     DPRINTF(("Freeing temporary memory\n"));
+-    (PUBL(free))(md->offset_vector);
++    (free)(md->offset_vector);
+     }
+ 
+   /* Set the return code to the number of captured strings, or 0 if there were
+@@ -7121,7 +7121,7 @@
+ if (using_temporary_offsets)
+   {
+   DPRINTF(("Freeing temporary memory\n"));
+-  (PUBL(free))(md->offset_vector);
++  (free)(md->offset_vector);
+   }
+ 
+ /* For anything other than nomatch or partial match, just return the code. */
+diff --color -urN code/pcre-8.37/pcre_get.c pcre-pcre-8.37-fix/pcre_get.c
+--- code/pcre-8.37/pcre_get.c	2014-01-31 14:31:54.000000000 +0000
++++ pcre-pcre-8.37-fix/pcre_get.c	2025-02-27 12:09:28.000000000 +0000
+@@ -459,7 +459,7 @@
+ for (i = 0; i < double_count; i += 2)
+   size += sizeof(pcre_uchar *) + IN_UCHARS(ovector[i+1] - ovector[i] + 1);
+ 
+-stringlist = (pcre_uchar **)(PUBL(malloc))(size);
++stringlist = (pcre_uchar **)(malloc)(size);
+ if (stringlist == NULL) return PCRE_ERROR_NOMEMORY;
+ 
+ #if defined COMPILE_PCRE8
+@@ -491,7 +491,7 @@
+ *************************************************/
+ 
+ /* This function exists for the benefit of people calling PCRE from non-C
+-programs that can call its functions, but not free() or (PUBL(free))()
++programs that can call its functions, but not free() or (free)()
+ directly.
+ 
+ Argument:   the result of a previous pcre_get_substring_list()
+@@ -509,7 +509,7 @@
+ pcre32_free_substring_list(PCRE_SPTR32 *pointer)
+ #endif
+ {
+-(PUBL(free))((void *)pointer);
++(free)((void *)pointer);
+ }
+ 
+ 
+@@ -559,7 +559,7 @@
+   return PCRE_ERROR_NOSUBSTRING;
+ stringnumber *= 2;
+ yield = ovector[stringnumber+1] - ovector[stringnumber];
+-substring = (pcre_uchar *)(PUBL(malloc))(IN_UCHARS(yield + 1));
++substring = (pcre_uchar *)(malloc)(IN_UCHARS(yield + 1));
+ if (substring == NULL) return PCRE_ERROR_NOMEMORY;
+ memcpy(substring, subject + ovector[stringnumber], IN_UCHARS(yield));
+ substring[yield] = 0;
+@@ -638,7 +638,7 @@
+ *************************************************/
+ 
+ /* This function exists for the benefit of people calling PCRE from non-C
+-programs that can call its functions, but not free() or (PUBL(free))()
++programs that can call its functions, but not free() or (free)()
+ directly.
+ 
+ Argument:   the result of a previous pcre_get_substring()
+@@ -656,7 +656,7 @@
+ pcre32_free_substring(PCRE_SPTR32 pointer)
+ #endif
+ {
+-(PUBL(free))((void *)pointer);
++(free)((void *)pointer);
+ }
+ 
+ /* End of pcre_get.c */
+diff --color -urN code/pcre-8.37/pcre_jit_compile.c pcre-pcre-8.37-fix/pcre_jit_compile.c
+--- code/pcre-8.37/pcre_jit_compile.c	2015-04-23 15:45:25.000000000 +0000
++++ pcre-pcre-8.37-fix/pcre_jit_compile.c	2025-02-27 12:09:28.000000000 +0000
+@@ -52,8 +52,8 @@
+ we just include it. This way we don't need to touch the build
+ system files. */
+ 
+-#define SLJIT_MALLOC(size, allocator_data) (PUBL(malloc))(size)
+-#define SLJIT_FREE(ptr, allocator_data) (PUBL(free))(ptr)
++#define SLJIT_MALLOC(size, allocator_data) (malloc)(size)
++#define SLJIT_FREE(ptr, allocator_data) (free)(ptr)
+ #define SLJIT_CONFIG_AUTO 1
+ #define SLJIT_CONFIG_STATIC 1
+ #define SLJIT_VERBOSE 0
+diff --color -urN code/pcre-8.37/pcre_maketables.c pcre-pcre-8.37-fix/pcre_maketables.c
+--- code/pcre-8.37/pcre_maketables.c	2014-01-31 14:32:53.000000000 +0000
++++ pcre-pcre-8.37-fix/pcre_maketables.c	2025-02-27 12:09:28.000000000 +0000
+@@ -59,7 +59,7 @@
+ /* This function builds a set of character tables for use by PCRE and returns
+ a pointer to them. They are build using the ctype functions, and consequently
+ their contents will depend upon the current locale setting. When compiled as
+-part of the library, the store is obtained via PUBL(malloc)(), but when
++part of the library, the store is obtained via malloc(), but when
+ compiled inside dftables, use malloc().
+ 
+ Arguments:   none
+@@ -81,7 +81,7 @@
+ int i;
+ 
+ #ifndef DFTABLES
+-yield = (unsigned char*)(PUBL(malloc))(tables_length);
++yield = (unsigned char*)(malloc)(tables_length);
+ #else
+ yield = (unsigned char*)malloc(tables_length);
+ #endif
+diff --color -urN code/pcre-8.37/pcre_study.c pcre-pcre-8.37-fix/pcre_study.c
+--- code/pcre-8.37/pcre_study.c	2015-04-14 17:06:44.000000000 +0000
++++ pcre-pcre-8.37-fix/pcre_study.c	2025-02-27 12:09:28.000000000 +0000
+@@ -1562,7 +1562,7 @@
+ #endif
+     PCRE_STUDY_EXTRA_NEEDED)) != 0)
+   {
+-  extra = (PUBL(extra) *)(PUBL(malloc))
++  extra = (PUBL(extra) *)(malloc)
+     (sizeof(PUBL(extra)) + sizeof(pcre_study_data));
+   if (extra == NULL)
+     {
+@@ -1673,7 +1673,7 @@
+      extra->executable_jit != NULL)
+   PRIV(jit_free)(extra->executable_jit);
+ #endif
+-PUBL(free)(extra);
++free(extra);
+ }
+ 
+ /* End of pcre_study.c */
+diff --color -urN code/pcre-8.37/pcreposix.c pcre-pcre-8.37-fix/pcreposix.c
+--- code/pcre-8.37/pcreposix.c	2014-09-15 13:48:59.000000000 +0000
++++ pcre-pcre-8.37-fix/pcreposix.c	2025-02-27 12:09:28.000000000 +0000
+@@ -244,7 +244,7 @@
+ PCREPOSIX_EXP_DEFN void PCRE_CALL_CONVENTION
+ regfree(regex_t *preg)
+ {
+-(PUBL(free))(preg->re_pcre);
++(free)(preg->re_pcre);
+ }
+ 
+ 
