@@ -7,4 +7,4 @@ date -s "2024-12-15 12:00:00"
 haveged -F -d 32 -w 1024 --verbose=1 &
 
 # Start nginx server
-nginx -c /etc/nginx/nginx.conf
+nginx -c /etc/nginx/nginx.conf -dasics 2>&1 > /var/log/nginx/dasics.log &
