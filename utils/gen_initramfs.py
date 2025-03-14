@@ -124,7 +124,7 @@ if __name__ == "__main__":
     # Initialize paths
     rootfsimg_path = os.path.join(os.getenv("RISCV_ROOTFS_HOME"), "rootfsimg")
     sysroot_path = os.path.join(os.getenv("RISCV"), "sysroot")
-    output_file = os.path.join(os.getenv("RISCV_ROOTFS_HOME"), "rootfsimg", "initramfs.txt")
+    output_file = os.path.join(os.getenv("RISCV_ROOTFS_HOME"), "rootfsimg", "initramfs-dasics.txt")
 
     # Start to generate initramfs.txt
     generate_initramfs_txt(rootfsimg_path, sysroot_path, output_file)
