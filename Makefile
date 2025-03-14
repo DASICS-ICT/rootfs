@@ -2,7 +2,7 @@ include Makefile.check
 
 APPS = busybox haveged nginx php
 APPS_DIR = $(addprefix apps/, $(APPS))
-LIBS = pcre pcre2 openssl zlib libatomic_ops
+LIBS = pcre pcre2 zlib libatomic_ops LibDASICS
 LIBS_DIR = $(addprefix libs/, $(LIBS))
 ROOTFSIMG_DIR = $(abspath rootfsimg)
 UTILS_DIR = $(abspath utils)

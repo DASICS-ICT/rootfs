@@ -21,9 +21,8 @@ NGINX_ELF    = $(NGINX_REPO)/build/nginx
 NGINX_FLAGS  = --prefix=$(DST_DIR) --builddir=$(NGINX_REPO)/build \
 	--user=nginx --group=nginx \
 	--with-cc=$(shell which $(CROSS_COMPILE)-gcc) --with-cpp=$(shell which $(CROSS_COMPILE)-g++) \
-	--with-http_ssl_module \
 	--with-pcre=$(RISCV_ROOTFS_HOME)/libs/pcre2/build \
-	--with-openssl=$(RISCV_ROOTFS_HOME)/libs/openssl/build \
+	--with-libdasics=$(RISCV_ROOTFS_HOME)/libs/LibDASICS/build \
 	--with-zlib=$(RISCV_ROOTFS_HOME)/libs/zlib/build \
 	--with-libatomic=$(RISCV_ROOTFS_HOME)/libs/libatomic_ops/build \
 	--error-log-path=/var/log/nginx/error.log \
@@ -36,9 +35,10 @@ NGINX_FLAGS  = --prefix=$(DST_DIR) --builddir=$(NGINX_REPO)/build \
 	--pid-path=/var/run/nginx.pid \
 	--lock-path=/var/run/lock/subsys/nginxi \
 	--add-module=$(APP_DIR)/ngx-php/third_party/ngx_devel_kit \
-	--add-module=$(APP_DIR)/ngx-php
+	--add-module=$(APP_DIR)/ngx-php \
+	--with-debug
 
-.PHONY: nginx distclean
+.PHONY: nginx clean update_patch
 
 nginx: $(NGINX_CONFIG)
 	$(MAKE) -C $(NGINX_REPO)
@@ -46,10 +46,14 @@ nginx: $(NGINX_CONFIG)
 $(NGINX_CONFIG):
 	cd $(NGINX_REPO) && ./auto/configure $(NGINX_FLAGS)
 
-$(NGINX_ELF): nginx
+# $(NGINX_ELF): nginx
 
-$(APP): $(NGINX_ELF)
-	ln -sf $(abspath $<) $@
+$(APP): nginx
+	@ln -sf $(NGINX_ELF) $@
 
 clean:
-	$(MAKE) -C $(NGINX_REPO) clean
+	@$(MAKE) -C $(NGINX_REPO) clean
+	@rm -r $(DST_DIR)
+
+update_patch:
+	@cd $(NGINX_REPO) && git diff --abbrev=9 > ../patchfile.patch

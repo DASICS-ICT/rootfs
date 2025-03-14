@@ -42,6 +42,19 @@ index ded93f5bc..d6ab27a6a 100644
      ngx_feature_incs=
      ngx_feature_path=
      ngx_feature_libs=
+diff --git a/auto/lib/conf b/auto/lib/conf
+index 2c7af1040..d7271da72 100644
+--- a/auto/lib/conf
++++ b/auto/lib/conf
+@@ -52,3 +52,7 @@ fi
+ if [ $NGX_LIBATOMIC != NO ]; then
+     . auto/lib/libatomic/conf
+ fi
++
++if [ $NGX_LIBDASICS != NO ]; then
++    . auto/lib/LibDASICS/conf
++fi
+\ No newline at end of file
 diff --git a/auto/lib/libatomic/conf b/auto/lib/libatomic/conf
 index 8c8cb438b..fe6e924cd 100644
 --- a/auto/lib/libatomic/conf
@@ -62,10 +75,10 @@ index 8c8cb438b..fe6e924cd 100644
  else
  
 diff --git a/auto/lib/make b/auto/lib/make
-index b64e32908..24d48570a 100644
+index b64e32908..934559020 100644
 --- a/auto/lib/make
 +++ b/auto/lib/make
-@@ -3,19 +3,19 @@
+@@ -3,22 +3,26 @@
  # Copyright (C) Nginx, Inc.
  
  
@@ -89,6 +102,14 @@ index b64e32908..24d48570a 100644
      . auto/lib/libatomic/make
  fi
  
+ if [ $USE_PERL != NO ]; then
+     . auto/lib/perl/make
+ fi
++
++if [ $NGX_LIBDASICS != NO -a $NGX_LIBDASICS != YES -a $NGX_LIBDASICS != ROOTFS ]; then
++    . auto/lib/LibDASICS/make
++fi
+\ No newline at end of file
 diff --git a/auto/lib/openssl/conf b/auto/lib/openssl/conf
 index fdf430dff..761483b50 100644
 --- a/auto/lib/openssl/conf
@@ -114,7 +135,7 @@ index fdf430dff..761483b50 100644
              if [ "$NGX_PLATFORM" = win32 ]; then
                  CORE_LIBS="$CORE_LIBS -lgdi32 -lcrypt32 -lws2_32"
 diff --git a/auto/lib/pcre/conf b/auto/lib/pcre/conf
-index cdf1809f5..c73d70857 100644
+index cdf1809f5..052623411 100644
 --- a/auto/lib/pcre/conf
 +++ b/auto/lib/pcre/conf
 @@ -5,7 +5,7 @@
@@ -145,7 +166,7 @@ index cdf1809f5..c73d70857 100644
 -                CORE_LIBS="$CORE_LIBS $PCRE/.libs/libpcre2-8.a"
 +                #LINK_DEPS="$LINK_DEPS $PCRE/.libs/libpcre2-8.a"
 +                #CORE_LIBS="$CORE_LIBS $PCRE/.libs/libpcre2-8.a"
-+                CORE_LIBS="$CORE_LIBS -L $PCRE/lib -lpcre2-8"
++                CORE_LIBS="$CORE_LIBS -L $PCRE/lib -Wl,-Bstatic -lpcre2-8 -Wl,-Bdynamic"
 +                PCRE_ROOTFS=$PCRE
 +                PCRE=ROOTFS
              ;;
@@ -204,6 +225,30 @@ index 239592e3c..a32388abf 100644
          ;;
  
      esac
+diff --git a/auto/options b/auto/options
+index 6a6e990a0..3d6eea0b5 100644
+--- a/auto/options
++++ b/auto/options
+@@ -168,6 +168,9 @@ USE_LIBXSLT=NO
+ USE_LIBGD=NO
+ USE_GEOIP=NO
+ 
++USE_LIBDASICS=NO
++NGX_LIBDASICS=NONE
++
+ NGX_GOOGLE_PERFTOOLS=NO
+ NGX_CPP_TEST=NO
+ 
+@@ -407,6 +410,9 @@ $0: warning: the \"--with-sha1-asm\" option is deprecated"
+         --with-libatomic)                NGX_LIBATOMIC=YES          ;;
+         --with-libatomic=*)              NGX_LIBATOMIC="$value"     ;;
+ 
++        --with-libdasics)                NGX_LIBDASICS=YES          ;;
++        --with-libdasics=*)              NGX_LIBDASICS="$value"     ;;
++
+         --test-build-devpoll)            NGX_TEST_BUILD_DEVPOLL=YES ;;
+         --test-build-eventport)          NGX_TEST_BUILD_EVENTPORT=YES ;;
+         --test-build-epoll)              NGX_TEST_BUILD_EPOLL=YES   ;;
 diff --git a/auto/os/linux b/auto/os/linux
 index bc0556b3a..05af6a003 100644
 --- a/auto/os/linux
@@ -254,7 +299,7 @@ index bc0556b3a..05af6a003 100644
  ngx_feature_path=
  ngx_feature_libs=
 diff --git a/auto/summary b/auto/summary
-index b3c07eedc..28e646ea3 100644
+index b3c07eedc..1589f0315 100644
 --- a/auto/summary
 +++ b/auto/summary
 @@ -18,6 +18,7 @@ else
@@ -279,6 +324,20 @@ index b3c07eedc..28e646ea3 100644
 +    ROOTFS)echo "  + using zlib library from rootfs: $ZLIB_ROOTFS" ;;
      *)     echo "  + using zlib library: $ZLIB" ;;
  esac
+ 
+@@ -40,6 +43,13 @@ case $NGX_LIBATOMIC in
+     *)     echo "  + using libatomic_ops library: $NGX_LIBATOMIC" ;;
+ esac
+ 
++case $NGX_LIBDASICS in
++    YES)   echo "  + using system LibDASICS library" ;;
++    NONE)  echo "  + LibDASICS library is not used" ;;
++    ROOTFS)echo "  + using LibDASICS library from rootfs: $NGX_LIBDASICS_ROOTFS" ;;
++    *)     echo "  + using LibDASICS library: $NGX_LIBDASICS" ;;
++esac
++
+ echo
+ 
  
 diff --git a/auto/types/sizeof b/auto/types/sizeof
 index 480d8cfa4..52c7287a8 100644
@@ -342,3 +401,34 @@ index f29e69c61..da0106c19 100644
  ngx_feature_incs="#include <semaphore.h>"
  ngx_feature_path=
  ngx_feature_libs=
+diff --git a/src/core/nginx.c b/src/core/nginx.c
+index 0deb27b7f..dfc676398 100644
+--- a/src/core/nginx.c
++++ b/src/core/nginx.c
+@@ -9,6 +9,8 @@
+ #include <ngx_core.h>
+ #include <nginx.h>
+ 
++#include <udasics.h>
++
+ 
+ static void ngx_show_version_info(void);
+ static ngx_int_t ngx_add_inherited_sockets(ngx_cycle_t *cycle);
+@@ -203,6 +205,8 @@ main(int argc, char *const *argv)
+     ngx_conf_dump_t  *cd;
+     ngx_core_conf_t  *ccf;
+ 
++    // register_udasics(0);
++    
+     ngx_debug_init();
+ 
+     if (ngx_strerror_init() != NGX_OK) {
+@@ -384,6 +388,8 @@ main(int argc, char *const *argv)
+         ngx_master_process_cycle(cycle);
+     }
+ 
++    // unregister_udasics();
++    
+     return 0;
+ }
+ 
