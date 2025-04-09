@@ -2,3 +2,6 @@
 	path = apps/busybox/repo
 	url = https://github.com/mirror/busybox.git
 	branch = 1_32_stable
+[submodule "libevent-2_2_1_alpha"]
+	path = libs/libevent/repo
+	url = https://github.com/libevent/libevent.git
