@@ -8,7 +8,7 @@ LIBS_DEP =
 LIBS_DEP_DIR = $(addprefix libs/, $(LIBS_DEP))
 ROOTFSIMG_DIR = $(abspath rootfsimg)
 UTILS_DIR = $(abspath utils)
-NETWORK ?=
+NETWORK ?= dhcp
 NETWORK_DIR = $(abspath network)
 
 ROOTFSIMG_NEW_DIRS = bin dev dev/pts lib proc sbin sys tmp mnt root \
