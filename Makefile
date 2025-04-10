@@ -1,6 +1,6 @@
 include Makefile.check
 
-APPS = busybox
+APPS = busybox memcached
 APPS_DIR = $(addprefix apps/, $(APPS))
 LIBS = libevent
 LIBS_DIR = $(addprefix libs/, $(LIBS))
