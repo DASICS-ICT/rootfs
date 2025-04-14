@@ -2,7 +2,7 @@ include Makefile.check
 
 APPS = busybox memcached
 APPS_DIR = $(addprefix apps/, $(APPS))
-LIBS = libevent
+LIBS = libevent openssl
 LIBS_DIR = $(addprefix libs/, $(LIBS))
 LIBS_DEP =
 LIBS_DEP_DIR = $(addprefix libs/, $(LIBS_DEP))

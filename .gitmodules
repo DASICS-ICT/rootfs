@@ -8,3 +8,6 @@
 [submodule "memcached-1_6_38"]
 	path = apps/memcached/repo
 	url = https://github.com/memcached/memcached.git
+[submodule "openssl-3_4_0"]
+	path = libs/openssl/repo
+	url = https://github.com/openssl/openssl.git
