@@ -29,8 +29,7 @@ $(OPENSSH_CONFIG):
 			--disable-etc-default-login
 
 $(OPENSSH_ELF): openssh
-	# FIXME: Deleting the following command will cause a fucking compiler error.
-	@$(shell true)
+	# FIXME: Deleting this comment will cause unexpected compiler errors.
 
 $(APP): $(OPENSSH_ELF)
 	@ln -sf $(abspath $<) $@
