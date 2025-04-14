@@ -1,3 +1,4 @@
 #!/bin/sh
 
-true
+# Launch memcached as daemon (debug mode)
+memcached -vvv -d -m 64 -p 11211 -u root
