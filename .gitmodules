@@ -5,6 +5,7 @@
 [submodule "libevent-2_1_12_stable"]
 	path = libs/libevent/repo
 	url = https://github.com/libevent/libevent.git
+	ignore = all
 [submodule "memcached-1_6_38"]
 	path = apps/memcached/repo
 	url = https://github.com/memcached/memcached.git
