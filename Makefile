@@ -2,9 +2,9 @@ include Makefile.check
 
 APPS = busybox memcached
 APPS_DIR = $(addprefix apps/, $(APPS))
-LIBS = libevent openssl
+LIBS = openssl
 LIBS_DIR = $(addprefix libs/, $(LIBS))
-LIBS_DEP =
+LIBS_DEP = libevent
 LIBS_DEP_DIR = $(addprefix libs/, $(LIBS_DEP))
 ROOTFSIMG_DIR = $(abspath rootfsimg)
 UTILS_DIR = $(abspath utils)
@@ -35,6 +35,9 @@ all: $(APPS_DIR) network
 	$(MAKE) -s -C $(RISCV_ROOTFS_HOME) initramfs
 
 $(APPS_DIR): %: $(LIBS_DIR) $(LIBS_DEP_DIR)
+	$(MAKE) -s -C $@ install
+
+libs/libevent: libs/openssl
 	$(MAKE) -s -C $@ install
 
 $(LIBS_DIR): %:

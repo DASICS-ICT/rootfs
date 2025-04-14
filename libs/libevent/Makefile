@@ -14,6 +14,8 @@ LIBEVENT_REPO   = $(abspath repo)
 LIBEVENT_CONFIG = $(LIBEVENT_REPO)/config.status
 LIBEVENT_SO     = $(LIBEVENT_REPO)/.libs/libevent-2.1.so.7
 
+OPENSSL_PKGCONFIG = $(abspath $(RISCV_ROOTFS_HOME)/libs/openssl/build/lib/pkgconfig)
+
 .PHONY: libevent
 
 libevent: $(LIBEVENT_CONFIG)
@@ -21,7 +23,7 @@ libevent: $(LIBEVENT_CONFIG)
 
 $(LIBEVENT_CONFIG):
 	cd $(LIBEVENT_REPO) && ./autogen.sh && \
-		./configure --host=$(CROSS_COMPILE) --prefix=$(DST_DIR) --disable-openssl
+		./configure --host=$(CROSS_COMPILE) --prefix=$(DST_DIR) PKG_CONFIG_PATH=$(OPENSSL_PKGCONFIG)
 
 $(LIBEVENT_SO): libevent
 
