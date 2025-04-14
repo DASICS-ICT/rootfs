@@ -1,4 +1,4 @@
-NAME    = libevent-2.2.so.1
+NAME    = libevent-2.1.so.7
 IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/usr/lib)
 APP     = $(DST_DIR)/lib/$(NAME)
 
@@ -12,7 +12,7 @@ CROSS_COMPILE = riscv64-unknown-linux-gnu
 
 LIBEVENT_REPO   = $(abspath repo)
 LIBEVENT_CONFIG = $(LIBEVENT_REPO)/config.status
-LIBEVENT_SO     = $(LIBEVENT_REPO)/.libs/libevent-2.2.so.1
+LIBEVENT_SO     = $(LIBEVENT_REPO)/.libs/libevent-2.1.so.7
 
 .PHONY: libevent
 

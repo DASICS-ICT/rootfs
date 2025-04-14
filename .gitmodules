@@ -2,7 +2,7 @@
 	path = apps/busybox/repo
 	url = https://github.com/mirror/busybox.git
 	branch = 1_32_stable
-[submodule "libevent-2_2_1_alpha"]
+[submodule "libevent-2_1_12_stable"]
 	path = libs/libevent/repo
 	url = https://github.com/libevent/libevent.git
 [submodule "memcached-1_6_38"]
