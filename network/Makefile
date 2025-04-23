@@ -4,8 +4,8 @@ endif
 
 NETWORK ?=
 ifneq ($(NETWORK),)
-ifeq ($(findstring $(NETWORK),dhcp localhost),)
-$(error NETWORK must be dhcp or localhost)
+ifeq ($(findstring $(NETWORK),dhcp localhost static),)
+$(error NETWORK must be dhcp, localhost or static)
 endif
 endif
 
