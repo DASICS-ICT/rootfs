@@ -17,6 +17,7 @@ BASH_ELF    = $(BASH_REPO)/bash
 
 bash: $(BASH_CONFIG)
 	$(MAKE) -C $(BASH_REPO) >/dev/null
+	$(CROSS_COMPILE)-strip $(BASH_ELF)
 
 $(BASH_CONFIG):
 	cd $(BASH_REPO) && ./configure --host=$(CROSS_COMPILE)
