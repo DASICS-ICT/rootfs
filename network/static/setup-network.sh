@@ -1,3 +1,3 @@
-#!/bin/sh
+#!/bin/bash
 
 ifup lo && ifup eth0

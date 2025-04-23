@@ -6,7 +6,7 @@ mdev -s
 
 # Configure network
 if [ -f /etc/init.d/setup-network.sh ]; then
-    sh /etc/init.d/setup-network.sh
+    bash /etc/init.d/setup-network.sh
 fi
 
 # Set environment variables
