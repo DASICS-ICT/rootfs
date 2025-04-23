@@ -21,6 +21,16 @@ OPENSSH_ELF    = $(OPENSSH_REPO)/ssh
 
 openssh: $(OPENSSH_CONFIG)
 	$(MAKE) -C $(OPENSSH_REPO)
+	$(CROSS_COMPILE)-strip $(OPENSSH_ELF)
+	$(CROSS_COMPILE)-strip $(OPENSSH_REPO)/sshd
+	$(CROSS_COMPILE)-strip $(OPENSSH_REPO)/scp
+	$(CROSS_COMPILE)-strip $(OPENSSH_REPO)/ssh-add
+	$(CROSS_COMPILE)-strip $(OPENSSH_REPO)/ssh-agent
+	$(CROSS_COMPILE)-strip $(OPENSSH_REPO)/ssh-keygen
+	$(CROSS_COMPILE)-strip $(OPENSSH_REPO)/ssh-keyscan
+	$(CROSS_COMPILE)-strip $(OPENSSH_REPO)/sftp
+	$(CROSS_COMPILE)-strip $(OPENSSH_REPO)/sshd-session
+	$(CROSS_COMPILE)-strip $(OPENSSH_REPO)/sftp-server
 
 $(OPENSSH_CONFIG):
 	cd $(OPENSSH_REPO) && autoreconf && \
