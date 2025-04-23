@@ -17,3 +17,7 @@
 	path = apps/haveged/repo
 	url = https://github.com/jirka-h/haveged.git
 	ignore = all
+[submodule "bash-5_2"]
+	path = apps/bash/repo
+	url = https://github.com/bminor/bash.git
+	ignore = all
