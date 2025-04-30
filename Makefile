@@ -2,7 +2,7 @@ include Makefile.check
 
 APPS = busybox ab
 APPS_DIR = $(addprefix apps/, $(APPS))
-LIBS = apr libexpat
+LIBS = apr libexpat openssl
 LIBS_DIR = $(addprefix libs/, $(LIBS))
 LIBS_DEP = apr-util
 LIBS_DEP_DIR = $(addprefix libs/, $(LIBS_DEP))
