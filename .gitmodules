@@ -14,3 +14,7 @@
 	url = https://github.com/apache/apr-util.git
 	branch = 1.7.x
 	ignore = all
+[submodule "openssl-1_0_1f"]
+	path = libs/openssl/repo
+	url = https://github.com/openssl/openssl.git
+	ignore = all
