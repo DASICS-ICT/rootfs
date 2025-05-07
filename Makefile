@@ -1,6 +1,6 @@
 include Makefile.check
 
-APPS = busybox dasics-test/rwx dasics-test/free dasics-test/ofb
+APPS = busybox dasics-test/rwx dasics-test/free dasics-test/ofb dasics-test/origin-syscall dasics-test/seccomp-bpf-filter dasics-test/seccomp-ptrace dasics-test/dasics-syscall-filter
 APPS_DIR = $(addprefix apps/, $(APPS))
 LIBS = LibDASICS
 LIBS_DIR = $(addprefix libs/, $(LIBS))
