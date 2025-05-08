@@ -2,7 +2,7 @@ include Makefile.check
 
 APPS = busybox
 APPS_DIR = $(addprefix apps/, $(APPS))
-LIBS =
+LIBS = mimalloc
 LIBS_DIR = $(addprefix libs/, $(LIBS))
 LIBS_DEP =
 LIBS_DEP_DIR = $(addprefix libs/, $(LIBS_DEP))
