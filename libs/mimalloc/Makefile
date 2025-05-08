@@ -1,6 +1,6 @@
-NAME    = libmimalloc.so.3
+NAME    = libmimalloc.so.2
 IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/usr/lib)
-APP     = $(DST_DIR)/lib/libmimalloc.so.3.0
+APP     = $(DST_DIR)/lib/libmimalloc.so.2.2
 
 ifneq ($(RISCV_ROOTFS_HOME),)
 include $(RISCV_ROOTFS_HOME)/Makefile.app
@@ -13,7 +13,7 @@ CROSS_COMPILE   = riscv64-unknown-linux-gnu
 MIMALLOC_REPO   = $(abspath repo)
 MIMALLOC_BUILD  = $(MIMALLOC_REPO)/build
 MIMALLOC_CONFIG = $(MIMALLOC_BUILD)/Makefile
-MIMALLOC_ELF    = $(MIMALLOC_BUILD)/libmimalloc.so.3.0
+MIMALLOC_ELF    = $(MIMALLOC_BUILD)/libmimalloc.so.2.2
 
 .PHONY: libmalloc
 

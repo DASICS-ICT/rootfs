@@ -2,6 +2,6 @@
 	path = apps/busybox/repo
 	url = https://github.com/mirror/busybox.git
 	branch = 1_32_stable
-[submodule "mimalloc_v3.0.3"]
+[submodule "mimalloc_v2.2.2"]
 	path = libs/mimalloc/repo
 	url = https://github.com/microsoft/mimalloc.git
