@@ -30,3 +30,9 @@ $(MIMALLOC_ELF): libmalloc
 
 $(APP): $(MIMALLOC_ELF)
 	$(MAKE) -C $(MIMALLOC_BUILD) install
+
+install::$(APP)
+	@ln -sf $(MIMALLOC_BUILD)/mimalloc-test-api $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/root)/mimalloc-test-api
+	@ln -sf $(MIMALLOC_BUILD)/mimalloc-test-api-fill $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/root)/mimalloc-test-api-fill
+	@ln -sf $(MIMALLOC_BUILD)/mimalloc-test-stress $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/root)/mimalloc-test-stress
+	@ln -sf $(MIMALLOC_BUILD)/mimalloc-test-stress-dynamic $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/root)/mimalloc-test-stress-dynamic
