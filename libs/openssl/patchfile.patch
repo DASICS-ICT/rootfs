@@ -1,0 +1,16 @@
+diff --git a/crypto/hashtable/hashtable.c b/crypto/hashtable/hashtable.c
+index 8d7f4751b..bbfd3338a 100644
+--- a/crypto/hashtable/hashtable.c
++++ b/crypto/hashtable/hashtable.c
+@@ -165,8 +165,9 @@ static struct ht_neighborhood_st *alloc_new_neighborhood_list(size_t len,
+ {
+     struct ht_neighborhood_st *ret;
+ 
+-    ret = OPENSSL_aligned_alloc(sizeof(struct ht_neighborhood_st) * len,
+-                                CACHE_LINE_BYTES, freeptr);
++    // ret = OPENSSL_aligned_alloc(sizeof(struct ht_neighborhood_st) * len,
++    //                             CACHE_LINE_BYTES, freeptr);
++    ret = NULL;
+ 
+     /* fall back to regular malloc */
+     if (ret == NULL) {

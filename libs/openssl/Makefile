@@ -18,7 +18,7 @@ openssl: $(OPENSSL_CONFIG)
 	$(MAKE) -C $(OPENSSL_REPO)
 
 $(OPENSSL_CONFIG):
-	cd $(OPENSSL_REPO) && ./Configure linux-generic64 no-asm no-threads shared\
+	cd $(OPENSSL_REPO) && ./Configure linux64-riscv64 no-threads shared\
 		--cross-compile-prefix=riscv64-unknown-linux-gnu- \
 		--prefix=$(DST_DIR) --openssldir=$(DST_DIR)/openssl
 

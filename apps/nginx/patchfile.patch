@@ -632,3 +632,32 @@ index b55527845..9293540c1 100644
 +    } 
 +}
 \ No newline at end of file
+diff --git a/src/http/modules/ngx_http_ssl_module.c b/src/http/modules/ngx_http_ssl_module.c
+index 1c92d9fa8..33b8a74a3 100644
+--- a/src/http/modules/ngx_http_ssl_module.c
++++ b/src/http/modules/ngx_http_ssl_module.c
+@@ -13,6 +13,8 @@
+ #include <ngx_event_quic_openssl_compat.h>
+ #endif
+ 
++#include <udasics.h>
++
+ 
+ typedef ngx_int_t (*ngx_ssl_variable_handler_pt)(ngx_connection_t *c,
+     ngx_pool_t *pool, ngx_str_t *s);
+@@ -486,12 +488,15 @@ ngx_http_ssl_alpn_select(ngx_ssl_conn_t *ssl_conn, const unsigned char **out,
+         }
+     }
+ 
++    int dasics_idx0 = LIBCFG_ALLOC(DASICS_LIBCFG_R | DASICS_LIBCFG_V, srv, srvlen + 1);
+     if (SSL_select_next_proto((unsigned char **) out, outlen, srv, srvlen,
+                               in, inlen)
+         != OPENSSL_NPN_NEGOTIATED)
+     {
++        dasics_libcfg_free(dasics_idx0);
+         return SSL_TLSEXT_ERR_ALERT_FATAL;
+     }
++    dasics_libcfg_free(dasics_idx0);
+ 
+     ngx_log_debug2(NGX_LOG_DEBUG_HTTP, c->log, 0,
+                    "SSL ALPN selected: %*s", (size_t) *outlen, *out);
