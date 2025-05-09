@@ -1,0 +1,22 @@
+diff --git a/deflate.c b/deflate.c
+index 012ea8148..cb1af6156 100644
+--- a/deflate.c
++++ b/deflate.c
+@@ -381,12 +381,12 @@ int ZEXPORT deflateInit2_(z_streamp strm, int level, int method,
+                           const char *version, int stream_size) {
+     deflate_state *s;
+     int wrap = 1;
+-    static const char my_version[] = ZLIB_VERSION;
++    // static const char my_version[] = ZLIB_VERSION;
+ 
+-    if (version == Z_NULL || version[0] != my_version[0] ||
+-        stream_size != sizeof(z_stream)) {
+-        return Z_VERSION_ERROR;
+-    }
++    // if (version == Z_NULL || version[0] != my_version[0] ||
++    //     stream_size != sizeof(z_stream)) {
++    //     return Z_VERSION_ERROR;
++    // }
+     if (strm == Z_NULL) return Z_STREAM_ERROR;
+ 
+     strm->msg = Z_NULL;
