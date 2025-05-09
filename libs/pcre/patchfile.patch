@@ -1,0 +1,310 @@
+diff --git a/pcre_compile.c b/pcre_compile.c
+index 8b80abe03..b71f61d91 100644
+--- a/pcre_compile.c
++++ b/pcre_compile.c
+@@ -929,12 +929,12 @@ if (cd->workspace_size >= COMPILE_WORK_SIZE_MAX ||
+     newsize - cd->workspace_size < WORK_SIZE_SAFETY_MARGIN)
+  return ERR72;
+ 
+-newspace = (PUBL(malloc))(IN_UCHARS(newsize));
++newspace = ((malloc))(IN_UCHARS(newsize));
+ if (newspace == NULL) return ERR21;
+ memcpy(newspace, cd->start_workspace, cd->workspace_size * sizeof(pcre_uchar));
+ cd->hwm = (pcre_uchar *)newspace + (cd->hwm - cd->start_workspace);
+ if (cd->workspace_size > COMPILE_WORK_SIZE)
+-  (PUBL(free))((void *)cd->start_workspace);
++  ((free))((void *)cd->start_workspace);
+ cd->start_workspace = newspace;
+ cd->workspace_size = newsize;
+ return 0;
+@@ -7251,7 +7251,7 @@ for (;; ptr++)
+             if (cd->names_found >= cd->named_group_list_size)
+               {
+               int newsize = cd->named_group_list_size * 2;
+-              named_group *newspace = (PUBL(malloc))
++              named_group *newspace = ((malloc))
+                 (newsize * sizeof(named_group));
+ 
+               if (newspace == NULL)
+@@ -7263,7 +7263,7 @@ for (;; ptr++)
+               memcpy(newspace, cd->named_groups,
+                 cd->named_group_list_size * sizeof(named_group));
+               if (cd->named_group_list_size > NAMED_GROUP_LIST_SIZE)
+-                (PUBL(free))((void *)cd->named_groups);
++                ((free))((void *)cd->named_groups);
+               cd->named_groups = newspace;
+               cd->named_group_list_size = newsize;
+               }
+@@ -9416,7 +9416,7 @@ size = sizeof(REAL_PCRE) +
+ 
+ /* Get the memory. */
+ 
+-re = (REAL_PCRE *)(PUBL(malloc))(size);
++re = (REAL_PCRE *)((malloc))(size);
+ if (re == NULL)
+   {
+   errorcode = ERR21;
+@@ -9483,7 +9483,7 @@ if (cd->names_found > 0)
+   for (; i > 0; i--, ng++)
+     add_name(cd, ng->name, ng->length, ng->number);
+   if (cd->named_group_list_size > NAMED_GROUP_LIST_SIZE)
+-    (PUBL(free))((void *)cd->named_groups);
++    ((free))((void *)cd->named_groups);
+   cd->named_group_list_size = 0;   /* So we don't free it twice */
+   }
+ 
+@@ -9564,7 +9564,7 @@ if (cd->hwm > cd->start_workspace)
+ NULL to indicate that forward references have been filled in. */
+ 
+ if (cd->workspace_size > COMPILE_WORK_SIZE)
+-  (PUBL(free))((void *)cd->start_workspace);
++  ((free))((void *)cd->start_workspace);
+ cd->start_workspace = NULL;
+ 
+ /* Give an error if there's back reference to a non-existent capturing
+@@ -9633,10 +9633,10 @@ if (errorcode == 0 && cd->check_lookbehind)
+ 
+ if (errorcode != 0)
+   {
+-  (PUBL(free))(re);
++  ((free))(re);
+   PCRE_EARLY_ERROR_RETURN:
+   if (cd->named_group_list_size > NAMED_GROUP_LIST_SIZE)
+-    (PUBL(free))((void *)cd->named_groups);
++    ((free))((void *)cd->named_groups);
+   *erroroffset = (int)(ptr - (const pcre_uchar *)pattern);
+   PCRE_EARLY_ERROR_RETURN2:
+   *errorptr = find_error_text(errorcode);
+@@ -9776,7 +9776,7 @@ was compiled can be seen. */
+ 
+ if (code - codestart > length)
+   {
+-  (PUBL(free))(re);
++  ((free))(re);
+   *errorptr = find_error_text(ERR23);
+   *erroroffset = ptr - (pcre_uchar *)pattern;
+   if (errorcodeptr != NULL) *errorcodeptr = ERR23;
+diff --git a/pcre_exec.c b/pcre_exec.c
+index 5b96954fc..04fd63394 100644
+--- a/pcre_exec.c
++++ b/pcre_exec.c
+@@ -351,7 +351,7 @@ argument of match(), which never changes. */
+   heapframe *newframe = frame->Xnextframe;\
+   if (newframe == NULL)\
+     {\
+-    newframe = (heapframe *)(PUBL(stack_malloc))(sizeof(heapframe));\
++    newframe = (heapframe *)((malloc))(sizeof(heapframe));\
+     if (newframe == NULL) RRETURN(PCRE_ERROR_NOMEMORY);\
+     newframe->Xnextframe = NULL;\
+     frame->Xnextframe = newframe;\
+@@ -1787,7 +1787,7 @@ for (;;)
+       else
+         {
+         new_recursive.offset_save =
+-          (int *)(PUBL(malloc))(new_recursive.saved_max * sizeof(int));
++          (int *)((malloc))(new_recursive.saved_max * sizeof(int));
+         if (new_recursive.offset_save == NULL) RRETURN(PCRE_ERROR_NOMEMORY);
+         }
+       memcpy(new_recursive.offset_save, md->offset_vector,
+@@ -1813,7 +1813,7 @@ for (;;)
+           {
+           DPRINTF(("Recursion matched\n"));
+           if (new_recursive.offset_save != stacksave)
+-            (PUBL(free))(new_recursive.offset_save);
++            ((free))(new_recursive.offset_save);
+ 
+           /* Set where we got to in the subject, and reset the start in case
+           it was changed by \K. This *is* propagated back out of a recursion,
+@@ -1831,7 +1831,7 @@ for (;;)
+         if (rrc >= MATCH_BACKTRACK_MIN && rrc <= MATCH_BACKTRACK_MAX)
+           {
+           if (new_recursive.offset_save != stacksave)
+-            (PUBL(free))(new_recursive.offset_save);
++            ((free))(new_recursive.offset_save);
+           RRETURN(MATCH_NOMATCH);
+           }
+ 
+@@ -1841,7 +1841,7 @@ for (;;)
+           {
+           DPRINTF(("Recursion gave error %d\n", rrc));
+           if (new_recursive.offset_save != stacksave)
+-            (PUBL(free))(new_recursive.offset_save);
++            ((free))(new_recursive.offset_save);
+           RRETURN(rrc);
+           }
+ 
+@@ -1853,7 +1853,7 @@ for (;;)
+       DPRINTF(("Recursion didn't match\n"));
+       md->recursive = new_recursive.prevrec;
+       if (new_recursive.offset_save != stacksave)
+-        (PUBL(free))(new_recursive.offset_save);
++        ((free))(new_recursive.offset_save);
+       RRETURN(MATCH_NOMATCH);
+       }
+ 
+@@ -6312,7 +6312,7 @@ while (nextframe != NULL)
+   {
+   heapframe *oldframe = nextframe;
+   nextframe = nextframe->Xnextframe;
+-  (PUBL(stack_free))(oldframe);
++  ((free))(oldframe);
+   }
+ }
+ #endif
+@@ -6663,7 +6663,7 @@ arg_offset_max = (2*ocount)/3;
+ if (re->top_backref > 0 && re->top_backref >= ocount/3)
+   {
+   ocount = re->top_backref * 3 + 3;
+-  md->offset_vector = (int *)(PUBL(malloc))(ocount * sizeof(int));
++  md->offset_vector = (int *)((malloc))(ocount * sizeof(int));
+   if (md->offset_vector == NULL) return PCRE_ERROR_NOMEMORY;
+   using_temporary_offsets = TRUE;
+   DPRINTF(("Got memory to hold back references\n"));
+@@ -7066,7 +7066,7 @@ if (rc == MATCH_MATCH || rc == MATCH_ACCEPT)
+       }
+     if (md->end_offset_top > arg_offset_max) md->capture_last |= OVFLBIT;
+     DPRINTF(("Freeing temporary memory\n"));
+-    (PUBL(free))(md->offset_vector);
++    ((free))(md->offset_vector);
+     }
+ 
+   /* Set the return code to the number of captured strings, or 0 if there were
+@@ -7122,7 +7122,7 @@ attempt has failed at all permitted starting positions. */
+ if (using_temporary_offsets)
+   {
+   DPRINTF(("Freeing temporary memory\n"));
+-  (PUBL(free))(md->offset_vector);
++  ((free))(md->offset_vector);
+   }
+ 
+ /* For anything other than nomatch or partial match, just return the code. */
+diff --git a/pcre_get.c b/pcre_get.c
+index 9475d5e88..2109e8218 100644
+--- a/pcre_get.c
++++ b/pcre_get.c
+@@ -466,7 +466,7 @@ for (i = 0; i < double_count; i += 2)
+   if (ovector[i+1] > ovector[i]) size += IN_UCHARS(ovector[i+1] - ovector[i]);
+   }
+ 
+-stringlist = (pcre_uchar **)(PUBL(malloc))(size);
++stringlist = (pcre_uchar **)((malloc))(size);
+ if (stringlist == NULL) return PCRE_ERROR_NOMEMORY;
+ 
+ #if defined COMPILE_PCRE8
+@@ -498,7 +498,7 @@ return 0;
+ *************************************************/
+ 
+ /* This function exists for the benefit of people calling PCRE from non-C
+-programs that can call its functions, but not free() or (PUBL(free))()
++programs that can call its functions, but not free() or ((free))()
+ directly.
+ 
+ Argument:   the result of a previous pcre_get_substring_list()
+@@ -516,7 +516,7 @@ PCRE_EXP_DEFN void PCRE_CALL_CONVENTION
+ pcre32_free_substring_list(PCRE_SPTR32 *pointer)
+ #endif
+ {
+-(PUBL(free))((void *)pointer);
++((free))((void *)pointer);
+ }
+ 
+ 
+@@ -566,7 +566,7 @@ if (stringnumber < 0 || stringnumber >= stringcount)
+   return PCRE_ERROR_NOSUBSTRING;
+ stringnumber *= 2;
+ yield = ovector[stringnumber+1] - ovector[stringnumber];
+-substring = (pcre_uchar *)(PUBL(malloc))(IN_UCHARS(yield + 1));
++substring = (pcre_uchar *)((malloc))(IN_UCHARS(yield + 1));
+ if (substring == NULL) return PCRE_ERROR_NOMEMORY;
+ memcpy(substring, subject + ovector[stringnumber], IN_UCHARS(yield));
+ substring[yield] = 0;
+@@ -645,7 +645,7 @@ return pcre32_get_substring(subject, ovector, stringcount, n, stringptr);
+ *************************************************/
+ 
+ /* This function exists for the benefit of people calling PCRE from non-C
+-programs that can call its functions, but not free() or (PUBL(free))()
++programs that can call its functions, but not free() or ((free))()
+ directly.
+ 
+ Argument:   the result of a previous pcre_get_substring()
+@@ -663,7 +663,7 @@ PCRE_EXP_DEFN void PCRE_CALL_CONVENTION
+ pcre32_free_substring(PCRE_SPTR32 pointer)
+ #endif
+ {
+-(PUBL(free))((void *)pointer);
++((free))((void *)pointer);
+ }
+ 
+ /* End of pcre_get.c */
+diff --git a/pcre_jit_compile.c b/pcre_jit_compile.c
+index 4dcf8fc21..5c13d5243 100644
+--- a/pcre_jit_compile.c
++++ b/pcre_jit_compile.c
+@@ -52,8 +52,8 @@ POSSIBILITY OF SUCH DAMAGE.
+ we just include it. This way we don't need to touch the build
+ system files. */
+ 
+-#define SLJIT_MALLOC(size, allocator_data) (PUBL(malloc))(size)
+-#define SLJIT_FREE(ptr, allocator_data) (PUBL(free))(ptr)
++#define SLJIT_MALLOC(size, allocator_data) ((malloc))(size)
++#define SLJIT_FREE(ptr, allocator_data) ((free))(ptr)
+ #define SLJIT_CONFIG_AUTO 1
+ #define SLJIT_CONFIG_STATIC 1
+ #define SLJIT_VERBOSE 0
+diff --git a/pcre_maketables.c b/pcre_maketables.c
+index a44a6eaa9..c40aafdb7 100644
+--- a/pcre_maketables.c
++++ b/pcre_maketables.c
+@@ -59,7 +59,7 @@ compilation of dftables.c, in which case the macro DFTABLES is defined. */
+ /* This function builds a set of character tables for use by PCRE and returns
+ a pointer to them. They are build using the ctype functions, and consequently
+ their contents will depend upon the current locale setting. When compiled as
+-part of the library, the store is obtained via PUBL(malloc)(), but when
++part of the library, the store is obtained via (malloc)(), but when
+ compiled inside dftables, use malloc().
+ 
+ Arguments:   none
+@@ -81,7 +81,7 @@ unsigned char *yield, *p;
+ int i;
+ 
+ #ifndef DFTABLES
+-yield = (unsigned char*)(PUBL(malloc))(tables_length);
++yield = (unsigned char*)((malloc))(tables_length);
+ #else
+ yield = (unsigned char*)malloc(tables_length);
+ #endif
+diff --git a/pcre_study.c b/pcre_study.c
+index d9d4960d8..d5f374757 100644
+--- a/pcre_study.c
++++ b/pcre_study.c
+@@ -1569,7 +1569,7 @@ if (bits_set || min > 0 || (options & (
+ #endif
+     PCRE_STUDY_EXTRA_NEEDED)) != 0)
+   {
+-  extra = (PUBL(extra) *)(PUBL(malloc))
++  extra = (PUBL(extra) *)((malloc))
+     (sizeof(PUBL(extra)) + sizeof(pcre_study_data));
+   if (extra == NULL)
+     {
+@@ -1680,7 +1680,7 @@ if ((extra->flags & PCRE_EXTRA_EXECUTABLE_JIT) != 0 &&
+      extra->executable_jit != NULL)
+   PRIV(jit_free)(extra->executable_jit);
+ #endif
+-PUBL(free)(extra);
++(free)(extra);
+ }
+ 
+ /* End of pcre_study.c */
+diff --git a/pcreposix.c b/pcreposix.c
+index 3042d7635..658652a22 100644
+--- a/pcreposix.c
++++ b/pcreposix.c
+@@ -245,7 +245,7 @@ return length + addlength;
+ PCREPOSIX_EXP_DEFN void PCRE_CALL_CONVENTION
+ regfree(regex_t *preg)
+ {
+-(PUBL(free))(preg->re_pcre);
++((free))(preg->re_pcre);
+ }
+ 
+ 
