@@ -42,6 +42,81 @@ index ded93f5bc..d6ab27a6a 100644
      ngx_feature_incs=
      ngx_feature_path=
      ngx_feature_libs=
+diff --git a/auto/lib/LibDASICS/conf b/auto/lib/LibDASICS/conf
+new file mode 100644
+index 000000000..f12144271
+--- /dev/null
++++ b/auto/lib/LibDASICS/conf
+@@ -0,0 +1,37 @@
++
++# Copyright (C) Igor Sysoev
++# Copyright (C) Nginx, Inc.
++
++
++if [ $NGX_LIBDASICS != YES ]; then
++
++    have=NGX_HAVE_LIBDASICS . auto/have
++    CORE_INCS="$CORE_INCS $NGX_LIBDASICS/include"
++    LINK_DEPS="$LINK_DEPS $NGX_LIBDASICS/libDASICS.a"
++    CORE_LIBS="$CORE_LIBS $NGX_LIBDASICS/libDASICS.a -T$NGX_LIBDASICS/ld.lds"
++    NGX_LIBDASICS_ROOTFS=$NGX_LIBDASICS
++    NGX_LIBDASICS=ROOTFS
++
++else
++
++    ngx_feature="LibDASICS library"
++    ngx_feature_name=NGX_HAVE_LIBDASICS
++    ngx_feature_run=yes
++    ngx_feature_incs="#include <udasics.h>"
++    ngx_feature_path=
++    ngx_feature_libs="-ldasics"
++    ngx_feature_test="register_udasics(0);"
++    . auto/feature
++
++    if [ $ngx_found = yes ]; then
++        CORE_LIBS="$CORE_LIBS $ngx_feature_libs"
++    else
++
++cat << END
++
++$0: error: LibDASICS library was not found.
++
++END
++        exit 1
++    fi
++fi
+\ No newline at end of file
+diff --git a/auto/lib/LibDASICS/make b/auto/lib/LibDASICS/make
+new file mode 100644
+index 000000000..eecb5d940
+--- /dev/null
++++ b/auto/lib/LibDASICS/make
+@@ -0,0 +1,11 @@
++
++# Copyright (C) Igor Sysoev
++# Copyright (C) Nginx, Inc.
++
++
++    cat << END                                            >> $NGX_MAKEFILE
++
++$NGX_LIBDASICS/libDASICS.a:
++	cd $NGX_LIBATOMIC && \$(MAKE)
++
++END
+\ No newline at end of file
+diff --git a/auto/lib/conf b/auto/lib/conf
+index 2c7af1040..d7271da72 100644
+--- a/auto/lib/conf
++++ b/auto/lib/conf
+@@ -52,3 +52,7 @@ fi
+ if [ $NGX_LIBATOMIC != NO ]; then
+     . auto/lib/libatomic/conf
+ fi
++
++if [ $NGX_LIBDASICS != NO ]; then
++    . auto/lib/LibDASICS/conf
++fi
+\ No newline at end of file
 diff --git a/auto/lib/libatomic/conf b/auto/lib/libatomic/conf
 index 8c8cb438b..fe6e924cd 100644
 --- a/auto/lib/libatomic/conf
@@ -62,10 +137,10 @@ index 8c8cb438b..fe6e924cd 100644
  else
  
 diff --git a/auto/lib/make b/auto/lib/make
-index b64e32908..24d48570a 100644
+index b64e32908..934559020 100644
 --- a/auto/lib/make
 +++ b/auto/lib/make
-@@ -3,19 +3,19 @@
+@@ -3,22 +3,26 @@
  # Copyright (C) Nginx, Inc.
  
  
@@ -89,6 +164,14 @@ index b64e32908..24d48570a 100644
      . auto/lib/libatomic/make
  fi
  
+ if [ $USE_PERL != NO ]; then
+     . auto/lib/perl/make
+ fi
++
++if [ $NGX_LIBDASICS != NO -a $NGX_LIBDASICS != YES -a $NGX_LIBDASICS != ROOTFS ]; then
++    . auto/lib/LibDASICS/make
++fi
+\ No newline at end of file
 diff --git a/auto/lib/openssl/conf b/auto/lib/openssl/conf
 index fdf430dff..761483b50 100644
 --- a/auto/lib/openssl/conf
@@ -170,6 +253,20 @@ index 239592e3c..a32388abf 100644
          ;;
  
      esac
+diff --git a/auto/options b/auto/options
+index 6a6e990a0..3750541e3 100644
+--- a/auto/options
++++ b/auto/options
+@@ -407,6 +407,9 @@ $0: warning: the \"--with-sha1-asm\" option is deprecated"
+         --with-libatomic)                NGX_LIBATOMIC=YES          ;;
+         --with-libatomic=*)              NGX_LIBATOMIC="$value"     ;;
+ 
++        --with-libdasics)                NGX_LIBDASICS=YES          ;;
++        --with-libdasics=*)              NGX_LIBDASICS="$value"     ;;
++
+         --test-build-devpoll)            NGX_TEST_BUILD_DEVPOLL=YES ;;
+         --test-build-eventport)          NGX_TEST_BUILD_EVENTPORT=YES ;;
+         --test-build-epoll)              NGX_TEST_BUILD_EPOLL=YES   ;;
 diff --git a/auto/os/linux b/auto/os/linux
 index bc0556b3a..05af6a003 100644
 --- a/auto/os/linux
@@ -220,7 +317,7 @@ index bc0556b3a..05af6a003 100644
  ngx_feature_path=
  ngx_feature_libs=
 diff --git a/auto/summary b/auto/summary
-index b3c07eedc..28e646ea3 100644
+index b3c07eedc..1589f0315 100644
 --- a/auto/summary
 +++ b/auto/summary
 @@ -18,6 +18,7 @@ else
@@ -245,6 +342,20 @@ index b3c07eedc..28e646ea3 100644
 +    ROOTFS)echo "  + using zlib library from rootfs: $ZLIB_ROOTFS" ;;
      *)     echo "  + using zlib library: $ZLIB" ;;
  esac
+ 
+@@ -40,6 +43,13 @@ case $NGX_LIBATOMIC in
+     *)     echo "  + using libatomic_ops library: $NGX_LIBATOMIC" ;;
+ esac
+ 
++case $NGX_LIBDASICS in
++    YES)   echo "  + using system LibDASICS library" ;;
++    NONE)  echo "  + LibDASICS library is not used" ;;
++    ROOTFS)echo "  + using LibDASICS library from rootfs: $NGX_LIBDASICS_ROOTFS" ;;
++    *)     echo "  + using LibDASICS library: $NGX_LIBDASICS" ;;
++esac
++
+ echo
+ 
  
 diff --git a/auto/types/sizeof b/auto/types/sizeof
 index 480d8cfa4..52c7287a8 100644

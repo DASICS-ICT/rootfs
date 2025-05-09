@@ -16,6 +16,7 @@ NGINX_FLAGS  = --prefix=$(DST_DIR) --builddir=$(NGINX_REPO)/build \
 	--user=nginx --group=nginx \
 	--with-cc=$(shell which $(CROSS_COMPILE)-gcc) --with-cpp=$(shell which $(CROSS_COMPILE)-g++) \
 	--with-http_ssl_module \
+	--with-libdasics=$(RISCV_ROOTFS_HOME)/libs/LibDASICS/build \
 	--with-pcre=$(RISCV_ROOTFS_HOME)/libs/pcre/build \
 	--with-openssl=$(RISCV_ROOTFS_HOME)/libs/openssl/build \
 	--with-zlib=$(RISCV_ROOTFS_HOME)/libs/zlib/build \
@@ -30,7 +31,7 @@ NGINX_FLAGS  = --prefix=$(DST_DIR) --builddir=$(NGINX_REPO)/build \
 	--pid-path=/var/run/nginx.pid \
 	--lock-path=/var/run/lock/subsys/nginx
 
-.PHONY: nginx
+.PHONY: nginx update_patch
 
 nginx: $(NGINX_CONFIG)
 	$(MAKE) -C $(NGINX_REPO)
@@ -42,3 +43,6 @@ $(NGINX_ELF): nginx
 
 $(APP): $(NGINX_ELF)
 	ln -sf $(abspath $<) $@
+
+update_patch:
+	@cd $(NGINX_REPO) && git diff HEAD --abbrev=9 > ../patchfile.patch
