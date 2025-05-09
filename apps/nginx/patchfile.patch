@@ -419,3 +419,216 @@ index f29e69c61..da0106c19 100644
  ngx_feature_incs="#include <semaphore.h>"
  ngx_feature_path=
  ngx_feature_libs=
+diff --git a/src/event/ngx_event_openssl.c b/src/event/ngx_event_openssl.c
+index 8d1f5695c..73cc8f2ea 100644
+--- a/src/event/ngx_event_openssl.c
++++ b/src/event/ngx_event_openssl.c
+@@ -879,18 +879,27 @@ ngx_ssl_password_callback(char *buf, int size, int rwflag, void *userdata)
+     return size;
+ }
+ 
++#include <udasics.h>
++#include <assert.h>
+ 
+ ngx_int_t
+ ngx_ssl_ciphers(ngx_conf_t *cf, ngx_ssl_t *ssl, ngx_str_t *ciphers,
+     ngx_uint_t prefer_server_ciphers)
+ {
++    uint32_t idx = LIBCFG_ALLOC(DASICS_LIBCFG_V | DASICS_LIBCFG_R | DASICS_LIBCFG_W, (uint64_t)ciphers->data, strlen((char *)ciphers->data));
++    assert((int)idx != -1);
++
+     if (SSL_CTX_set_cipher_list(ssl->ctx, (char *) ciphers->data) == 0) {
+         ngx_ssl_error(NGX_LOG_EMERG, ssl->log, 0,
+                       "SSL_CTX_set_cipher_list(\"%V\") failed",
+                       ciphers);
++
++        assert((int)dasics_libcfg_free(idx) != -1);
+         return NGX_ERROR;
+     }
+ 
++    assert((int)dasics_libcfg_free(idx) != -1);
++
+     if (prefer_server_ciphers) {
+         SSL_CTX_set_options(ssl->ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
+     }
+@@ -3660,6 +3669,13 @@ ngx_ssl_error(ngx_uint_t level, ngx_log_t *log, ngx_err_t err, char *fmt, ...)
+     u_char       errstr[NGX_MAX_CONF_ERRSTR];
+     const char  *data;
+ 
++    int32_t data_idx = dasics_libcfg_alloc(DASICS_LIBCFG_W | DASICS_LIBCFG_R | DASICS_LIBCFG_V , \
++                                            (uint64_t)&data, (uint64_t)(&data) + sizeof(data));
++    int32_t flags_idx = dasics_libcfg_alloc(DASICS_LIBCFG_W | DASICS_LIBCFG_R | DASICS_LIBCFG_V , \
++                                            (uint64_t)&flags, (uint64_t)(&flags) + sizeof(flags));
++    int32_t errstr_idx = dasics_libcfg_alloc(DASICS_LIBCFG_W | DASICS_LIBCFG_R | DASICS_LIBCFG_V , \
++                                            (uint64_t)errstr, (uint64_t)errstr + sizeof(errstr));
++
+     last = errstr + NGX_MAX_CONF_ERRSTR;
+ 
+     va_start(args, fmt);
+@@ -3706,6 +3722,10 @@ ngx_ssl_error(ngx_uint_t level, ngx_log_t *log, ngx_err_t err, char *fmt, ...)
+         }
+     }
+ 
++    dasics_libcfg_free(data_idx);
++    dasics_libcfg_free(flags_idx);
++    dasics_libcfg_free(errstr_idx);
++
+     ngx_log_error(level, log, err, "%*s", p - errstr, errstr);
+ }
+ 
+@@ -3798,6 +3818,11 @@ ngx_ssl_session_id_context(ngx_ssl_t *ssl, ngx_str_t *sess_ctx,
+     STACK_OF(X509_NAME)  *list;
+     u_char                buf[EVP_MAX_MD_SIZE];
+ 
++    int32_t len_idx = dasics_libcfg_alloc(DASICS_LIBCFG_W | DASICS_LIBCFG_R | DASICS_LIBCFG_V , \
++                                            (uint64_t)&len, (uint64_t)(&len) + sizeof(len));
++    int32_t buf_idx = dasics_libcfg_alloc(DASICS_LIBCFG_W | DASICS_LIBCFG_R | DASICS_LIBCFG_V , \
++                                            (uint64_t)buf, (uint64_t)buf + sizeof(buf));
++
+     /*
+      * Session ID context is set based on the string provided,
+      * the server certificates, and the client CA list.
+@@ -3892,9 +3917,13 @@ ngx_ssl_session_id_context(ngx_ssl_t *ssl, ngx_str_t *sess_ctx,
+         return NGX_ERROR;
+     }
+ 
++    dasics_libcfg_free(len_idx);
++    dasics_libcfg_free(buf_idx);
+     return NGX_OK;
+ 
+ failed:
++    dasics_libcfg_free(len_idx);
++    dasics_libcfg_free(buf_idx);
+ 
+     EVP_MD_CTX_destroy(md);
+ 
+@@ -4609,11 +4638,16 @@ ngx_ssl_ticket_key_callback(ngx_ssl_conn_t *ssl_conn,
+             return -1;
+         }
+ 
++        int aeskey_idx = LIBCFG_ALLOC(DASICS_LIBCFG_W | DASICS_LIBCFG_R | DASICS_LIBCFG_V, (uint64_t)&key[0], sizeof(ngx_ssl_ticket_key_t));
++
+         if (EVP_EncryptInit_ex(ectx, cipher, NULL, key[0].aes_key, iv) != 1) {
+             ngx_ssl_error(NGX_LOG_ALERT, c->log, 0,
+                           "EVP_EncryptInit_ex() failed");
++
++            assert(dasics_libcfg_free(aeskey_idx)!= -1);
+             return -1;
+         }
++        assert(dasics_libcfg_free(aeskey_idx)!= -1);
+ 
+ #if OPENSSL_VERSION_NUMBER >= 0x10000000L
+         if (HMAC_Init_ex(hctx, key[0].hmac_key, size, digest, NULL) != 1) {
+@@ -5752,11 +5786,18 @@ ngx_ssl_get_fingerprint(ngx_connection_t *c, ngx_pool_t *pool, ngx_str_t *s)
+         return NGX_OK;
+     }
+ 
++    int32_t len_idx = dasics_libcfg_alloc(DASICS_LIBCFG_W | DASICS_LIBCFG_R | DASICS_LIBCFG_V , \
++                                            (uint64_t)&len, (uint64_t)(&len) + sizeof(len));
++
+     if (!X509_digest(cert, EVP_sha1(), buf, &len)) {
+         ngx_ssl_error(NGX_LOG_ALERT, c->log, 0, "X509_digest() failed");
++
++        dasics_libcfg_free(len_idx);
++
+         X509_free(cert);
+         return NGX_ERROR;
+     }
++    dasics_libcfg_free(len_idx);
+ 
+     s->len = 2 * len;
+     s->data = ngx_pnalloc(pool, 2 * len);
+diff --git a/src/http/modules/ngx_http_gzip_filter_module.c b/src/http/modules/ngx_http_gzip_filter_module.c
+index b55527845..9293540c1 100644
+--- a/src/http/modules/ngx_http_gzip_filter_module.c
++++ b/src/http/modules/ngx_http_gzip_filter_module.c
+@@ -11,6 +11,8 @@
+ 
+ #include <zlib.h>
+ 
++#include <udasics.h>
++
+ 
+ typedef struct {
+     ngx_flag_t           enable;
+@@ -99,6 +101,10 @@ static char *ngx_http_gzip_merge_conf(ngx_conf_t *cf,
+ static char *ngx_http_gzip_window(ngx_conf_t *cf, void *post, void *data);
+ static char *ngx_http_gzip_hash(ngx_conf_t *cf, void *post, void *data);
+ 
++int dasics_zlib_idx[4];
++int dasics_zlib_heap_size;
++static void dasics_zlib_hook_alloc(ngx_http_gzip_ctx_t *ctx);
++static void dasics_zlib_hook_free();
+ 
+ static ngx_conf_num_bounds_t  ngx_http_gzip_comp_level_bounds = {
+     ngx_conf_check_num_bounds, 1, 9
+@@ -454,7 +460,9 @@ failed:
+     ctx->done = 1;
+ 
+     if (ctx->preallocated) {
++        dasics_zlib_hook_alloc(ctx);
+         deflateEnd(&ctx->zstream);
++        dasics_zlib_hook_free();
+ 
+         ngx_pfree(r->pool, ctx->preallocated);
+     }
+@@ -611,6 +619,8 @@ ngx_http_gzip_filter_deflate_start(ngx_http_request_t *r,
+     conf = ngx_http_get_module_loc_conf(r, ngx_http_gzip_filter_module);
+ 
+     ctx->preallocated = ngx_palloc(r->pool, ctx->allocated);
++    dasics_zlib_heap_size = ctx->allocated;
++
+     if (ctx->preallocated == NULL) {
+         return NGX_ERROR;
+     }
+@@ -621,8 +631,10 @@ ngx_http_gzip_filter_deflate_start(ngx_http_request_t *r,
+     ctx->zstream.zfree = ngx_http_gzip_filter_free;
+     ctx->zstream.opaque = ctx;
+ 
++    dasics_zlib_hook_alloc(ctx);
+     rc = deflateInit2(&ctx->zstream, (int) conf->level, Z_DEFLATED,
+                       ctx->wbits + 16, ctx->memlevel, Z_DEFAULT_STRATEGY);
++    dasics_zlib_hook_free();
+ 
+     if (rc != Z_OK) {
+         ngx_log_error(NGX_LOG_ALERT, r->connection->log, 0,
+@@ -756,7 +768,9 @@ ngx_http_gzip_filter_deflate(ngx_http_request_t *r, ngx_http_gzip_ctx_t *ctx)
+                  ctx->zstream.avail_in, ctx->zstream.avail_out,
+                  ctx->flush, ctx->redo);
+ 
++    dasics_zlib_hook_alloc(ctx);
+     rc = deflate(&ctx->zstream, ctx->flush);
++    dasics_zlib_hook_free();
+ 
+     if (rc != Z_OK && rc != Z_STREAM_END && rc != Z_BUF_ERROR) {
+         ngx_log_error(NGX_LOG_ALERT, r->connection->log, 0,
+@@ -880,7 +894,9 @@ ngx_http_gzip_filter_deflate_end(ngx_http_request_t *r,
+     ctx->zin = ctx->zstream.total_in;
+     ctx->zout = ctx->zstream.total_out;
+ 
++    dasics_zlib_hook_alloc(ctx);
+     rc = deflateEnd(&ctx->zstream);
++    dasics_zlib_hook_free();
+ 
+     if (rc != Z_OK) {
+         ngx_log_error(NGX_LOG_ALERT, r->connection->log, 0,
+@@ -1181,3 +1197,18 @@ ngx_http_gzip_hash(ngx_conf_t *cf, void *post, void *data)
+ 
+     return "must be 512, 1k, 2k, 4k, 8k, 16k, 32k, 64k, or 128k";
+ }
++
++
++static void dasics_zlib_hook_alloc(ngx_http_gzip_ctx_t *ctx) {
++    dasics_zlib_idx[0] = LIBCFG_ALLOC(DASICS_LIBCFG_R | DASICS_LIBCFG_W | DASICS_LIBCFG_V, &ctx->zstream, sizeof(ctx->zstream));
++    dasics_zlib_idx[1] = LIBCFG_ALLOC(DASICS_LIBCFG_R | DASICS_LIBCFG_W | DASICS_LIBCFG_V, ctx->preallocated, dasics_zlib_heap_size);
++    dasics_zlib_idx[2] = LIBCFG_ALLOC(DASICS_LIBCFG_R | DASICS_LIBCFG_W | DASICS_LIBCFG_V, ctx->zstream.next_in, ctx->zstream.avail_in);
++    dasics_zlib_idx[3] = LIBCFG_ALLOC(DASICS_LIBCFG_R | DASICS_LIBCFG_W | DASICS_LIBCFG_V, ctx->zstream.next_out, ctx->zstream.avail_out);
++}
++
++static void dasics_zlib_hook_free() {
++    int i;
++    for (i = 0; i < 4; ++i) {
++        dasics_libcfg_free(dasics_zlib_idx[i]);
++    } 
++}
+\ No newline at end of file
