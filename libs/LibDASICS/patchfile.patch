@@ -1,0 +1,247 @@
+diff --git a/include/fit.h b/include/fit.h
+new file mode 100644
+index 0000000..495ba68
+--- /dev/null
++++ b/include/fit.h
+@@ -0,0 +1,8 @@
++#ifndef __FIT_H__
++#define __FIT_H__
++
++void fit_init(const char *filename);
++void fit_print();
++void fit_destroy();
++
++#endif /* __FIT_H__ */
+\ No newline at end of file
+diff --git a/src/fit/fit.c b/src/fit/fit.c
+new file mode 100644
+index 0000000..875b765
+--- /dev/null
++++ b/src/fit/fit.c
+@@ -0,0 +1,226 @@
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <elf.h>
++#include <fcntl.h>
++#include <unistd.h>
++#include <sys/mman.h>
++#include <sys/stat.h>
++#include "uthash.h"
++
++// Syscall/Maincall 条目结构体
++typedef struct {
++    uint16_t count;     // 条目数量
++    uint16_t numbers[]; // 可变数组，存储编号
++} __attribute__((packed)) call_entry;
++
++// FIT 表条目结构体
++typedef struct {
++    char *name;             // 条目名称（如 "test_rwx"）
++    call_entry *syscalls;   // syscall 数据
++    call_entry *maincalls;  // maincall 数据
++    UT_hash_handle hh;      // uthash 句柄
++} fit_entry;
++
++// 全局哈希表
++fit_entry *fit_table = NULL;
++
++// 读取 ELF section
++static void *read_elf_section(const char *elf_file, const char *section_name, size_t *size) {
++    int fd = open(elf_file, O_RDONLY);
++    if (fd == -1) {
++        perror("open");
++        return NULL;
++    }
++
++    Elf64_Ehdr ehdr;
++    if (read(fd, &ehdr, sizeof(ehdr)) != sizeof(ehdr)) {
++        perror("read");
++        close(fd);
++        return NULL;
++    }
++
++    lseek(fd, ehdr.e_shoff, SEEK_SET);
++    Elf64_Shdr shdr;
++    for (int i = 0; i < ehdr.e_shnum; i++) {
++        if (read(fd, &shdr, sizeof(shdr)) != sizeof(shdr)) {
++            perror("read");
++            close(fd);
++            return NULL;
++        }
++
++        // 读取 section 名称
++        lseek(fd, ehdr.e_shoff + ehdr.e_shentsize * ehdr.e_shstrndx, SEEK_SET);
++        char name[256];
++        lseek(fd, shdr.sh_name, SEEK_CUR);
++        if (read(fd, name, sizeof(name)) <= 0) {
++            perror("read");
++            close(fd);
++            return NULL;
++        }
++
++        if (strcmp(name, section_name) == 0) {
++            void *data = malloc(shdr.sh_size);
++            if (!data) {
++                perror("malloc");
++                close(fd);
++                return NULL;
++            }
++
++            lseek(fd, shdr.sh_offset, SEEK_SET);
++            if (read(fd, data, shdr.sh_size) != shdr.sh_size) {
++                perror("read");
++                free(data);
++                close(fd);
++                return NULL;
++            }
++
++            *size = shdr.sh_size;
++            close(fd);
++            return data;
++        }
++    }
++
++    close(fd);
++    return NULL;
++}
++
++// 从 section 名称中提取 key（如从 ".syscalls.test_rwx" 提取 "test_rwx"）
++static char *extract_key_from_section(const char *section_name) {
++    const char *dot = strrchr(section_name, '.');
++    if (!dot) return NULL;
++    return strdup(dot + 1);
++}
++
++// 处理 syscall/maincall section
++static void process_call_section(const char *section_name, void *data, size_t size) {
++    char *key = extract_key_from_section(section_name);
++    if (!key) {
++        fprintf(stderr, "Invalid section name: %s\n", section_name);
++        return;
++    }
++
++    // 查找或创建 FIT 条目
++    fit_entry *entry = NULL;
++    HASH_FIND_STR(fit_table, key, entry);
++    if (!entry) {
++        entry = malloc(sizeof(fit_entry));
++        if (!entry) {
++            perror("malloc");
++            free(key);
++            return;
++        }
++        entry->name = key;
++        entry->syscalls = NULL;
++        entry->maincalls = NULL;
++        HASH_ADD_KEYPTR(hh, fit_table, entry->name, strlen(entry->name), entry);
++    } else {
++        free(key);
++    }
++
++    // 复制数据到 FIT 条目
++    call_entry *call_data = malloc(size);
++    if (!call_data) {
++        perror("malloc");
++        return;
++    }
++    memcpy(call_data, data, size);
++
++    // 根据 section 类型存储数据
++    if (strstr(section_name, ".syscalls.")) {
++        entry->syscalls = call_data;
++    } else if (strstr(section_name, ".maincalls.")) {
++        entry->maincalls = call_data;
++    } else {
++        free(call_data);
++    }
++}
++
++// 初始化 FIT 表
++void fit_init(const char *elf_file) {
++    int fd = open(elf_file, O_RDONLY);
++    if (fd == -1) {
++        perror("open");
++        return;
++    }
++
++    struct stat st;
++    if (fstat(fd, &st) == -1) {
++        perror("fstat");
++        close(fd);
++        return;
++    }
++
++    void *map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
++    if (map == MAP_FAILED) {
++        perror("mmap");
++        close(fd);
++        return;
++    }
++
++    Elf64_Ehdr *ehdr = (Elf64_Ehdr *)map;
++    Elf64_Shdr *shdr = (Elf64_Shdr *)(map + ehdr->e_shoff);
++    char *shstrtab = (char *)(map + shdr[ehdr->e_shstrndx].sh_offset);
++
++    for (int i = 0; i < ehdr->e_shnum; i++) {
++        char *section_name = shstrtab + shdr[i].sh_name;
++
++        if (strstr(section_name, ".syscalls.") || strstr(section_name, ".maincalls.")) {
++            void *section_data = map + shdr[i].sh_offset;
++            size_t section_size = shdr[i].sh_size;
++            process_call_section(section_name, section_data, section_size);
++        }
++    }
++
++    munmap(map, st.st_size);
++    close(fd);
++}
++
++// 打印 FIT 表内容
++void fit_print() {
++    fit_entry *entry, *tmp;
++    HASH_ITER(hh, fit_table, entry, tmp) {
++        printf("Entry: %s\n", entry->name);
++
++        if (entry->syscalls) {
++            printf("  Syscalls (%d):", entry->syscalls->count);
++            for (int i = 0; i < entry->syscalls->count; i++) {
++                printf(" %d", entry->syscalls->numbers[i]);
++            }
++            printf("\n");
++        }
++
++        if (entry->maincalls) {
++            printf("  Maincalls (%d):", entry->maincalls->count);
++            for (int i = 0; i < entry->maincalls->count; i++) {
++                printf(" %d", entry->maincalls->numbers[i]);
++            }
++            printf("\n");
++        }
++    }
++}
++
++// 释放 FIT 表
++void fit_destroy() {
++    fit_entry *entry, *tmp;
++    HASH_ITER(hh, fit_table, entry, tmp) {
++        if (entry->syscalls) free(entry->syscalls);
++        if (entry->maincalls) free(entry->maincalls);
++        free(entry->name);
++        HASH_DEL(fit_table, entry);
++        free(entry);
++    }
++}
++
++// int main(int argc, char *argv[]) {
++//     if (argc != 2) {
++//         fprintf(stderr, "Usage: %s <elf_file>\n", argv[0]);
++//         return 1;
++//     }
++
++//     fit_init(argv[1]);
++//     fit_print();
++//     fit_destroy();
++
++//     return 0;
++// }
