@@ -6,6 +6,7 @@
 #include <errno.h>
 
 #include "udasics.h"
+#include "fit.h"
 
 const char *test_info = "[MAIN]-  Test 3: bound register allocation and authority \n";
 
@@ -42,12 +43,15 @@ void exit_function() {
     printf("[MAIN] test dasics finished\n");
 }
 
-int main() {
+int main(int argc, char *argv[]) {
     atexit(exit_function);
 
     printf(test_info);
 
     register_udasics(0);
+
+    fit_init(argv[0]);
+    fit_print();
 
     // Allocate jump bound for .ulibtext section
     extern char __ULIBTEXT_BEGIN__, __ULIBTEXT_END__;
@@ -71,6 +75,7 @@ int main() {
     dasics_libcfg_free(idx_stack);
     dasics_jumpcfg_free(idx_ulibtext);
 
+    fit_destroy();
     unregister_udasics();
 
     return 0;
