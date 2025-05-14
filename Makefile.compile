@@ -31,7 +31,10 @@ $(DST_DIR)/%.o: %.c
 $(APP): $(OBJS)
 	@echo + LD $@
 	@$(LD) -o $(APP) $(OBJS) $(LDFLAGS)
-	@$(OBJDUMP) -d $@ > $(patsubst %,%.txt,$@)
+	@if [ -f $(APP_DIR)/postprocessing.sh ]; then \
+		$(APP_DIR)/postprocessing.sh; \
+	fi
+	@$(OBJDUMP) -D $@ > $(patsubst %,%.txt,$@)
 
 # Dependencies
 DEPS = $(addprefix $(DST_DIR)/, $(addsuffix .d, $(basename $(SRCS))))
