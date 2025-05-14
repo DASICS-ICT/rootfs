@@ -1,0 +1,38 @@
+{
+    "test_rwx": [
+        {
+            "syscalls": [
+                {
+                    "syscall_number": "63",
+                    "wrapper_name": "read"
+                },
+                {
+                    "syscall_number": "64",
+                    "wrapper_name": "write"
+                }
+            ],
+            "maincalls": [
+                {
+                    "maincall_number": "0",
+                    "wrapper_name": "maincall_print"
+                }
+            ]
+        }
+    ],
+    "test_rwx_2": [
+        {
+            "syscalls": [
+                {
+                    "syscall_number": "63",
+                    "wrapper_name": "read"
+                }
+            ],
+            "maincalls": [
+                {
+                    "maincall_number": "0",
+                    "wrapper_name": "maincall_print"
+                }
+            ]
+        }
+    ]
+}
