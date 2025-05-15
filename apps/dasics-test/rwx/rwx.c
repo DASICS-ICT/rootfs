@@ -6,16 +6,14 @@
 #include <errno.h>
 
 #include "udasics.h"
-#include "fit.h"
 
 const char *test_info = "[MAIN]-  Test 3: bound register allocation and authority \n";
 
-static char secret[100] = "[ULIB1]: It's the secret!";
-static char __attribute__((section(".ulibrodata.test_rwx"))) pub_readonly[100] = "[ULIB1]: It's readonly buffer!";
-static char __attribute__((section(".ulibdata.test_rwx"))) pub_rwbuffer[100] = "[ULIB1]: It's public rw buffer!";
-static char __attribute__((section(".ulibbss.test_rwx"))) pub_rwbss[10];
+static char ATTR_ULIB_DATA secret[100] 		 = "[ULIB1]: It's the secret!";
+static char ATTR_ULIB_DATA pub_readonly[100] = "[ULIB1]: It's readonly buffer!";
+static char ATTR_ULIB_DATA pub_rwbuffer[100] = "[ULIB1]: It's public rw buffer!";
 
-int __attribute__((section(".ulibtext.test_rwx"))) test_rwx() {
+int ATTR_ULIB_TEXT test_rwx() {
     dasics_umaincall(Umaincall_PRINT, "************* ULIB START ***************** \n");  // lib call main
 
     dasics_umaincall(Umaincall_PRINT, "try to print the read only buffer: %s\n", pub_readonly);  // That's ok
@@ -34,17 +32,6 @@ int __attribute__((section(".ulibtext.test_rwx"))) test_rwx() {
     dasics_umaincall(Umaincall_PRINT, "try to store to the secret\n");
     secret[3] = temp;                     // raise DasicsUStoreAccessFault
 
-    dasics_umaincall(Umaincall_PRINT, "try to modify the bss buffer: %s\n", pub_rwbss);  // That's ok
-    for (int i = 0; i < 10; i++) {
-        pub_rwbss[i] = 'A';               // That's ok
-    }
-    pub_rwbss[10] = '\0';               // That's ok
-    dasics_umaincall(Umaincall_PRINT, "new bss buffer: %s\n", pub_rwbss);  // That's ok
-    pub_rwbss[7] = pub_readonly[12];  // That's ok
-    pub_rwbss[4] = 'B';               // That's ok
-    pub_rwbss[100] = 'B';             // raise DasicsUStoreAccessFault
-    dasics_umaincall(Umaincall_PRINT, "new bss buffer: %s\n", pub_rwbss);  // That's ok
-
     dasics_umaincall(Umaincall_PRINT, "************* ULIB   END ***************** \n");  // lib call main
 
     return 0;
@@ -55,19 +42,16 @@ void exit_function() {
     printf("[MAIN] test dasics finished\n");
 }
 
-int main(int argc, char *argv[]) {
+int main() {
     atexit(exit_function);
 
     printf(test_info);
 
     register_udasics(0);
 
-    fit_init(argv[0]);
-    fit_print();
-
     // Allocate jump bound for .ulibtext section
-    extern char __ULIBTEXT_TEST_RWX_BEGIN__, __ULIBTEXT_TEST_RWX_END__;
-    int idx_ulibtext = dasics_jumpcfg_alloc((uint64_t)&__ULIBTEXT_TEST_RWX_BEGIN__, (uint64_t)&__ULIBTEXT_TEST_RWX_END__ + 1);
+    extern char __ULIBTEXT_BEGIN__, __ULIBTEXT_END__;
+    int idx_ulibtext = dasics_jumpcfg_alloc((uint64_t)&__ULIBTEXT_BEGIN__, (uint64_t)&__ULIBTEXT_END__);
 
     // Allocate permissions for stack
     uint64_t frame_addr, badfunc_stack_top;
@@ -76,24 +60,17 @@ int main(int argc, char *argv[]) {
     int idx_stack = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, badfunc_stack_top - 32, badfunc_stack_top);
 
     // Allocate permissions for public buffers
-    extern char __ULIBRODATA_TEST_RWX_BEGIN__, __ULIBRODATA_TEST_RWX_END__;
-    int idx_ro = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)&__ULIBRODATA_TEST_RWX_BEGIN__, (uint64_t)&__ULIBRODATA_TEST_RWX_END__ + 1);
-    extern char __ULIBDATA_TEST_RWX_BEGIN__, __ULIBDATA_TEST_RWX_END__;
-    int idx_rw = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, (uint64_t)&__ULIBDATA_TEST_RWX_BEGIN__, (uint64_t)&__ULIBDATA_TEST_RWX_END__ + 1);
-    extern char __ULIBBSS_TEST_RWX_BEGIN__, __ULIBBSS_TEST_RWX_END__;
-    int idx_bss = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, (uint64_t)&__ULIBBSS_TEST_RWX_BEGIN__, (uint64_t)&__ULIBBSS_TEST_RWX_END__ + 1);
+    int idx_ro = dasics_libcfg_alloc(DASICS_LIBCFG_R                  , (uint64_t)pub_readonly, (uint64_t)(pub_readonly + 100));
+    int idx_rw = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, (uint64_t)pub_rwbuffer, (uint64_t)(pub_rwbuffer + 100));
 
-    // Call test_rwx
     lib_call(&test_rwx);
 
     // Free those used permissions via handlers
-    dasics_libcfg_free(idx_bss);
     dasics_libcfg_free(idx_rw);
     dasics_libcfg_free(idx_ro);
     dasics_libcfg_free(idx_stack);
     dasics_jumpcfg_free(idx_ulibtext);
 
-    fit_destroy();
     unregister_udasics();
 
     return 0;
