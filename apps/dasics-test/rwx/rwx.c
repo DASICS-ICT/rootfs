@@ -6,15 +6,16 @@
 #include <errno.h>
 
 #include "udasics.h"
+#include "fit.h"
 
 const char *test_info = "[MAIN]-  Test 3: bound register allocation and authority \n";
 
-static char ATTR_ULIB_DATA secret[100] 		 = "[ULIB1]: It's the secret!";
-static char ATTR_ULIB_DATA pub_readonly[100] = "[ULIB1]: It's readonly buffer!";
-static char ATTR_ULIB_DATA pub_rwbuffer[100] = "[ULIB1]: It's public rw buffer!";
-static char ATTR_ULIB_DATA pub_rwbss[10];
+static char secret[100] = "[ULIB1]: It's the secret!";
+static char __attribute__((section(".ulibrodata.test_rwx"))) pub_readonly[100] = "[ULIB1]: It's readonly buffer!";
+static char __attribute__((section(".ulibdata.test_rwx"))) pub_rwbuffer[100] = "[ULIB1]: It's public rw buffer!";
+static char __attribute__((section(".ulibbss.test_rwx"))) pub_rwbss[10];
 
-int ATTR_ULIB_TEXT test_rwx() {
+int __attribute__((section(".ulibtext.test_rwx"))) test_rwx() {
     dasics_umaincall(Umaincall_PRINT, "************* ULIB START ***************** \n");  // lib call main
 
     dasics_umaincall(Umaincall_PRINT, "try to print the read only buffer: %s\n", pub_readonly);  // That's ok
@@ -61,29 +62,10 @@ int main() {
 
     register_udasics(0);
 
-    // Allocate jump bound for .ulibtext section
-    extern char __ULIBTEXT_BEGIN__, __ULIBTEXT_END__;
-    int idx_ulibtext = dasics_jumpcfg_alloc((uint64_t)&__ULIBTEXT_BEGIN__, (uint64_t)&__ULIBTEXT_END__);
+    fit_init();
+    fit_print();
 
-    // Allocate permissions for stack
-    uint64_t frame_addr, badfunc_stack_top;
-    asm volatile("mv %0, sp" : "=r"(frame_addr));
-    badfunc_stack_top = frame_addr - 0x8;  // 0x8 is the stack size of lib_call
-    int idx_stack = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, badfunc_stack_top - 32, badfunc_stack_top);
-
-    // Allocate permissions for public buffers
-    int idx_ro = dasics_libcfg_alloc(DASICS_LIBCFG_R                  , (uint64_t)pub_readonly, (uint64_t)(pub_readonly + 100));
-    int idx_rw = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, (uint64_t)pub_rwbuffer, (uint64_t)(pub_rwbuffer + 100));
-    int idx_bss = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, (uint64_t)pub_rwbss, (uint64_t)(pub_rwbss + 10));
-
-    lib_call(&test_rwx);
-
-    // Free those used permissions via handlers
-    dasics_libcfg_free(idx_bss);
-    dasics_libcfg_free(idx_rw);
-    dasics_libcfg_free(idx_ro);
-    dasics_libcfg_free(idx_stack);
-    dasics_jumpcfg_free(idx_ulibtext);
+    fit_switchto(test_rwx);
 
     unregister_udasics();
 
