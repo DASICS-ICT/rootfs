@@ -12,6 +12,7 @@ const char *test_info = "[MAIN]-  Test 3: bound register allocation and authorit
 static char ATTR_ULIB_DATA secret[100] 		 = "[ULIB1]: It's the secret!";
 static char ATTR_ULIB_DATA pub_readonly[100] = "[ULIB1]: It's readonly buffer!";
 static char ATTR_ULIB_DATA pub_rwbuffer[100] = "[ULIB1]: It's public rw buffer!";
+static char ATTR_ULIB_DATA pub_rwbss[10];
 
 int ATTR_ULIB_TEXT test_rwx() {
     dasics_umaincall(Umaincall_PRINT, "************* ULIB START ***************** \n");  // lib call main
@@ -31,6 +32,17 @@ int ATTR_ULIB_TEXT test_rwx() {
     char temp = secret[3];                // raise DasicsULoadAccessFault
     dasics_umaincall(Umaincall_PRINT, "try to store to the secret\n");
     secret[3] = temp;                     // raise DasicsUStoreAccessFault
+
+    dasics_umaincall(Umaincall_PRINT, "try to modify the bss buffer: %s\n", pub_rwbss);  // That's ok
+    for (int i = 0; i < 10; i++) {
+        pub_rwbss[i] = 'A';               // That's ok
+    }
+    pub_rwbss[10] = '\0';               // That's ok
+    dasics_umaincall(Umaincall_PRINT, "new bss buffer: %s\n", pub_rwbss);  // That's ok
+    pub_rwbss[7] = pub_readonly[12];  // That's ok
+    pub_rwbss[4] = 'B';               // That's ok
+    pub_rwbss[100] = 'B';             // raise DasicsUStoreAccessFault
+    dasics_umaincall(Umaincall_PRINT, "new bss buffer: %s\n", pub_rwbss);  // That's ok
 
     dasics_umaincall(Umaincall_PRINT, "************* ULIB   END ***************** \n");  // lib call main
 
@@ -62,10 +74,12 @@ int main() {
     // Allocate permissions for public buffers
     int idx_ro = dasics_libcfg_alloc(DASICS_LIBCFG_R                  , (uint64_t)pub_readonly, (uint64_t)(pub_readonly + 100));
     int idx_rw = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, (uint64_t)pub_rwbuffer, (uint64_t)(pub_rwbuffer + 100));
+    int idx_bss = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, (uint64_t)pub_rwbss, (uint64_t)(pub_rwbss + 10));
 
     lib_call(&test_rwx);
 
     // Free those used permissions via handlers
+    dasics_libcfg_free(idx_bss);
     dasics_libcfg_free(idx_rw);
     dasics_libcfg_free(idx_ro);
     dasics_libcfg_free(idx_stack);
