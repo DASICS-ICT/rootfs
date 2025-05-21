@@ -67,6 +67,8 @@ int main() {
 
     fit_switchto(test_rwx);
 
+    fit_destroy();
+
     unregister_udasics();
 
     return 0;
