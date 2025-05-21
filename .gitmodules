@@ -19,13 +19,21 @@
 	path = libs/zlib/repo
 	url = https://github.com/madler/zlib.git
 	ignore = all
-[submodule "nginx-1_27_1"]
-	path = apps/nginx/repo
-	url = https://github.com/nginx/nginx.git
-	ignore = all
 [submodule "libatomic_ops-7_8_2"]
 	path = libs/libatomic_ops/repo
 	url = https://github.com/ivmai/libatomic_ops.git
 [submodule "libs/LibDASICS/repo"]
 	path = libs/LibDASICS/repo
 	url = https://github.com/DASICS-ICT/LibDASICS
+[submodule "apps/nginx-openssl-pcre-zlib/repo"]
+	path = apps/nginx-openssl-pcre-zlib/repo
+	url = https://github.com/nginx/nginx.git
+	ignore = all
+[submodule "apps/nginx-openssl-pcre/repo"]
+	path = apps/nginx-openssl-pcre/repo
+	url = https://github.com/nginx/nginx.git
+	ignore = all
+[submodule "apps/nginx-openssl/repo"]
+	path = apps/nginx-openssl/repo
+	url = https://github.com/nginx/nginx.git
+	ignore = all

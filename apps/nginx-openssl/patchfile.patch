@@ -1,0 +1,569 @@
+diff --git a/auto/cc/conf b/auto/cc/conf
+index ba31cb88c..e6d753c7f 100644
+--- a/auto/cc/conf
++++ b/auto/cc/conf
+@@ -183,7 +183,7 @@ if [ "$NGX_PLATFORM" != win32 ]; then
+     else
+         ngx_feature="gcc builtin atomic operations"
+         ngx_feature_name=NGX_HAVE_GCC_ATOMIC
+-        ngx_feature_run=yes
++        ngx_feature_run=no
+         ngx_feature_incs=
+         ngx_feature_path=
+         ngx_feature_libs=
+@@ -204,7 +204,7 @@ if [ "$NGX_PLATFORM" != win32 ]; then
+     else
+         ngx_feature="C99 variadic macros"
+         ngx_feature_name="NGX_HAVE_C99_VARIADIC_MACROS"
+-        ngx_feature_run=yes
++        ngx_feature_run=no
+         ngx_feature_incs="#include <stdio.h>
+ #define var(dummy, ...)  sprintf(__VA_ARGS__)"
+         ngx_feature_path=
+@@ -218,7 +218,7 @@ if [ "$NGX_PLATFORM" != win32 ]; then
+ 
+     ngx_feature="gcc variadic macros"
+     ngx_feature_name="NGX_HAVE_GCC_VARIADIC_MACROS"
+-    ngx_feature_run=yes
++    ngx_feature_run=no
+     ngx_feature_incs="#include <stdio.h>
+ #define var(dummy, args...)  sprintf(args)"
+     ngx_feature_path=
+diff --git a/auto/cc/name b/auto/cc/name
+index ded93f5bc..d6ab27a6a 100644
+--- a/auto/cc/name
++++ b/auto/cc/name
+@@ -7,7 +7,7 @@ if [ "$NGX_PLATFORM" != win32 ]; then
+ 
+     ngx_feature="C compiler"
+     ngx_feature_name=
+-    ngx_feature_run=yes
++    ngx_feature_run=no
+     ngx_feature_incs=
+     ngx_feature_path=
+     ngx_feature_libs=
+diff --git a/auto/lib/LibDASICS/conf b/auto/lib/LibDASICS/conf
+new file mode 100644
+index 000000000..f12144271
+--- /dev/null
++++ b/auto/lib/LibDASICS/conf
+@@ -0,0 +1,37 @@
++
++# Copyright (C) Igor Sysoev
++# Copyright (C) Nginx, Inc.
++
++
++if [ $NGX_LIBDASICS != YES ]; then
++
++    have=NGX_HAVE_LIBDASICS . auto/have
++    CORE_INCS="$CORE_INCS $NGX_LIBDASICS/include"
++    LINK_DEPS="$LINK_DEPS $NGX_LIBDASICS/libDASICS.a"
++    CORE_LIBS="$CORE_LIBS $NGX_LIBDASICS/libDASICS.a -T$NGX_LIBDASICS/ld.lds"
++    NGX_LIBDASICS_ROOTFS=$NGX_LIBDASICS
++    NGX_LIBDASICS=ROOTFS
++
++else
++
++    ngx_feature="LibDASICS library"
++    ngx_feature_name=NGX_HAVE_LIBDASICS
++    ngx_feature_run=yes
++    ngx_feature_incs="#include <udasics.h>"
++    ngx_feature_path=
++    ngx_feature_libs="-ldasics"
++    ngx_feature_test="register_udasics(0);"
++    . auto/feature
++
++    if [ $ngx_found = yes ]; then
++        CORE_LIBS="$CORE_LIBS $ngx_feature_libs"
++    else
++
++cat << END
++
++$0: error: LibDASICS library was not found.
++
++END
++        exit 1
++    fi
++fi
+\ No newline at end of file
+diff --git a/auto/lib/LibDASICS/make b/auto/lib/LibDASICS/make
+new file mode 100644
+index 000000000..eecb5d940
+--- /dev/null
++++ b/auto/lib/LibDASICS/make
+@@ -0,0 +1,11 @@
++
++# Copyright (C) Igor Sysoev
++# Copyright (C) Nginx, Inc.
++
++
++    cat << END                                            >> $NGX_MAKEFILE
++
++$NGX_LIBDASICS/libDASICS.a:
++	cd $NGX_LIBATOMIC && \$(MAKE)
++
++END
+\ No newline at end of file
+diff --git a/auto/lib/conf b/auto/lib/conf
+index 2c7af1040..d7271da72 100644
+--- a/auto/lib/conf
++++ b/auto/lib/conf
+@@ -52,3 +52,7 @@ fi
+ if [ $NGX_LIBATOMIC != NO ]; then
+     . auto/lib/libatomic/conf
+ fi
++
++if [ $NGX_LIBDASICS != NO ]; then
++    . auto/lib/LibDASICS/conf
++fi
+\ No newline at end of file
+diff --git a/auto/lib/libatomic/conf b/auto/lib/libatomic/conf
+index 8c8cb438b..fe6e924cd 100644
+--- a/auto/lib/libatomic/conf
++++ b/auto/lib/libatomic/conf
+@@ -6,9 +6,11 @@
+ if [ $NGX_LIBATOMIC != YES ]; then
+ 
+     have=NGX_HAVE_LIBATOMIC . auto/have
+-    CORE_INCS="$CORE_INCS $NGX_LIBATOMIC/src"
+-    LINK_DEPS="$LINK_DEPS $NGX_LIBATOMIC/src/libatomic_ops.a"
+-    CORE_LIBS="$CORE_LIBS $NGX_LIBATOMIC/src/libatomic_ops.a"
++    CORE_INCS="$CORE_INCS $NGX_LIBATOMIC/include"
++    LINK_DEPS="$LINK_DEPS $NGX_LIBATOMIC/lib/libatomic_ops.a"
++    CORE_LIBS="$CORE_LIBS $NGX_LIBATOMIC/lib/libatomic_ops.a"
++    NGX_LIBATOMIC_ROOTFS=$NGX_LIBATOMIC
++    NGX_LIBATOMIC=ROOTFS
+ 
+ else
+ 
+diff --git a/auto/lib/make b/auto/lib/make
+index b64e32908..934559020 100644
+--- a/auto/lib/make
++++ b/auto/lib/make
+@@ -3,22 +3,26 @@
+ # Copyright (C) Nginx, Inc.
+ 
+ 
+-if [ $PCRE != NONE -a $PCRE != NO -a $PCRE != YES ]; then
++if [ $PCRE != NONE -a $PCRE != NO -a $PCRE != YES -a $PCRE != ROOTFS ]; then
+     . auto/lib/pcre/make
+ fi
+ 
+-if [ $OPENSSL != NONE -a $OPENSSL != NO -a $OPENSSL != YES ]; then
++if [ $OPENSSL != NONE -a $OPENSSL != NO -a $OPENSSL != YES -a $OPENSSL != ROOTFS ]; then
+     . auto/lib/openssl/make
+ fi
+ 
+-if [ $ZLIB != NONE -a $ZLIB != NO -a $ZLIB != YES ]; then
++if [ $ZLIB != NONE -a $ZLIB != NO -a $ZLIB != YES -a $ZLIB != ROOTFS ]; then
+     . auto/lib/zlib/make
+ fi
+ 
+-if [ $NGX_LIBATOMIC != NO -a $NGX_LIBATOMIC != YES ]; then
++if [ $NGX_LIBATOMIC != NO -a $NGX_LIBATOMIC != YES -a $NGX_LIBATOMIC != ROOTFS ]; then
+     . auto/lib/libatomic/make
+ fi
+ 
+ if [ $USE_PERL != NO ]; then
+     . auto/lib/perl/make
+ fi
++
++if [ $NGX_LIBDASICS != NO -a $NGX_LIBDASICS != YES -a $NGX_LIBDASICS != ROOTFS ]; then
++    . auto/lib/LibDASICS/make
++fi
+\ No newline at end of file
+diff --git a/auto/lib/openssl/conf b/auto/lib/openssl/conf
+index fdf430dff..761483b50 100644
+--- a/auto/lib/openssl/conf
++++ b/auto/lib/openssl/conf
+@@ -40,12 +40,15 @@ if [ $OPENSSL != NONE ]; then
+         ;;
+ 
+         *)
+-            CORE_INCS="$CORE_INCS $OPENSSL/.openssl/include"
+-            CORE_DEPS="$CORE_DEPS $OPENSSL/.openssl/include/openssl/ssl.h"
+-            CORE_LIBS="$CORE_LIBS $OPENSSL/.openssl/lib/libssl.a"
+-            CORE_LIBS="$CORE_LIBS $OPENSSL/.openssl/lib/libcrypto.a"
++            CORE_INCS="$CORE_INCS $OPENSSL/include"
++            CORE_DEPS="$CORE_DEPS $OPENSSL/include/openssl/ssl.h"
++            # CORE_LIBS="$CORE_LIBS $OPENSSL/lib/libssl.a"
++            # CORE_LIBS="$CORE_LIBS $OPENSSL/lib/libcrypto.a"
++            CORE_LIBS="$CORE_LIBS -L $OPENSSL/lib -lcrypto -lssl"
+             CORE_LIBS="$CORE_LIBS $NGX_LIBDL"
+             CORE_LIBS="$CORE_LIBS $NGX_LIBPTHREAD"
++            OPENSSL_ROOTFS=$OPENSSL
++            OPENSSL=ROOTFS
+ 
+             if [ "$NGX_PLATFORM" = win32 ]; then
+                 CORE_LIBS="$CORE_LIBS -lgdi32 -lcrypt32 -lws2_32"
+diff --git a/auto/lib/pcre/conf b/auto/lib/pcre/conf
+index cdf1809f5..e396e9ed9 100644
+--- a/auto/lib/pcre/conf
++++ b/auto/lib/pcre/conf
+@@ -43,8 +43,8 @@ if [ $PCRE != NONE ]; then
+             have=PCRE_STATIC . auto/have
+         fi
+ 
+-        CORE_INCS="$CORE_INCS $PCRE"
+-        CORE_DEPS="$CORE_DEPS $PCRE/pcre.h"
++        CORE_INCS="$CORE_INCS $PCRE/include"
++        CORE_DEPS="$CORE_DEPS $PCRE/include/pcre.h"
+ 
+         case "$NGX_CC_NAME" in
+ 
+@@ -54,8 +54,11 @@ if [ $PCRE != NONE ]; then
+             ;;
+ 
+             *)
+-                LINK_DEPS="$LINK_DEPS $PCRE/.libs/libpcre.a"
+-                CORE_LIBS="$CORE_LIBS $PCRE/.libs/libpcre.a"
++                LINK_DEPS="$LINK_DEPS $PCRE/lib/libpcre.a"
++                CORE_LIBS="$CORE_LIBS $PCRE/lib/libpcre.a"
++                # CORE_LIBS="$CORE_LIBS -L $PCRE/lib -lpcre"
++                PCRE_ROOTFS=$PCRE
++                PCRE=ROOTFS
+             ;;
+ 
+         esac
+diff --git a/auto/lib/zlib/conf b/auto/lib/zlib/conf
+index 239592e3c..42f87dfd2 100644
+--- a/auto/lib/zlib/conf
++++ b/auto/lib/zlib/conf
+@@ -4,7 +4,7 @@
+ 
+ 
+ if [ $ZLIB != NONE ]; then
+-    CORE_INCS="$CORE_INCS $ZLIB"
++    CORE_INCS="$CORE_INCS $ZLIB/include"
+ 
+     case "$NGX_CC_NAME" in
+ 
+@@ -33,9 +33,11 @@ if [ $ZLIB != NONE ]; then
+ 
+         *)
+             have=NGX_ZLIB . auto/have
+-            LINK_DEPS="$LINK_DEPS $ZLIB/libz.a"
+-            CORE_LIBS="$CORE_LIBS $ZLIB/libz.a"
+-            #CORE_LIBS="$CORE_LIBS -L $ZLIB -lz"
++            LINK_DEPS="$LINK_DEPS $ZLIB/lib/libz.a"
++            CORE_LIBS="$CORE_LIBS $ZLIB/lib/libz.a"
++            # CORE_LIBS="$CORE_LIBS -L $ZLIB/lib -lz"
++            ZLIB_ROOTFS=$ZLIB
++            ZLIB=ROOTFS
+         ;;
+ 
+     esac
+diff --git a/auto/options b/auto/options
+index 6a6e990a0..3750541e3 100644
+--- a/auto/options
++++ b/auto/options
+@@ -407,6 +407,9 @@ $0: warning: the \"--with-sha1-asm\" option is deprecated"
+         --with-libatomic)                NGX_LIBATOMIC=YES          ;;
+         --with-libatomic=*)              NGX_LIBATOMIC="$value"     ;;
+ 
++        --with-libdasics)                NGX_LIBDASICS=YES          ;;
++        --with-libdasics=*)              NGX_LIBDASICS="$value"     ;;
++
+         --test-build-devpoll)            NGX_TEST_BUILD_DEVPOLL=YES ;;
+         --test-build-eventport)          NGX_TEST_BUILD_EVENTPORT=YES ;;
+         --test-build-epoll)              NGX_TEST_BUILD_EPOLL=YES   ;;
+diff --git a/auto/os/linux b/auto/os/linux
+index bc0556b3a..05af6a003 100644
+--- a/auto/os/linux
++++ b/auto/os/linux
+@@ -36,7 +36,7 @@ fi
+ 
+ ngx_feature="epoll"
+ ngx_feature_name="NGX_HAVE_EPOLL"
+-ngx_feature_run=yes
++ngx_feature_run=no
+ ngx_feature_incs="#include <sys/epoll.h>"
+ ngx_feature_path=
+ ngx_feature_libs=
+@@ -135,7 +135,7 @@ ngx_feature_test="int fd; struct stat sb;
+ CC_AUX_FLAGS="$cc_aux_flags -D_GNU_SOURCE"
+ ngx_feature="sendfile()"
+ ngx_feature_name="NGX_HAVE_SENDFILE"
+-ngx_feature_run=yes
++ngx_feature_run=no
+ ngx_feature_incs="#include <sys/sendfile.h>
+                   #include <errno.h>"
+ ngx_feature_path=
+@@ -156,7 +156,7 @@ fi
+ CC_AUX_FLAGS="$cc_aux_flags -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64"
+ ngx_feature="sendfile64()"
+ ngx_feature_name="NGX_HAVE_SENDFILE64"
+-ngx_feature_run=yes
++ngx_feature_run=no
+ ngx_feature_incs="#include <sys/sendfile.h>
+                   #include <errno.h>"
+ ngx_feature_path=
+@@ -174,7 +174,7 @@ ngx_include="sys/prctl.h"; . auto/include
+ 
+ ngx_feature="prctl(PR_SET_DUMPABLE)"
+ ngx_feature_name="NGX_HAVE_PR_SET_DUMPABLE"
+-ngx_feature_run=yes
++ngx_feature_run=no
+ ngx_feature_incs="#include <sys/prctl.h>"
+ ngx_feature_path=
+ ngx_feature_libs=
+@@ -186,7 +186,7 @@ ngx_feature_test="if (prctl(PR_SET_DUMPABLE, 1, 0, 0, 0) == -1) return 1"
+ 
+ ngx_feature="prctl(PR_SET_KEEPCAPS)"
+ ngx_feature_name="NGX_HAVE_PR_SET_KEEPCAPS"
+-ngx_feature_run=yes
++ngx_feature_run=no
+ ngx_feature_incs="#include <sys/prctl.h>"
+ ngx_feature_path=
+ ngx_feature_libs=
+diff --git a/auto/summary b/auto/summary
+index b3c07eedc..1589f0315 100644
+--- a/auto/summary
++++ b/auto/summary
+@@ -18,6 +18,7 @@ else
+     case $PCRE in
+         YES)   echo "  + using system $PCRE_LIBRARY library" ;;
+         NONE)  echo "  + PCRE library is not used" ;;
++        ROOTFS)echo "  + using $PCRE_LIBRARY library from rootfs: $PCRE_ROOTFS" ;;
+         *)     echo "  + using $PCRE_LIBRARY library: $PCRE" ;;
+     esac
+ fi
+@@ -25,12 +26,14 @@ fi
+ case $OPENSSL in
+     YES)   echo "  + using system OpenSSL library" ;;
+     NONE)  echo "  + OpenSSL library is not used" ;;
++    ROOTFS)echo "  + using OpenSSL library from rootfs: $OPENSSL_ROOTFS" ;;
+     *)     echo "  + using OpenSSL library: $OPENSSL" ;;
+ esac
+ 
+ case $ZLIB in
+     YES)   echo "  + using system zlib library" ;;
+     NONE)  echo "  + zlib library is not used" ;;
++    ROOTFS)echo "  + using zlib library from rootfs: $ZLIB_ROOTFS" ;;
+     *)     echo "  + using zlib library: $ZLIB" ;;
+ esac
+ 
+@@ -40,6 +43,13 @@ case $NGX_LIBATOMIC in
+     *)     echo "  + using libatomic_ops library: $NGX_LIBATOMIC" ;;
+ esac
+ 
++case $NGX_LIBDASICS in
++    YES)   echo "  + using system LibDASICS library" ;;
++    NONE)  echo "  + LibDASICS library is not used" ;;
++    ROOTFS)echo "  + using LibDASICS library from rootfs: $NGX_LIBDASICS_ROOTFS" ;;
++    *)     echo "  + using LibDASICS library: $NGX_LIBDASICS" ;;
++esac
++
+ echo
+ 
+ 
+diff --git a/auto/types/sizeof b/auto/types/sizeof
+index 480d8cfa4..52c7287a8 100644
+--- a/auto/types/sizeof
++++ b/auto/types/sizeof
+@@ -33,7 +33,7 @@ int main(void) {
+ END
+ 
+ 
+-ngx_test="$CC $CC_TEST_FLAGS $CC_AUX_FLAGS \
++ngx_test="gcc $CC_TEST_FLAGS $CC_AUX_FLAGS \
+           -o $NGX_AUTOTEST $NGX_AUTOTEST.c $NGX_LD_OPT $ngx_feature_libs"
+ 
+ eval "$ngx_test >> $NGX_AUTOCONF_ERR 2>&1"
+diff --git a/auto/unix b/auto/unix
+index f29e69c61..da0106c19 100644
+--- a/auto/unix
++++ b/auto/unix
+@@ -99,7 +99,7 @@ if test -z "$NGX_KQUEUE_CHECKED"; then
+ 
+         ngx_feature="kqueue's EVFILT_TIMER"
+         ngx_feature_name="NGX_HAVE_TIMER_EVENT"
+-        ngx_feature_run=yes
++        ngx_feature_run=no
+         ngx_feature_incs="#include <sys/event.h>
+                           #include <sys/time.h>"
+         ngx_feature_path=
+@@ -853,7 +853,7 @@ ngx_feature_test="void *p; p = memalign(4096, 4096);
+ 
+ ngx_feature="mmap(MAP_ANON|MAP_SHARED)"
+ ngx_feature_name="NGX_HAVE_MAP_ANON"
+-ngx_feature_run=yes
++ngx_feature_run=no
+ ngx_feature_incs="#include <sys/mman.h>"
+ ngx_feature_path=
+ ngx_feature_libs=
+@@ -866,7 +866,7 @@ ngx_feature_test="void *p;
+ 
+ ngx_feature='mmap("/dev/zero", MAP_SHARED)'
+ ngx_feature_name="NGX_HAVE_MAP_DEVZERO"
+-ngx_feature_run=yes
++ngx_feature_run=no
+ ngx_feature_incs="#include <sys/mman.h>
+                   #include <sys/stat.h>
+                   #include <fcntl.h>"
+@@ -881,7 +881,7 @@ ngx_feature_test='void *p; int  fd;
+ 
+ ngx_feature="System V shared memory"
+ ngx_feature_name="NGX_HAVE_SYSVSHM"
+-ngx_feature_run=yes
++ngx_feature_run=no
+ ngx_feature_incs="#include <sys/ipc.h>
+                   #include <sys/shm.h>"
+ ngx_feature_path=
+@@ -895,7 +895,7 @@ ngx_feature_test="int  id;
+ 
+ ngx_feature="POSIX semaphores"
+ ngx_feature_name="NGX_HAVE_POSIX_SEM"
+-ngx_feature_run=yes
++ngx_feature_run=no
+ ngx_feature_incs="#include <semaphore.h>"
+ ngx_feature_path=
+ ngx_feature_libs=
+diff --git a/src/event/ngx_event_openssl.c b/src/event/ngx_event_openssl.c
+index 8d1f5695c..414ce5aed 100644
+--- a/src/event/ngx_event_openssl.c
++++ b/src/event/ngx_event_openssl.c
+@@ -879,18 +879,27 @@ ngx_ssl_password_callback(char *buf, int size, int rwflag, void *userdata)
+     return size;
+ }
+ 
++#include <udasics.h>
++#include <assert.h>
+ 
+ ngx_int_t
+ ngx_ssl_ciphers(ngx_conf_t *cf, ngx_ssl_t *ssl, ngx_str_t *ciphers,
+     ngx_uint_t prefer_server_ciphers)
+ {
++    uint32_t idx = LIBCFG_ALLOC(DASICS_LIBCFG_V | DASICS_LIBCFG_R | DASICS_LIBCFG_W, (uint64_t)ciphers->data, strlen((char *)ciphers->data) + 1);
++    assert((int)idx != -1);
++
+     if (SSL_CTX_set_cipher_list(ssl->ctx, (char *) ciphers->data) == 0) {
+         ngx_ssl_error(NGX_LOG_EMERG, ssl->log, 0,
+                       "SSL_CTX_set_cipher_list(\"%V\") failed",
+                       ciphers);
++
++        assert((int)dasics_libcfg_free(idx) != -1);
+         return NGX_ERROR;
+     }
+ 
++    assert((int)dasics_libcfg_free(idx) != -1);
++
+     if (prefer_server_ciphers) {
+         SSL_CTX_set_options(ssl->ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
+     }
+@@ -3660,6 +3669,13 @@ ngx_ssl_error(ngx_uint_t level, ngx_log_t *log, ngx_err_t err, char *fmt, ...)
+     u_char       errstr[NGX_MAX_CONF_ERRSTR];
+     const char  *data;
+ 
++    int32_t data_idx = dasics_libcfg_alloc(DASICS_LIBCFG_W | DASICS_LIBCFG_R | DASICS_LIBCFG_V , \
++                                            (uint64_t)&data, (uint64_t)(&data) + sizeof(data));
++    int32_t flags_idx = dasics_libcfg_alloc(DASICS_LIBCFG_W | DASICS_LIBCFG_R | DASICS_LIBCFG_V , \
++                                            (uint64_t)&flags, (uint64_t)(&flags) + sizeof(flags));
++    int32_t errstr_idx = dasics_libcfg_alloc(DASICS_LIBCFG_W | DASICS_LIBCFG_R | DASICS_LIBCFG_V , \
++                                            (uint64_t)errstr, (uint64_t)errstr + sizeof(errstr));
++
+     last = errstr + NGX_MAX_CONF_ERRSTR;
+ 
+     va_start(args, fmt);
+@@ -3706,6 +3722,10 @@ ngx_ssl_error(ngx_uint_t level, ngx_log_t *log, ngx_err_t err, char *fmt, ...)
+         }
+     }
+ 
++    dasics_libcfg_free(data_idx);
++    dasics_libcfg_free(flags_idx);
++    dasics_libcfg_free(errstr_idx);
++
+     ngx_log_error(level, log, err, "%*s", p - errstr, errstr);
+ }
+ 
+@@ -3798,6 +3818,11 @@ ngx_ssl_session_id_context(ngx_ssl_t *ssl, ngx_str_t *sess_ctx,
+     STACK_OF(X509_NAME)  *list;
+     u_char                buf[EVP_MAX_MD_SIZE];
+ 
++    int32_t len_idx = dasics_libcfg_alloc(DASICS_LIBCFG_W | DASICS_LIBCFG_R | DASICS_LIBCFG_V , \
++                                            (uint64_t)&len, (uint64_t)(&len) + sizeof(len));
++    int32_t buf_idx = dasics_libcfg_alloc(DASICS_LIBCFG_W | DASICS_LIBCFG_R | DASICS_LIBCFG_V , \
++                                            (uint64_t)buf, (uint64_t)buf + sizeof(buf));
++
+     /*
+      * Session ID context is set based on the string provided,
+      * the server certificates, and the client CA list.
+@@ -3892,9 +3917,13 @@ ngx_ssl_session_id_context(ngx_ssl_t *ssl, ngx_str_t *sess_ctx,
+         return NGX_ERROR;
+     }
+ 
++    dasics_libcfg_free(len_idx);
++    dasics_libcfg_free(buf_idx);
+     return NGX_OK;
+ 
+ failed:
++    dasics_libcfg_free(len_idx);
++    dasics_libcfg_free(buf_idx);
+ 
+     EVP_MD_CTX_destroy(md);
+ 
+@@ -4609,11 +4638,16 @@ ngx_ssl_ticket_key_callback(ngx_ssl_conn_t *ssl_conn,
+             return -1;
+         }
+ 
++        int aeskey_idx = LIBCFG_ALLOC(DASICS_LIBCFG_W | DASICS_LIBCFG_R | DASICS_LIBCFG_V, (uint64_t)&key[0], sizeof(ngx_ssl_ticket_key_t));
++
+         if (EVP_EncryptInit_ex(ectx, cipher, NULL, key[0].aes_key, iv) != 1) {
+             ngx_ssl_error(NGX_LOG_ALERT, c->log, 0,
+                           "EVP_EncryptInit_ex() failed");
++
++            assert(dasics_libcfg_free(aeskey_idx)!= -1);
+             return -1;
+         }
++        assert(dasics_libcfg_free(aeskey_idx)!= -1);
+ 
+ #if OPENSSL_VERSION_NUMBER >= 0x10000000L
+         if (HMAC_Init_ex(hctx, key[0].hmac_key, size, digest, NULL) != 1) {
+@@ -5752,11 +5786,18 @@ ngx_ssl_get_fingerprint(ngx_connection_t *c, ngx_pool_t *pool, ngx_str_t *s)
+         return NGX_OK;
+     }
+ 
++    int32_t len_idx = dasics_libcfg_alloc(DASICS_LIBCFG_W | DASICS_LIBCFG_R | DASICS_LIBCFG_V , \
++                                            (uint64_t)&len, (uint64_t)(&len) + sizeof(len));
++
+     if (!X509_digest(cert, EVP_sha1(), buf, &len)) {
+         ngx_ssl_error(NGX_LOG_ALERT, c->log, 0, "X509_digest() failed");
++
++        dasics_libcfg_free(len_idx);
++
+         X509_free(cert);
+         return NGX_ERROR;
+     }
++    dasics_libcfg_free(len_idx);
+ 
+     s->len = 2 * len;
+     s->data = ngx_pnalloc(pool, 2 * len);
+diff --git a/src/http/modules/ngx_http_ssl_module.c b/src/http/modules/ngx_http_ssl_module.c
+index 1c92d9fa8..33b8a74a3 100644
+--- a/src/http/modules/ngx_http_ssl_module.c
++++ b/src/http/modules/ngx_http_ssl_module.c
+@@ -13,6 +13,8 @@
+ #include <ngx_event_quic_openssl_compat.h>
+ #endif
+ 
++#include <udasics.h>
++
+ 
+ typedef ngx_int_t (*ngx_ssl_variable_handler_pt)(ngx_connection_t *c,
+     ngx_pool_t *pool, ngx_str_t *s);
+@@ -486,12 +488,15 @@ ngx_http_ssl_alpn_select(ngx_ssl_conn_t *ssl_conn, const unsigned char **out,
+         }
+     }
+ 
++    int dasics_idx0 = LIBCFG_ALLOC(DASICS_LIBCFG_R | DASICS_LIBCFG_V, srv, srvlen + 1);
+     if (SSL_select_next_proto((unsigned char **) out, outlen, srv, srvlen,
+                               in, inlen)
+         != OPENSSL_NPN_NEGOTIATED)
+     {
++        dasics_libcfg_free(dasics_idx0);
+         return SSL_TLSEXT_ERR_ALERT_FATAL;
+     }
++    dasics_libcfg_free(dasics_idx0);
+ 
+     ngx_log_debug2(NGX_LOG_DEBUG_HTTP, c->log, 0,
+                    "SSL ALPN selected: %*s", (size_t) *outlen, *out);

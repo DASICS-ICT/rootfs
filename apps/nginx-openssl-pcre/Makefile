@@ -1,4 +1,4 @@
-NAME    = nginx
+NAME    = nginx-openssl-pcre
 IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/usr/sbin)
 
 ifneq ($(RISCV_ROOTFS_HOME),)
