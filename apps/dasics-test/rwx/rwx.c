@@ -8,7 +8,7 @@
 #include "udasics.h"
 #include "fit.h"
 
-const char *test_info = "[MAIN]-  Test 3: bound register allocation and authority \n";
+const char *test_info = "[MAIN]-  Test 1: bound register allocation and authority \n";
 
 static char secret[100] = "[ULIB1]: It's the secret!";
 static char __attribute__((section(".ulibrodata.test_rwx"))) pub_readonly[100] = "[ULIB1]: It's readonly buffer!";
