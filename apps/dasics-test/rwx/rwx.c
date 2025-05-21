@@ -15,7 +15,7 @@ static char __attribute__((section(".ulibrodata.test_rwx"))) pub_readonly[100] =
 static char __attribute__((section(".ulibdata.test_rwx"))) pub_rwbuffer[100] = "[ULIB1]: It's public rw buffer!";
 static char __attribute__((section(".ulibbss.test_rwx"))) pub_rwbss[10];
 
-int __attribute__((section(".ulibtext.test_rwx"))) test_rwx() {
+void __attribute__((section(".ulibtext.test_rwx"))) test_rwx() {
     dasics_umaincall(Umaincall_PRINT, "************* ULIB START ***************** \n");  // lib call main
 
     dasics_umaincall(Umaincall_PRINT, "try to print the read only buffer: %s\n", pub_readonly);  // That's ok
@@ -46,8 +46,6 @@ int __attribute__((section(".ulibtext.test_rwx"))) test_rwx() {
     dasics_umaincall(Umaincall_PRINT, "new bss buffer: %s\n", pub_rwbss);  // That's ok
 
     dasics_umaincall(Umaincall_PRINT, "************* ULIB   END ***************** \n");  // lib call main
-
-    return 0;
 }
 
 
