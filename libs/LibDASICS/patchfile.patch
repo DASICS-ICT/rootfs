@@ -1,3 +1,16 @@
+diff --git a/include/asm/offset.h b/include/asm/offset.h
+index 4fdd746..432f482 100644
+--- a/include/asm/offset.h
++++ b/include/asm/offset.h
+@@ -45,4 +45,7 @@
+ 
+ #define OFFSET_UMAINCALL        (8*13)
+ 
++/* for lib_call */
++#define STACK_FRAME_SIZE_LIBCALL 72
++
+ #endif
+\ No newline at end of file
 diff --git a/include/bitmap.h b/include/bitmap.h
 new file mode 100644
 index 0000000..75990a5
@@ -108,7 +121,7 @@ index 0000000..50f9a0d
 +#endif // FIT_H
 \ No newline at end of file
 diff --git a/include/udasics.h b/include/udasics.h
-index 2448aa0..2419b08 100644
+index 2448aa0..2425731 100644
 --- a/include/udasics.h
 +++ b/include/udasics.h
 @@ -16,6 +16,7 @@ extern "C" {
@@ -119,6 +132,15 @@ index 2448aa0..2419b08 100644
  #define DASICS_LIBCFG_R     0x2UL
  #define DASICS_LIBCFG_W     0x1UL
  
+@@ -73,7 +74,7 @@ int32_t dasics_jumpcfg_active(int32_t idx);
+ // extern uint64_t umaincall_helper;
+ extern void dasics_ufault_entry(void);
+ extern uint64_t dasics_umaincall(UmaincallTypes type, ...);
+-extern void lib_call(void* func_name, ...);
++extern uint64_t lib_call(void *func_name, ...);
+ extern void azone_call(void* func_name);
+ 
+ #define LIBCFG_ALLOC(flag, base, len) (dasics_libcfg_alloc(flag,((uint64_t)(base)),((uint64_t)(base)) + ((uint64_t)(len))));
 diff --git a/include/usyscall.h b/include/usyscall.h
 index d62e2eb..9b83693 100644
 --- a/include/usyscall.h
@@ -168,13 +190,14 @@ index d62e2eb..9b83693 100644
                                      unsigned long, \
 diff --git a/src/fit/fit.c b/src/fit/fit.c
 new file mode 100644
-index 0000000..7789d4b
+index 0000000..ff62147
 --- /dev/null
 +++ b/src/fit/fit.c
-@@ -0,0 +1,184 @@
+@@ -0,0 +1,185 @@
 +#include "fit.h"
 +#include <stdlib.h>
 +#include <asm/unistd.h>
++#include <asm/offset.h>
 +
 +fit_entry_t *fit_table = NULL;
 +static void *current_closure_key = NULL;
@@ -267,7 +290,7 @@ index 0000000..7789d4b
 +                                                          entry->bounds_data[i].hi + 1);
 +        } else if (entry->bounds_data[i].lo == UINT64_MAX) {
 +            asm volatile("mv %0, sp" : "=r"(frame_addr));
-+            badfunc_stack_top = frame_addr - 0x8;  // 0x8 is the stack size of lib_call
++            badfunc_stack_top = frame_addr - STACK_FRAME_SIZE_LIBCALL;
 +            badfunc_stack_size = entry->bounds_data[i].hi;
 +            handle_array[i].handle = dasics_libcfg_alloc(entry->bounds_data[i].perm,
 +                                                         badfunc_stack_top - badfunc_stack_size,
@@ -289,7 +312,7 @@ index 0000000..7789d4b
 +
 +    // Execute function
 +    va_start(args, func);
-+    lib_call(func, args);
++    ret = lib_call(func, args);
 +    va_end(args);
 +
 +    // Remove argbound permissions if the callback exists
@@ -357,6 +380,60 @@ index 0000000..7789d4b
 +    }
 +}
 \ No newline at end of file
+diff --git a/src/maincall/umaincall_entry.S b/src/maincall/umaincall_entry.S
+index 15faf97..b9c17db 100644
+--- a/src/maincall/umaincall_entry.S
++++ b/src/maincall/umaincall_entry.S
+@@ -55,16 +55,43 @@ END(dasics_umaincall)
+ 
+ 
+ #-----------------------------------------------------------------------
+-# : pass arguments to umaincall helper.
++# lib_call: pass arguments to the target function.
+ #-----------------------------------------------------------------------
+ .section .text
+ .global lib_call
+ .type lib_call, @function
+ 
+ lib_call:
+-    addi   sp, sp, -8
+-    sd     ra, 0(sp)
+-    .word 0x0005108b    // dasicscall.jr ra, a0
+-    ld     ra, 0(sp)
+-    addi   sp, sp, 8
++    // Allocate stack frame
++    addi   sp, sp, -STACK_FRAME_SIZE_LIBCALL
++    sd     ra, 64(sp)
++    sd     s0, 56(sp)
++    addi   s0, sp, STACK_FRAME_SIZE_LIBCALL
++
++    // Save registers
++    sd     a1, -24(s0)
++    sd     a2, -32(s0)
++    sd     a3, -40(s0)
++    sd     a4, -48(s0)
++    sd     a5, -56(s0)
++    sd     a6, -64(s0)
++    sd     a7, -72(s0)
++
++    // Change the order of arguments
++    mv     t0, a0
++    ld     a0, -24(s0)
++    ld     a1, -32(s0)
++    ld     a2, -40(s0)
++    ld     a3, -48(s0)
++    ld     a4, -56(s0)
++    ld     a5, -64(s0)
++    ld     a6, -72(s0)
++
++    // Call the target function
++    .word 0x0002908b    // dasicscall.jr ra, t0
++
++    // Restore registers
++    ld     ra, 64(sp)
++    ld     s0, 56(sp)
++    addi   sp, sp, STACK_FRAME_SIZE_LIBCALL
+     ret
 diff --git a/src/udasics/udasics.c b/src/udasics/udasics.c
 index 76be029..296c750 100644
 --- a/src/udasics/udasics.c
