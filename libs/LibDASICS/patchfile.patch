@@ -47,10 +47,10 @@ index 0000000..75990a5
 \ No newline at end of file
 diff --git a/include/fit.h b/include/fit.h
 new file mode 100644
-index 0000000..a05e63f
+index 0000000..30e369e
 --- /dev/null
 +++ b/include/fit.h
-@@ -0,0 +1,50 @@
+@@ -0,0 +1,52 @@
 +#ifndef FIT_H
 +#define FIT_H
 +
@@ -99,6 +99,8 @@ index 0000000..a05e63f
 +extern void fit_destroy(void);
 +extern void fit_print(void);
 +extern uint64_t fit_switchto(void *func, ...);
++extern int fit_check_syscall(int sysno, uint64_t epc);
++extern int fit_check_maincall(int maincall, uint64_t epc);
 +
 +#endif // FIT_H
 \ No newline at end of file
@@ -163,14 +165,16 @@ index d62e2eb..9b83693 100644
                                      unsigned long, \
 diff --git a/src/fit/fit.c b/src/fit/fit.c
 new file mode 100644
-index 0000000..d113521
+index 0000000..d159550
 --- /dev/null
 +++ b/src/fit/fit.c
-@@ -0,0 +1,118 @@
+@@ -0,0 +1,170 @@
 +#include "fit.h"
 +#include <stdlib.h>
++#include <asm/unistd.h>
 +
 +fit_entry_t *fit_table = NULL;
++static void *current_closure_key = NULL;
 +
 +int fit_init(void) {
 +    // Initialize the FIT table with static permissions
@@ -248,6 +252,9 @@ index 0000000..d113521
 +        return -1;  // Return error if not found
 +    }
 +
++    // Set current closure key
++    current_closure_key = entry->key;
++
 +    // Set permissions for current function
 +    uint64_t frame_addr, badfunc_stack_top, badfunc_stack_size;
 +    fit_handles_t *handle_array = (fit_handles_t *)malloc(entry->bounds_num * sizeof(fit_handles_t));
@@ -283,6 +290,109 @@ index 0000000..d113521
 +    }
 +    free(handle_array);
 +
++    // Reset current closure key
++    current_closure_key = NULL;
++
 +    return ret;
 +}
++
++int fit_check_syscall(int sysno, uint64_t epc) {
++    // Check if syscall number is valid
++    if (sysno < 0 || sysno >= __NR_syscalls) {
++        printf("Invalid syscall number %d\n", sysno);
++        return -1;  // Return error if invalid syscall number
++    }
++
++    // Find entry in FIT table
++    fit_entry_t *entry = NULL;
++    HASH_FIND_PTR(fit_table, &current_closure_key, entry);  // Use function address as key
++    if (!entry) {
++        return -1;  // Return error if not found
++    }
++
++    // Check if syscall is valid
++    if (bitmap_query(entry->syscalls, sysno)) {
++        return 0;  // Valid syscall
++    } else {
++        return -1;  // Invalid syscall
++    }
++}
++
++int fit_check_maincall(int maincall, uint64_t epc) {
++    // Check if maincall number is valid
++    if (maincall < 0 || maincall >= Umaincall_UNKNOWN) {
++        printf("Invalid maincall number %d\n", maincall);
++        return -1;  // Return error if invalid maincall number
++    }
++
++    // Find entry in FIT table
++    fit_entry_t *entry = NULL;
++    HASH_FIND_PTR(fit_table, &current_closure_key, entry);  // Use function address as key
++    if (!entry) {
++        return -1;  // Return error if not found
++    }
++
++    // Check if maincall is valid
++    if (bitmap_query(entry->maincalls, maincall)) {
++        return 0;  // Valid maincall
++    } else {
++        return -1;  // Invalid maincall
++    }
++}
 \ No newline at end of file
+diff --git a/src/udasics/udasics.c b/src/udasics/udasics.c
+index 76be029..296c750 100644
+--- a/src/udasics/udasics.c
++++ b/src/udasics/udasics.c
+@@ -7,6 +7,7 @@
+ #include <utrap.h>
+ #include <dasics_stdio.h>
+ #include <umaincall.h>
++#include <fit.h>
+ 
+ uint64_t umaincall_helper;
+ 
+@@ -194,6 +195,17 @@ void dasics_umaincall_helper(struct umaincall * regs, ...)
+     // Judge This is a dynamic call
+     if (dasics_dynamic_call(regs)) return;
+ 
++    // Check whether the maincall is allowed to be called by the function closure
++    uint64_t maincall_pc = (uint64_t)regs->ra - 4;  // 4 is the length of jalr
++    if (fit_check_maincall(regs->a0, maincall_pc) != 0) {
++        printf("[DASICS MAINCALL] Invalid maincall %d at %lx, cancel this maincall\n", \
++            regs->a0, maincall_pc);
++        regs->t1 = regs->ra;
++        regs->a0 = -1;
++        return;
++    }
++
++    // Perform the maincall
+     uint64_t retval = 0;
+ 
+     va_list args;
+diff --git a/src/utrap/ecall.c b/src/utrap/ecall.c
+index c0f117a..1d22a58 100644
+--- a/src/utrap/ecall.c
++++ b/src/utrap/ecall.c
+@@ -1,12 +1,20 @@
+ #include <utrap.h>
+ #include <usyscall.h>
+-
++#include <fit.h>
+ 
+ int handle_DasicsUEcallFault(struct ucontext_trap * regs)
+ {
+   // Do uepc ++ first
+   regs->uepc += 4;  
+ 
++  // Check whether the function closure is allowed to call the syscall
++  if (fit_check_syscall(regs->a7, regs->uepc - 4) != 0)
++  {
++    // Invalid syscall
++    printf("[DASICS EXCEPTION] Invalid syscall %d at %lx, cancel this syscall\n", regs->a7, regs->uepc - 4);
++    return -1;  // Return -1 to terminate the program
++  }
++
+   syscall_check[regs->a7].check(
+     regs->a0,
+     regs->a1,
