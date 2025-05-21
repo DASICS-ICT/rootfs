@@ -396,3 +396,23 @@ index c0f117a..1d22a58 100644
    syscall_check[regs->a7].check(
      regs->a0,
      regs->a1,
+diff --git a/src/utrap/trap_entry.S b/src/utrap/trap_entry.S
+index 00eaf59..c37c0c6 100644
+--- a/src/utrap/trap_entry.S
++++ b/src/utrap/trap_entry.S
+@@ -138,8 +138,13 @@ END(_setup_fault)
+ # Deal invoke_syscall carefully
+ ENTRY(invoke_syscall)
+     mv a0, sp
+-    call handle_DasicsUEcallFault
++    ld t0, udasics_ecall_fault_handler
++    jalr t0
++    bnez a0, check_failed
+     RESTORE_CONTEXT
+-    ecall 
++    ecall
+     uret
++check_failed:
++    la t0, __dasics_uret
++    jr t0
+ END(invoke_syscall)
