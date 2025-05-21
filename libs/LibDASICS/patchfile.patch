@@ -47,10 +47,10 @@ index 0000000..75990a5
 \ No newline at end of file
 diff --git a/include/fit.h b/include/fit.h
 new file mode 100644
-index 0000000..30e369e
+index 0000000..50f9a0d
 --- /dev/null
 +++ b/include/fit.h
-@@ -0,0 +1,52 @@
+@@ -0,0 +1,55 @@
 +#ifndef FIT_H
 +#define FIT_H
 +
@@ -87,6 +87,9 @@ index 0000000..30e369e
 +
 +    uint8_t *maincalls;           // Main call bitmap
 +    size_t maincalls_size;        // Main call bitmap size (in bytes)
++
++    void (*argbound_alloc)(va_list); // Callback function for argument bound allocation
++    void (*argbound_free)(void);     // Callback function for argument bound deallocation
 +
 +    UT_hash_handle hh;            // Required field for UTHash
 +} fit_entry_t;
@@ -165,10 +168,10 @@ index d62e2eb..9b83693 100644
                                      unsigned long, \
 diff --git a/src/fit/fit.c b/src/fit/fit.c
 new file mode 100644
-index 0000000..d159550
+index 0000000..7789d4b
 --- /dev/null
 +++ b/src/fit/fit.c
-@@ -0,0 +1,170 @@
+@@ -0,0 +1,184 @@
 +#include "fit.h"
 +#include <stdlib.h>
 +#include <asm/unistd.h>
@@ -242,7 +245,6 @@ index 0000000..d159550
 +}
 +
 +uint64_t fit_switchto(void *func, ...) {
-+    va_list args;
 +    fit_entry_t *entry = NULL;
 +    uint64_t ret = 0;
 +
@@ -277,8 +279,23 @@ index 0000000..d159550
 +        }
 +    }
 +
++    // Set argbound permissions if the callback exists
++    va_list args;
++    va_start(args, func);
++    if (entry->argbound_alloc) {
++        entry->argbound_alloc(args);
++    }
++    va_end(args);
++
 +    // Execute function
++    va_start(args, func);
 +    lib_call(func, args);
++    va_end(args);
++
++    // Remove argbound permissions if the callback exists
++    if (entry->argbound_free) {
++        entry->argbound_free();
++    }
 +
 +    // Remove allocated permissions
 +    for (size_t i = 0; i < entry->bounds_num; i++) {
