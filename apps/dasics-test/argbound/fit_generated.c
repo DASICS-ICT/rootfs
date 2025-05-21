@@ -6,7 +6,7 @@
 #include <udasics.h>
 
 static fit_handles_t *handle_argbound_test_argbound = NULL;
-static const size_t argbound_num_test_argbound = 2;
+static const size_t argbound_num_test_argbound = 3;
 
 static void fit_argbound_alloc_test_argbound(va_list args) {
     // Allocate memory for the handle array
@@ -16,15 +16,19 @@ static void fit_argbound_alloc_test_argbound(va_list args) {
         return;
     }
 
+    // Initialize the handles and permissions for va_list args
+    handle_argbound_test_argbound[0].handle = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, (uint64_t)args, (uint64_t)args + sizeof(char *) * 2);
+    handle_argbound_test_argbound[0].perm = DASICS_LIBCFG_R | DASICS_LIBCFG_W;
+
     // Get the arguments
     char *src = va_arg(args, char *);
     char *dst = va_arg(args, char *);
 
     // Initialize the handles and permissions
-    handle_argbound_test_argbound[0].handle = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)src, (uint64_t)src + 10);
-    handle_argbound_test_argbound[0].perm = DASICS_LIBCFG_R;
-    handle_argbound_test_argbound[1].handle = dasics_libcfg_alloc(DASICS_LIBCFG_W, (uint64_t)dst, (uint64_t)dst + 10);
-    handle_argbound_test_argbound[1].perm = DASICS_LIBCFG_W;
+    handle_argbound_test_argbound[1].handle = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)src, (uint64_t)src + 10);
+    handle_argbound_test_argbound[1].perm = DASICS_LIBCFG_R;
+    handle_argbound_test_argbound[2].handle = dasics_libcfg_alloc(DASICS_LIBCFG_W, (uint64_t)dst, (uint64_t)dst + 10);
+    handle_argbound_test_argbound[2].perm = DASICS_LIBCFG_W;
 }
 
 static void fit_argbound_free_test_argbound(void) {
