@@ -26,6 +26,10 @@ int fit_init_static(void) {
         return -1;
     }
 
+    // Set argument bound allocation and deallocation functions
+    entry->argbound_alloc = NULL;  // No argument bound allocation function
+    entry->argbound_free = NULL;   // No argument bound deallocation function
+
     // Calculate bitmap size and allocate
     entry->syscalls_size = (__NR_syscalls + 7) / 8;
     entry->maincalls_size = (Umaincall_UNKNOWN + 7) / 8;
