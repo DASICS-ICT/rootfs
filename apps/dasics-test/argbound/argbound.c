@@ -64,9 +64,7 @@ int main() {
 
     printf(test_info);
 
-    register_udasics(0);
-
-    fit_init();
+    fit_init(0);
     fit_print();
 
     test_argbound_args_t src = {
@@ -86,7 +84,6 @@ int main() {
     printf("[MAIN] return value: %lx\n", ret);
 
     fit_destroy();
-    unregister_udasics();
 
     return 0;
 }

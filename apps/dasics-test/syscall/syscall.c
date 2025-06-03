@@ -31,15 +31,12 @@ int main() {
 
     printf(test_info);
 
-    register_udasics(0);
-
-    fit_init();
+    fit_init(0);
     fit_print();
 
     fit_switchto(test_syscall);
 
     fit_destroy();
-    unregister_udasics();
 
     return 0;
 }

@@ -60,7 +60,7 @@ index 0000000..75990a5
 \ No newline at end of file
 diff --git a/include/fit.h b/include/fit.h
 new file mode 100644
-index 0000000..50f9a0d
+index 0000000..5238a68
 --- /dev/null
 +++ b/include/fit.h
 @@ -0,0 +1,55 @@
@@ -110,7 +110,7 @@ index 0000000..50f9a0d
 +extern fit_entry_t *fit_table;    // FIT table pointer
 +
 +// Function declarations
-+extern int fit_init(void);
++extern int fit_init(uint64_t dasics_funcptr);
 +extern int fit_init_static(void);
 +extern void fit_destroy(void);
 +extern void fit_print(void);
@@ -190,10 +190,10 @@ index d62e2eb..9b83693 100644
                                      unsigned long, \
 diff --git a/src/fit/fit.c b/src/fit/fit.c
 new file mode 100644
-index 0000000..ff62147
+index 0000000..088bf27
 --- /dev/null
 +++ b/src/fit/fit.c
-@@ -0,0 +1,185 @@
+@@ -0,0 +1,191 @@
 +#include "fit.h"
 +#include <stdlib.h>
 +#include <asm/unistd.h>
@@ -202,7 +202,10 @@ index 0000000..ff62147
 +fit_entry_t *fit_table = NULL;
 +static void *current_closure_key = NULL;
 +
-+int fit_init(void) {
++int fit_init(uint64_t dasics_funcptr) {
++    // Initialize DASICS mechanism
++    register_udasics(dasics_funcptr);
++
 +    // Initialize the FIT table with static permissions
 +    return fit_init_static();
 +}
@@ -226,6 +229,9 @@ index 0000000..ff62147
 +    }
 +
 +    fit_table = NULL;  // Set table pointer to NULL
++
++    // Clean up DASICS resources
++    unregister_udasics();
 +}
 +
 +void fit_print(void) {
