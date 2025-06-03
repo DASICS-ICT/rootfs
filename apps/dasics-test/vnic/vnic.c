@@ -1,23 +1,21 @@
 #include "vnic.h"
 
-#define DRV_NAME "vnic"
-
-static struct net_device *vnic_dev;
 
 /* 网络设备操作函数 */
 static netdev_tx_t vnic_start_xmit(struct sk_buff *skb, struct net_device *dev)
 {
     skb_tx_timestamp(skb);
-    /* 数据包统计 */
-    dev->stats.tx_packets++;
-    dev->stats.tx_bytes += skb->len;
-
-    /* 回环数据包 */
-    skb->dev = dev;
-    skb->pkt_type = PACKET_LOOPBACK;
-    skb->ip_summed = CHECKSUM_UNNECESSARY;
     
-    netif_rx(skb);  // 将数据包送回协议栈
+    if (skb_is_nonlinear(skb)) {
+        if (skb_linearize(skb) != 0) {
+            //dev_kfree_skb(skb);
+            pr_info("skb_linearize failed\n");
+            return NETDEV_TX_OK;
+        }
+    }
+
+    vnic_send_packet(skb);
+    
     pr_info("vnic_start_xmit: dev = %llx, tx_packets %llx, tx_bytes = %llx\n", 
            (unsigned long long)dev, (unsigned long long)dev->stats.tx_packets,
            (unsigned long long)dev->stats.tx_bytes);
@@ -25,6 +23,23 @@ static netdev_tx_t vnic_start_xmit(struct sk_buff *skb, struct net_device *dev)
     //    dev_kfree_skb(skb);
 
     return NETDEV_TX_OK;
+}
+
+static int vnic_poll_rx(void *data)
+{
+    int ret;
+    while (!kthread_should_stop()) { // 检查线程是否应停止
+        ret = vnic_recv_packet();       
+        if (ret < 0) {
+            pr_err("Failed to receive packet: %d\n", ret);
+            continue; // 如果接收失败，继续下一次循环
+        }
+        else if (ret > 0)
+            pr_info("recv packet len %llx\n", ret);
+
+        msleep(5); // 休眠5毫秒降低CPU占用
+    }
+    return 0;
 }
 
 static int vnic_open(struct net_device *dev)
@@ -56,10 +71,20 @@ static void vnic_setup(struct net_device *dev)
     dev->netdev_ops = &vnic_ops;
     dev->flags |= IFF_NOARP;  // 禁用ARP
     
-    /* 随机MAC地址 */
+    /* random mac */
     //eth_random_addr(dev->dev_addr);
-    /* 手动设定mac地址为01:02:03:04:05:06 */
-    memcpy(dev->dev_addr, "\x01\x02\x03\x04\x05\x06", ETH_ALEN);
+    /* manually set mac address */
+    #ifdef fpga
+        memcpy(dev->dev_addr, "\x01\x02\x03\x04\x05\x06", ETH_ALEN);
+    #else
+        memcpy(dev->dev_addr, "\x11\x22\x33\x44\x55\x66", ETH_ALEN);
+    #endif
+
+    if (vnic_init_share_mem()) {
+        pr_err("Failed to initialize shared memory\n");
+        return;
+    }
+    pr_info("share_mem_virt: 0x%llx\n", (uint64_t)share_mem_virt);
 }
 
 static int __init vnic_init(void)
@@ -77,6 +102,12 @@ static int __init vnic_init(void)
         free_netdev(vnic_dev);
         return ret;
     }
+
+    polling_thread = kthread_run(vnic_poll_rx, NULL, "vnic_poll");
+    if (IS_ERR(polling_thread)) {
+        pr_err("Failed to start polling thread\n");
+        return PTR_ERR(polling_thread);
+    }
     
     pr_info("Virtual network device %s registered\n", vnic_dev->name);
     return 0;
@@ -86,6 +117,11 @@ static void __exit vnic_exit(void)
 {
     unregister_netdev(vnic_dev);
     free_netdev(vnic_dev);
+    if (polling_thread) {
+        kthread_stop(polling_thread); // 停止线程
+        polling_thread = NULL;
+    }
+    iounmap(share_mem_virt); // 取消映射
     pr_info("Virtual network device unregistered\n");
 }
 
