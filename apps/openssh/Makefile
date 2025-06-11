@@ -26,7 +26,8 @@ $(OPENSSH_CONFIG):
 	cd $(OPENSSH_REPO) && autoreconf && \
 		./configure --host=$(CROSS_COMPILE) \
 			--with-libs --with-zlib=$(ZLIB_DIR) --with-ssl-dir=$(OPENSSL_DIR) \
-			--disable-etc-default-login
+			--disable-etc-default-login \
+			--without-zlib-version-check --without-openssl-header-check
 
 $(OPENSSH_ELF): openssh
 	# FIXME: Deleting this comment will cause unexpected compiler errors.
