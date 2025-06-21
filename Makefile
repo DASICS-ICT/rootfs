@@ -1,6 +1,6 @@
 include Makefile.check
 
-APPS = busybox
+APPS = busybox sudo sudo-origin
 APPS_DIR = $(addprefix apps/, $(APPS))
 LIBS =
 LIBS_DIR = $(addprefix libs/, $(LIBS))
@@ -44,6 +44,7 @@ network:
 	$(MAKE) -s -C $(NETWORK_DIR) NETWORK=$(NETWORK)
 
 initramfs:
+	cp -r ./locale $(ROOTFSIMG_DIR)/usr/lib
 	python $(UTILS_DIR)/gen_initramfs.py
 
 clean:

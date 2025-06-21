@@ -28,6 +28,14 @@ def find_dependencies(executable, sysroot, rootfsimg):
                     dependencies.append(lib_path)
                 else:
                     raise FileNotFoundError(f"Dependency {lib_name} not found in sysroot or rootfsimg")
+        if executable.endswith('sudo'):
+            # Special handling for sudo to ensure it links to the correct library
+            lib_name = "libnss_files.so.2"
+            lib_path = find_library_path(lib_name, sysroot, rootfsimg)
+            if lib_path:
+                dependencies.append(lib_path)
+            else:
+                raise FileNotFoundError(f"Dependency {lib_name} not found in sysroot or rootfsimg")            
         return dependencies
     except subprocess.CalledProcessError:
         return []
@@ -76,7 +84,10 @@ def import_dirs_to_initramfs(rootfsimg_path, f):
         for dir in dirs:
             dir_path = os.path.join(root, dir)
             relative_path = os.path.relpath(dir_path, rootfsimg_path).replace(os.sep, '/')
-            f.write(f"dir /{relative_path} 755 0 0\n")
+            if relative_path == 'home/ceshi':
+                f.write(f"dir /{relative_path} 755 1000 1000\n")
+            else:
+                f.write(f"dir /{relative_path} 755 0 0\n")
     f.write("\n")
 
 def import_files_to_initramfs(rootfsimg_path, f):
@@ -88,10 +99,21 @@ def import_files_to_initramfs(rootfsimg_path, f):
             file_path = os.path.join(root, file)
             relative_path = os.path.relpath(file_path, rootfsimg_path).replace(os.sep, '/')
             env_file_path = os.sep.join(["${RISCV_ROOTFS_HOME}", "rootfsimg", relative_path])
-            f.write(f"file /{relative_path} {env_file_path} 755 0 0\n")
-
+            if relative_path.startswith('home/ceshi'):
+                f.write(f"file /{relative_path} {env_file_path} 755 1000 1000\n")
+                continue
+            if relative_path == 'bin/sudo':
+                f.write(f"file /{relative_path} {env_file_path} 4755 0 0\n")
+            else:
+                f.write(f"file /{relative_path} {env_file_path} 755 0 0\n")
+            
+            
+            
     # Add slink for busybox
     f.write(f"slink /init /bin/busybox 755 0 0\n")
+    f.write(f"slink /bin/sudoedit /bin/sudo 755 0 0\n")
+    
+    f.write(f"file /bin/su " +  os.sep.join(["${RISCV_ROOTFS_HOME}", "rootfsimg/bin/busybox"]) + " 4755 0 0\n")
 
 def write_device_nodes(f):
     f.write("# Create device nodes\n")

@@ -2,3 +2,10 @@
 	path = apps/busybox/repo
 	url = https://github.com/mirror/busybox.git
 	branch = 1_32_stable
+[submodule "apps/sudo/repo"]
+	path = apps/sudo/repo
+	url = https://github.com/DASICS-ICT/DASICS-CVE-2021-3156.git
+	branch = dasics-protection-ecall
+[submodule "apps/sudo-origin/repo"]
+	path = apps/sudo-origin/repo
+	url = https://github.com/DASICS-ICT/DASICS-CVE-2021-3156.git
