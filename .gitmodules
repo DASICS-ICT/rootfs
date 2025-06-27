@@ -2,3 +2,9 @@
 	path = apps/busybox/repo
 	url = https://github.com/mirror/busybox.git
 	branch = 1_32_stable
+[submodule "fio"]
+	path = apps/fio/repo
+	url = https://github.com/axboe/fio.git
+[submodule "iperf3"]
+	path = apps/iperf3/repo
+	url = https://github.com/esnet/iperf.git
