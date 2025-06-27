@@ -96,6 +96,8 @@ def import_files_to_initramfs(rootfsimg_path, f):
 def write_device_nodes(f):
     f.write("# Create device nodes\n")
     f.writelines(["nod /dev/console 644 0 0 c 5 1\n", \
+                  "nod /dev/mem 644 0 0 c 1 1\n", \
+                  "nod /dev/zero 644 0 0 c 1 5\n", \
                   "nod /dev/null 644 0 0 c 1 3\n\n"])
 
 def generate_initramfs_txt(rootfsimg_path, sysroot_path, output_file):
