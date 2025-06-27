@@ -7,10 +7,9 @@ else
 $(error RISCV_ROOTFS_HOME is not defined)
 endif
 
-CROSS_COMPILE = riscv64-unknown-linux-gnu
-
 IPERF3_REPO   = $(abspath repo)
 IPERF3_ELF    = $(IPERF3_REPO)/src/iperf3
+IPERF3_CONFIG = $(IPERF3_REPO)/src/iperf_config.h
 
 .PHONY: iperf3
 
