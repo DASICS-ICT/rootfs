@@ -11,13 +11,17 @@ FIO_REPO   = $(abspath repo)
 FIO_ELF    = $(FIO_REPO)/fio
 FIO_CONFIG = $(FIO_REPO)/config-host.mak
 
+CROSS_COMPILE ?= riscv64-unknown-linux-gnu-
+
 .PHONY: fio
 
 fio: $(FIO_CONFIG)
 	$(MAKE) -C $(FIO_REPO)
 
 $(FIO_CONFIG):
-	cd $(FIO_REPO) && ./configure --cc=$(CROSS_COMPILE)gcc --cpu=riscv64 --build-static
+	cd $(FIO_REPO) && cross_compile=yes ./configure --prefix=$(DST_DIR) --cc=$(CROSS_COMPILE)gcc --cpu=riscv64 --build-static
+
+$(FIO_ELF): fio
 
 $(APP): fio
 
