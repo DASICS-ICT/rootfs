@@ -1,6 +1,6 @@
-NAME    = libssl.so.3
-IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/usr/lib)
+NAME    = libssl.a
 APP     = $(DST_DIR)/lib/$(NAME)
+NEED_INSTALL = false
 
 ifneq ($(RISCV_ROOTFS_HOME),)
 include $(RISCV_ROOTFS_HOME)/Makefile.app
@@ -10,7 +10,7 @@ endif
 
 OPENSSL_REPO   = $(abspath repo)
 OPENSSL_CONFIG = $(OPENSSL_REPO)/configdata.pm
-OPENSSL_SO     = $(OPENSSL_REPO)/libssl.so.3
+OPENSSL_A      = $(OPENSSL_REPO)/libssl.a
 
 .PHONY: openssl
 
@@ -18,16 +18,12 @@ openssl: $(OPENSSL_CONFIG)
 	$(MAKE) -C $(OPENSSL_REPO)
 
 $(OPENSSL_CONFIG):
-	cd $(OPENSSL_REPO) && ./Configure linux-generic64 no-asm no-threads shared\
+	cd $(OPENSSL_REPO) && ./Configure linux-generic64 no-asm no-threads no-shared\
 		--cross-compile-prefix=riscv64-unknown-linux-gnu- \
 		--prefix=$(DST_DIR) --openssldir=$(DST_DIR)/openssl
 
-$(OPENSSL_SO): openssl
+$(OPENSSL_A): openssl
 
-$(APP): $(OPENSSL_SO)
+$(APP): $(OPENSSL_A)
 	# No need to install documents
 	$(MAKE) -C $(OPENSSL_REPO) install_sw
-
-# libssl.so.3 is installed in Makefile.app, thus here we install libcrypto.so.3
-install:: $(APP)
-	@ln -sf $(DST_DIR)/lib/libcrypto.so.3 $(IST_DIR)/libcrypto.so.3

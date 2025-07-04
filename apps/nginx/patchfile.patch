@@ -1,5 +1,5 @@
 diff --git a/auto/cc/conf b/auto/cc/conf
-index ba31cb88c..e6d753c7f 100644
+index ba31cb8..e6d753c 100644
 --- a/auto/cc/conf
 +++ b/auto/cc/conf
 @@ -183,7 +183,7 @@ if [ "$NGX_PLATFORM" != win32 ]; then
@@ -30,7 +30,7 @@ index ba31cb88c..e6d753c7f 100644
  #define var(dummy, args...)  sprintf(args)"
      ngx_feature_path=
 diff --git a/auto/cc/name b/auto/cc/name
-index ded93f5bc..d6ab27a6a 100644
+index ded93f5..d6ab27a 100644
 --- a/auto/cc/name
 +++ b/auto/cc/name
 @@ -7,7 +7,7 @@ if [ "$NGX_PLATFORM" != win32 ]; then
@@ -43,7 +43,7 @@ index ded93f5bc..d6ab27a6a 100644
      ngx_feature_path=
      ngx_feature_libs=
 diff --git a/auto/lib/libatomic/conf b/auto/lib/libatomic/conf
-index 8c8cb438b..fe6e924cd 100644
+index 8c8cb43..fe6e924 100644
 --- a/auto/lib/libatomic/conf
 +++ b/auto/lib/libatomic/conf
 @@ -6,9 +6,11 @@
@@ -62,7 +62,7 @@ index 8c8cb438b..fe6e924cd 100644
  else
  
 diff --git a/auto/lib/make b/auto/lib/make
-index b64e32908..24d48570a 100644
+index b64e329..24d4857 100644
 --- a/auto/lib/make
 +++ b/auto/lib/make
 @@ -3,19 +3,19 @@
@@ -90,7 +90,7 @@ index b64e32908..24d48570a 100644
  fi
  
 diff --git a/auto/lib/openssl/conf b/auto/lib/openssl/conf
-index fdf430dff..761483b50 100644
+index fdf430d..ad6064d 100644
 --- a/auto/lib/openssl/conf
 +++ b/auto/lib/openssl/conf
 @@ -40,12 +40,15 @@ if [ $OPENSSL != NONE ]; then
@@ -103,9 +103,9 @@ index fdf430dff..761483b50 100644
 -            CORE_LIBS="$CORE_LIBS $OPENSSL/.openssl/lib/libcrypto.a"
 +            CORE_INCS="$CORE_INCS $OPENSSL/include"
 +            CORE_DEPS="$CORE_DEPS $OPENSSL/include/openssl/ssl.h"
-+            # CORE_LIBS="$CORE_LIBS $OPENSSL/lib/libssl.a"
-+            # CORE_LIBS="$CORE_LIBS $OPENSSL/lib/libcrypto.a"
-+            CORE_LIBS="$CORE_LIBS -L $OPENSSL/lib -lcrypto -lssl"
++            CORE_LIBS="$CORE_LIBS $OPENSSL/lib/libssl.a"
++            CORE_LIBS="$CORE_LIBS $OPENSSL/lib/libcrypto.a"
++            # CORE_LIBS="$CORE_LIBS -L $OPENSSL/lib -lcrypto -lssl"
              CORE_LIBS="$CORE_LIBS $NGX_LIBDL"
              CORE_LIBS="$CORE_LIBS $NGX_LIBPTHREAD"
 +            OPENSSL_ROOTFS=$OPENSSL
@@ -114,7 +114,7 @@ index fdf430dff..761483b50 100644
              if [ "$NGX_PLATFORM" = win32 ]; then
                  CORE_LIBS="$CORE_LIBS -lgdi32 -lcrypt32 -lws2_32"
 diff --git a/auto/lib/pcre/conf b/auto/lib/pcre/conf
-index cdf1809f5..d3a7dc0c1 100644
+index cdf1809..d3a7dc0 100644
 --- a/auto/lib/pcre/conf
 +++ b/auto/lib/pcre/conf
 @@ -43,8 +43,8 @@ if [ $PCRE != NONE ]; then
@@ -143,7 +143,7 @@ index cdf1809f5..d3a7dc0c1 100644
  
          esac
 diff --git a/auto/lib/zlib/conf b/auto/lib/zlib/conf
-index 239592e3c..a32388abf 100644
+index 239592e..a32388a 100644
 --- a/auto/lib/zlib/conf
 +++ b/auto/lib/zlib/conf
 @@ -4,7 +4,7 @@
@@ -171,7 +171,7 @@ index 239592e3c..a32388abf 100644
  
      esac
 diff --git a/auto/os/linux b/auto/os/linux
-index bc0556b3a..05af6a003 100644
+index bc0556b..05af6a0 100644
 --- a/auto/os/linux
 +++ b/auto/os/linux
 @@ -36,7 +36,7 @@ fi
@@ -220,7 +220,7 @@ index bc0556b3a..05af6a003 100644
  ngx_feature_path=
  ngx_feature_libs=
 diff --git a/auto/summary b/auto/summary
-index b3c07eedc..28e646ea3 100644
+index b3c07ee..28e646e 100644
 --- a/auto/summary
 +++ b/auto/summary
 @@ -18,6 +18,7 @@ else
@@ -247,7 +247,7 @@ index b3c07eedc..28e646ea3 100644
  esac
  
 diff --git a/auto/types/sizeof b/auto/types/sizeof
-index 480d8cfa4..52c7287a8 100644
+index 480d8cf..52c7287 100644
 --- a/auto/types/sizeof
 +++ b/auto/types/sizeof
 @@ -33,7 +33,7 @@ int main(void) {
@@ -260,7 +260,7 @@ index 480d8cfa4..52c7287a8 100644
  
  eval "$ngx_test >> $NGX_AUTOCONF_ERR 2>&1"
 diff --git a/auto/unix b/auto/unix
-index f29e69c61..da0106c19 100644
+index f29e69c..da0106c 100644
 --- a/auto/unix
 +++ b/auto/unix
 @@ -99,7 +99,7 @@ if test -z "$NGX_KQUEUE_CHECKED"; then
