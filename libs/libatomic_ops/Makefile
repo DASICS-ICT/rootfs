@@ -1,6 +1,6 @@
 NAME    = libatomic_ops.a
-IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/usr/lib)
 APP     = $(DST_DIR)/lib/$(NAME)
+NEED_INSTALL = false
 
 ifneq ($(RISCV_ROOTFS_HOME),)
 include $(RISCV_ROOTFS_HOME)/Makefile.app
