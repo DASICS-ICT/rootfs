@@ -143,7 +143,7 @@ index cdf1809..d3a7dc0 100644
  
          esac
 diff --git a/auto/lib/zlib/conf b/auto/lib/zlib/conf
-index 239592e..a32388a 100644
+index 239592e..42f87df 100644
 --- a/auto/lib/zlib/conf
 +++ b/auto/lib/zlib/conf
 @@ -4,7 +4,7 @@
@@ -162,9 +162,9 @@ index 239592e..a32388a 100644
 -            LINK_DEPS="$LINK_DEPS $ZLIB/libz.a"
 -            CORE_LIBS="$CORE_LIBS $ZLIB/libz.a"
 -            #CORE_LIBS="$CORE_LIBS -L $ZLIB -lz"
-+            # LINK_DEPS="$LINK_DEPS $ZLIB/lib/libz.a"
-+            # CORE_LIBS="$CORE_LIBS $ZLIB/lib/libz.a"
-+            CORE_LIBS="$CORE_LIBS -L $ZLIB/lib -lz"
++            LINK_DEPS="$LINK_DEPS $ZLIB/lib/libz.a"
++            CORE_LIBS="$CORE_LIBS $ZLIB/lib/libz.a"
++            # CORE_LIBS="$CORE_LIBS -L $ZLIB/lib -lz"
 +            ZLIB_ROOTFS=$ZLIB
 +            ZLIB=ROOTFS
          ;;
