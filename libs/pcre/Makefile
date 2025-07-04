@@ -1,6 +1,6 @@
-NAME    = libpcre.so.1
-IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/usr/lib)
+NAME    = libpcre.a
 APP     = $(DST_DIR)/lib/$(NAME)
+NEED_INSTALL = false
 
 ifneq ($(RISCV_ROOTFS_HOME),)
 include $(RISCV_ROOTFS_HOME)/Makefile.app
@@ -12,7 +12,7 @@ CROSS_COMPILE = riscv64-unknown-linux-gnu
 
 PCRE_REPO   = $(abspath repo)
 PCRE_CONFIG = $(PCRE_REPO)/config.status
-PCRE_SO     = $(PCRE_REPO)/.libs/libpcre.so.1.2.13
+PCRE_A      = $(PCRE_REPO)/.libs/libpcre.a
 
 .PHONY: pcre
 
@@ -22,7 +22,7 @@ pcre: $(PCRE_CONFIG)
 $(PCRE_CONFIG):
 	cd $(PCRE_REPO) && ./configure --host=$(CROSS_COMPILE) --prefix=$(DST_DIR)
 
-$(PCRE_SO): pcre
+$(PCRE_A): pcre
 
-$(APP): $(PCRE_SO)
+$(APP): $(PCRE_A)
 	$(MAKE) -C $(PCRE_REPO) install

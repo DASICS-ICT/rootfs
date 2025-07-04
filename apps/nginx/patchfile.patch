@@ -114,7 +114,7 @@ index fdf430d..ad6064d 100644
              if [ "$NGX_PLATFORM" = win32 ]; then
                  CORE_LIBS="$CORE_LIBS -lgdi32 -lcrypt32 -lws2_32"
 diff --git a/auto/lib/pcre/conf b/auto/lib/pcre/conf
-index cdf1809..d3a7dc0 100644
+index cdf1809..e396e9e 100644
 --- a/auto/lib/pcre/conf
 +++ b/auto/lib/pcre/conf
 @@ -43,8 +43,8 @@ if [ $PCRE != NONE ]; then
@@ -134,9 +134,9 @@ index cdf1809..d3a7dc0 100644
              *)
 -                LINK_DEPS="$LINK_DEPS $PCRE/.libs/libpcre.a"
 -                CORE_LIBS="$CORE_LIBS $PCRE/.libs/libpcre.a"
-+                # LINK_DEPS="$LINK_DEPS $PCRE/lib/libpcre.a"
-+                # CORE_LIBS="$CORE_LIBS $PCRE/lib/libpcre.a"
-+                CORE_LIBS="$CORE_LIBS -L $PCRE/lib -lpcre"
++                LINK_DEPS="$LINK_DEPS $PCRE/lib/libpcre.a"
++                CORE_LIBS="$CORE_LIBS $PCRE/lib/libpcre.a"
++                # CORE_LIBS="$CORE_LIBS -L $PCRE/lib -lpcre"
 +                PCRE_ROOTFS=$PCRE
 +                PCRE=ROOTFS
              ;;
