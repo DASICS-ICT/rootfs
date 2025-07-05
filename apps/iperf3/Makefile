@@ -11,7 +11,7 @@ IPERF3_REPO   = $(abspath repo)
 IPERF3_ELF    = $(IPERF3_REPO)/src/iperf3
 IPERF3_CONFIG = $(IPERF3_REPO)/src/iperf_config.h
 
-CROSS_COMPILE ?= riscv64-unknown-linux-gnu-
+CROSS_COMPILE ?= riscv64-unknown-linux-gnu
 
 .PHONY: iperf3
 
