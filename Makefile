@@ -1,6 +1,6 @@
 include Makefile.check
 
-APPS = busybox
+APPS = busybox dpdk
 APPS_DIR = $(addprefix apps/, $(APPS))
 LIBS =
 LIBS_DIR = $(addprefix libs/, $(LIBS))
