@@ -4,6 +4,7 @@ import sys
 import datetime
 import fnmatch
 
+EXTRA_LIBS = ["libgcc_s.so.1"]
 def write_timestamp_to_file(f):
     current_time = datetime.datetime.now()
     timestamp = (
@@ -42,6 +43,37 @@ def find_library_path(lib_name, sysroot, rootfsimg):
             return lib_path
     return None
 
+def link_extra_libraries(extra_libs, sysroot, rootfsimg, f):
+    """Process extra libraries"""
+    for lib_name in extra_libs:
+        print(f" - Processing extra library: {lib_name}")
+
+        # Find the actual path of the library
+        lib_path = find_library_path(lib_name, sysroot, rootfsimg)
+        if not lib_path:
+            print(f"  ! Warning: Extra library {lib_name} not found in sysroot or rootfsimg")
+            continue
+            
+        # Determine the target path
+        relative_dep_path = os.path.relpath(lib_path, rootfsimg).replace(os.sep, '/')
+        if '/usr/lib' in relative_dep_path:
+            target_dir = os.path.join(rootfsimg, 'usr/lib')
+        else:
+            target_dir = os.path.join(rootfsimg, 'lib')
+
+        # Ensure the target directory exists
+        if not os.path.exists(target_dir):
+            os.makedirs(target_dir, exist_ok=True)
+            print(f"  + Created directory: {target_dir}")
+
+        # Create symbolic link
+        link_path = os.path.join(target_dir, lib_name)
+        if not os.path.exists(link_path):
+            os.symlink(lib_path, link_path)
+            print(f"  + Created symlink: {link_path} -> {lib_path}")
+        else:
+            print(f"  • Symbolic link already exists: {link_path}")
+
 def link_dependencies_to_rootfsimg(rootfsimg_path, sysroot_path, f):
     # Create default link for ld-linux-riscv64-lp64d.so.1
     ld_linux_src = os.path.join(sysroot_path, 'lib', 'ld-linux-riscv64-lp64d.so.1')
@@ -69,6 +101,7 @@ def link_dependencies_to_rootfsimg(rootfsimg_path, sysroot_path, f):
                             link_path = os.path.join(target_dir, os.path.basename(dep))
                             if not os.path.exists(link_path):
                                 os.symlink(dep, link_path)
+    link_extra_libraries(EXTRA_LIBS, sysroot_path, rootfsimg_path, f)
 
 def import_dirs_to_initramfs(rootfsimg_path, f):
     f.write("# Create directories\n")
