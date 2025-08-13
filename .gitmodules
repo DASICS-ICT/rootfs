@@ -4,4 +4,4 @@
 	branch = 1_32_stable
 [submodule "apps/dpdk/repo"]
 	path = apps/dpdk/repo
-	url = https://github.com/DPDK/dpdk
+	url = https://github.com/DASICS-ICT/dpdk
