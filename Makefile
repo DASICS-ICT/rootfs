@@ -2,7 +2,7 @@ include Makefile.check
 
 APPS = busybox dpdk
 APPS_DIR = $(addprefix apps/, $(APPS))
-LIBS =
+LIBS = LibDASICS
 LIBS_DIR = $(addprefix libs/, $(LIBS))
 LIBS_DEP =
 LIBS_DEP_DIR = $(addprefix libs/, $(LIBS_DEP))
@@ -41,7 +41,7 @@ $(LIBS_DIR): %:
 	$(MAKE) -s -C $@ install
 
 network:
-	$(MAKE) -s -C $(NETWORK_DIR) NETWORK=$(NETWORK)
+	
 
 initramfs:
 	python $(UTILS_DIR)/gen_initramfs.py
