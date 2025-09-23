@@ -1,6 +1,6 @@
 include Makefile.check
 
-APPS = busybox iperf3 fio
+APPS = busybox iperf3 fio uintr
 APPS_DIR = $(addprefix apps/, $(APPS))
 LIBS =
 LIBS_DIR = $(addprefix libs/, $(LIBS))
