@@ -1,4 +1,4 @@
-NAME    = dpdk-vnic
+NAME    = dpdk-helloworld
 IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/bin)
 DASICS_SUPPORT = $(abspath $(RISCV_ROOTFS_HOME)/libs/LibDASICS)
 INC_DIR += $(DASICS_SUPPORT)/repo/include
@@ -14,20 +14,20 @@ CROSS_COMPILE = riscv64-unknown-linux-gnu
 
 DPDK_REPO   = $(abspath repo)
 #DPDK_CONFIG = $(BASH_REPO)/config.status
-DPDK_ELF    = $(DPDK_REPO)/riscv64-build-gcc/examples/dpdk-vnic
+DPDK_ELF    = $(DPDK_REPO)/riscv64-build-gcc/examples/dpdk-helloworld
 BUILD_DIR   = $(DPDK_REPO)/riscv64-build-gcc
 MESON_OPTIONS += \
 	-Dexamples=all --cross-file config/riscv/riscv64_linux_gcc 
 
-.PHONY: dpdk-vnic
+.PHONY: dpdk-helloworld
 
-dpdk-vnic:
+dpdk-helloworld:
 	cd $(DPDK_REPO) && \
 	meson setup riscv64-build-gcc $(MESON_OPTIONS)
 	cd $(DPDK_REPO) && \
 	ninja -C riscv64-build-gcc
 
-$(DPDK_ELF): dpdk-vnic
+$(DPDK_ELF): dpdk-helloworld
 
 $(APP): $(DPDK_ELF)
 	ln -sf $(abspath $<) $@
