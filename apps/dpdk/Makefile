@@ -27,7 +27,5 @@ dpdk-helloworld:
 	cd $(DPDK_REPO) && \
 	ninja -C riscv64-build-gcc
 
-$(DPDK_ELF): dpdk-helloworld
-
-$(APP): $(DPDK_ELF)
-	ln -sf $(abspath $<) $@
+$(APP): dpdk-helloworld
+	ln -sf $(DPDK_ELF) $@
