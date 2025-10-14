@@ -2,6 +2,8 @@ include Makefile.check
 
 APPS = busybox dpdk
 APPS_DIR = $(addprefix apps/, $(APPS))
+APPS_DEP = dperf
+APPS_DEP_DIR = $(addprefix apps/, $(APPS_DEP))
 LIBS = LibDASICS
 LIBS_DIR = $(addprefix libs/, $(LIBS))
 LIBS_DEP =
@@ -18,11 +20,11 @@ $(shell cd $(ROOTFSIMG_DIR) && mkdir -p $(ROOTFSIMG_NEW_DIRS))
 
 .DEFAULT_GOAL = all
 
-.PHONY: init all $(APPS_DIR) $(LIBS_DIR) $(LIBS_DEP_DIR) network initramfs clean repoclean distclean
+.PHONY: init all $(APPS_DIR) $(APPS_DEP_DIR) $(LIBS_DIR) $(LIBS_DEP_DIR) network initramfs clean repoclean distclean
 
 init:
 	git submodule update --init --depth 1
-	@$(foreach dir,$(APPS_DIR) $(LIBS_DIR) $(LIBS_DEP_DIR), \
+	@$(foreach dir,$(APPS_DIR) $(APPS_DEP_DIR) $(LIBS_DIR) $(LIBS_DEP_DIR), \
 		$(if $(wildcard $(dir)/repo), \
 			$(if $(wildcard $(dir)/patchfile.patch), \
 				echo "Applying patch to $(dir)/repo"; \
@@ -40,19 +42,25 @@ $(APPS_DIR): %: $(LIBS_DIR) $(LIBS_DEP_DIR)
 $(LIBS_DIR): %:
 	$(MAKE) -s -C $@ install
 
+$(APPS_DEP_DIR): %: $(APPS_DIR)
+	$(MAKE) -s -C $@ install
+
+$(LIBS_DEP_DIR): %: $(LIBS_DIR)
+	$(MAKE) -s -C $@ install
+
 network:
-	
+	$(MAKE) -s -C $(NETWORK_DIR) NETWORK=$(NETWORK)
 
 initramfs:
 	python $(UTILS_DIR)/gen_initramfs.py
 
 clean:
 	$(MAKE) -s -C $(NETWORK_DIR) clean
-	$(foreach dir, $(LIBS_DIR) $(LIBS_DEP_DIR) $(APPS_DIR), $(MAKE) -s -C $(dir) clean ;)
+	$(foreach dir, $(LIBS_DIR) $(LIBS_DEP_DIR) $(APPS_DIR) $(APPS_DEP_DIR), $(MAKE) -s -C $(dir) clean ;)
 	cd $(ROOTFSIMG_DIR) && rm -f initramfs*.txt && rm -rf $(ROOTFSIMG_NEW_DIRS)
 
 repoclean: clean
-	$(foreach dir, $(LIBS_DIR) $(LIBS_DEP_DIR) $(APPS_DIR), \
+	$(foreach dir, $(LIBS_DIR) $(LIBS_DEP_DIR) $(APPS_DIR) $(APPS_DEP_DIR), \
 		$(if $(wildcard $(dir)/repo/Makefile), \
 			$(MAKE) -s -C $(dir)/repo clean ;) \
 	)

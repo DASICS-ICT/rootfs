@@ -8,3 +8,6 @@
 [submodule "libs/LibDASICS/repo"]
 	path = libs/LibDASICS/repo
 	url = https://github.com/DASICS-ICT/LibDASICS
+[submodule "dperf"]
+	path = apps/dperf/repo
+	url = https://github.com/DASICS-ICT/dperf.git
