@@ -15,7 +15,10 @@ PROGS = $(patsubst $(SRC_DIR)/%.c, $(DST_DIR)/%, $(SRCS))
 
 # Compiler settings
 CC = $(CROSS_COMPILE)gcc
-CFLAGS = -Wall -O2 -static
+# Use -O1 to avoid aggressive optimizations that might reorder code
+# Use -fno-reorder-functions to preserve function order
+# Use -fno-align-functions to prevent automatic function alignment padding
+CFLAGS = -Wall -O1 -static -fno-reorder-functions -fno-align-functions
 
 # Build all test programs
 .PHONY: all_tests
