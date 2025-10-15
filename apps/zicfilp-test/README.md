@@ -4,10 +4,7 @@ RISC-V Zicfilp (Landing Pad) 扩展的用户态测试程序。
 
 ## 测试程序
 
-### 1. test_prctl.c
-测试 prctl 接口的基本功能（在禁用状态下）。
-
-### 2. test_zicfilp_correct.c
+### test_zicfilp_correct.c
 演示正确的 Zicfilp 测试方法：
 - 启用前：可以调用 printf
 - 启用后：只能使用 syscall
@@ -36,6 +33,5 @@ cd /path/to/rootfs
 
 ```bash
 # 在 NEMU 启动 Linux 后
-/root/test_prctl
 /root/test_zicfilp_correct
 ```
