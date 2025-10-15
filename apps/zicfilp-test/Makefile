@@ -1,0 +1,41 @@
+NAME    = zicfilp-test
+IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/root)
+NEED_INSTALL = false
+
+ifneq ($(RISCV_ROOTFS_HOME),)
+include $(RISCV_ROOTFS_HOME)/Makefile.app
+else
+$(error RISCV_ROOTFS_HOME is not defined)
+endif
+
+# Source files
+SRC_DIR = src
+SRCS = $(wildcard $(SRC_DIR)/*.c)
+PROGS = $(patsubst $(SRC_DIR)/%.c, $(DST_DIR)/%, $(SRCS))
+
+# Compiler settings
+CC = $(CROSS_COMPILE)gcc
+CFLAGS = -Wall -O2 -static
+
+# Build all test programs
+.PHONY: all_tests
+
+all_tests: $(PROGS)
+
+$(DST_DIR)/%: $(SRC_DIR)/%.c
+	@mkdir -p $(DST_DIR)
+	$(CC) $(CFLAGS) $< -o $@
+	@echo "Built: $@"
+
+# Dummy target for Makefile.app
+$(APP):
+	@echo "Building zicfilp tests..."
+	@$(MAKE) -s all_tests
+
+# Install all programs
+install:: all_tests
+	@mkdir -p $(IST_DIR)
+	@for prog in $(PROGS); do \
+		ln -sf $$(readlink -f $$prog) $(IST_DIR)/$$(basename $$prog); \
+		echo "Installed: $$(basename $$prog) -> $(IST_DIR)"; \
+	done
