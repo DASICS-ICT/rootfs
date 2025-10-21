@@ -38,7 +38,10 @@ $(APP):
 # Install all programs
 install:: all_tests
 	@mkdir -p $(IST_DIR)
+	@mkdir -p $(RISCV_ROOTFS_HOME)/rootfsimg/build
 	@for prog in $(PROGS); do \
 		ln -sf $$(readlink -f $$prog) $(IST_DIR)/$$(basename $$prog); \
 		echo "Installed: $$(basename $$prog) -> $(IST_DIR)"; \
+		cp -f $$prog $(RISCV_ROOTFS_HOME)/rootfsimg/build/$$(basename $$prog); \
+		echo "Copied: $$(basename $$prog) -> rootfsimg/build/"; \
 	done
