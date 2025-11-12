@@ -18,7 +18,7 @@ TESTPMD_ELF    = $(DPDK_REPO)/riscv64-build-gcc/app/dpdk-testpmd
 SIMPLEPERF_ELF = $(DPDK_REPO)/riscv64-build-gcc/examples/dpdk-simpleperf
 BUILD_DIR   = $(DPDK_REPO)/riscv64-build-gcc
 MESON_OPTIONS += \
-	-Dexamples=all --cross-file config/riscv/riscv64_linux_gcc 
+	-Dexamples=all -Denable_dbchecker=true --cross-file config/riscv/riscv64_linux_gcc 
 
 .PHONY: dpdk
 

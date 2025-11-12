@@ -7,4 +7,4 @@ mkdir -p /dev/hugepages
 mount -t hugetlbfs none /dev/hugepages
 # echo "0000:01:00.0" > /sys/bus/pci/drivers/igb/unbind
 echo "8086 1521" > /sys/bus/pci/drivers/igb_uio/new_id
-mknod /dev/uio0 c 252 0
+mknod /dev/uio1 c 252 1
