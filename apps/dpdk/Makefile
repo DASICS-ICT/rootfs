@@ -34,4 +34,4 @@ dpdk:
 $(APP): dpdk
 # 	ln -sf $(BUILD_DIR)/app/dpdk-testpmd $(RISCV_ROOTFS_HOME)/rootfsimg/bin/dpdk-testpmd
 	ln -sf $(BUILD_DIR)/examples/dpdk-simpleperf $(RISCV_ROOTFS_HOME)/rootfsimg/bin/dpdk-simpleperf
-	ln -sf $(BUILD_DIR)/examples/dpdk-l2fwd $(RISCV_ROOTFS_HOME)/rootfsimg/bin/dpdk-l2fwd
+# 	ln -sf $(BUILD_DIR)/examples/dpdk-l2fwd $(RISCV_ROOTFS_HOME)/rootfsimg/bin/dpdk-l2fwd
