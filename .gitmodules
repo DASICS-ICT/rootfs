@@ -40,4 +40,7 @@
 [submodule "apps/nginx-no-dasics/repo"]
 	path = apps/nginx-no-dasics/repo
 	url = https://github.com/nginx/nginx.git
+[submodule "openssh-9_9_p1"]
+	path = apps/openssh/repo
+	url = https://github.com/openssh/openssh-portable.git
 	ignore = all

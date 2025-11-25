@@ -1,17 +1,20 @@
 include Makefile.check
 
-APPS = busybox haveged nginx-openssl nginx-openssl-pcre nginx-openssl-pcre-zlib nginx-no-dasics
+APPS = busybox haveged nginx-openssl nginx-openssl-pcre nginx-openssl-pcre-zlib nginx-no-dasics openssh
 APPS_DIR = $(addprefix apps/, $(APPS))
 LIBS = pcre openssl zlib libatomic_ops LibDASICS
 LIBS_DIR = $(addprefix libs/, $(LIBS))
+LIBS_DEP =
+LIBS_DEP_DIR = $(addprefix libs/, $(LIBS_DEP))
 ROOTFSIMG_DIR = $(abspath rootfsimg)
 UTILS_DIR = $(abspath utils)
 NETWORK ?= dhcp
 NETWORK_DIR = $(abspath network)
 
-ROOTFSIMG_NEW_DIRS = bin dev lib proc sbin sys tmp mnt root \
+ROOTFSIMG_NEW_DIRS = bin dev ev/pts lib proc sbin sys tmp mnt root \
 	usr usr/bin usr/sbin usr/lib \
-	var var/run var/log var/log/nginx var/lib/nginx var/empty/nginx \
+	usr/local/bin usr/local/sbin usr/local/libexec/ usr/local/etc \
+	var var/run var/log var/log/nginx var/lib/nginx var/empty var/empty/nginx var/lastlog \
 	var/lib/nginx/tmp/client_body var/lib/nginx/tmp/fastcgi \
 	var/lib/nginx/tmp/proxy var/lib/nginx/tmp/scgi var/lib/nginx/tmp/uwsgi \
 	var/run/lock/subsys
@@ -20,11 +23,11 @@ $(shell cd $(ROOTFSIMG_DIR) && mkdir -p $(ROOTFSIMG_NEW_DIRS))
 
 .DEFAULT_GOAL = all
 
-.PHONY: init all $(APPS_DIR) $(LIBS_DIR) network initramfs clean repoclean distclean
+.PHONY: init all $(APPS_DIR) $(LIBS_DIR) $(LIBS_DEP_DIR) network initramfs clean repoclean distclean
 
 init:
 	git submodule update --init --depth 1
-	@$(foreach dir,$(APPS_DIR) $(LIBS_DIR), \
+	@$(foreach dir,$(APPS_DIR) $(LIBS_DIR) $(LIBS_DEP_DIR), \
 		$(if $(wildcard $(dir)/repo), \
 			$(if $(wildcard $(dir)/patchfile.patch), \
 				echo "Applying patch to $(dir)/repo"; \
@@ -36,7 +39,7 @@ init:
 all: $(APPS_DIR) network
 	$(MAKE) -s -C $(RISCV_ROOTFS_HOME) initramfs
 
-$(APPS_DIR): %: $(LIBS_DIR)
+$(APPS_DIR): %: $(LIBS_DIR) $(LIBS_DEP_DIR)
 	$(MAKE) -s -C $@ install
 
 $(LIBS_DIR): %:
@@ -50,11 +53,11 @@ initramfs:
 
 clean:
 	$(MAKE) -s -C $(NETWORK_DIR) clean
-	$(foreach dir, $(LIBS_DIR) $(APPS_DIR), $(MAKE) -s -C $(dir) clean ;)
+	$(foreach dir, $(LIBS_DIR) $(LIBS_DEP_DIR) $(APPS_DIR), $(MAKE) -s -C $(dir) clean ;)
 	cd $(ROOTFSIMG_DIR) && rm -f initramfs*.txt && rm -rf $(ROOTFSIMG_NEW_DIRS)
 
 repoclean: clean
-	$(foreach dir, $(LIBS_DIR) $(APPS_DIR), \
+	$(foreach dir, $(LIBS_DIR) $(LIBS_DEP_DIR) $(APPS_DIR), \
 		$(if $(wildcard $(dir)/repo/Makefile), \
 			$(MAKE) -s -C $(dir)/repo clean ;) \
 	)
