@@ -12,7 +12,6 @@ CROSS_COMPILE = riscv64-unknown-linux-gnu
 
 MEMCACHED_REPO   = $(abspath repo)
 MEMCACHED_CONFIG = $(MEMCACHED_REPO)/config.status
-MEMCACHED_ELF    = $(MEMCACHED_REPO)/memcached
 
 LIBEVENT_BUILD   = $(abspath $(RISCV_ROOTFS_HOME)/libs/libevent/build)
 
@@ -25,8 +24,5 @@ $(MEMCACHED_CONFIG):
 	cd $(MEMCACHED_REPO) && ./autogen.sh && \
 		./configure --host=$(CROSS_COMPILE) --prefix=$(DST_DIR) --with-libevent=$(LIBEVENT_BUILD)
 
-$(MEMCACHED_ELF): memcached
-	# FIXME: Deleting this comment will cause some fucking compiler errors.
-
-$(APP): $(MEMCACHED_ELF)
+$(APP): memcached
 	$(MAKE) -C $(MEMCACHED_REPO) install
