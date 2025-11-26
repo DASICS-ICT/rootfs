@@ -23,5 +23,5 @@ $(BUSYBOX_CONFIG): $(DEFAULT_CONFIG)
 
 $(BUSYBOX_ELF): busybox
 
-$(APP): $(BUSYBOX_ELF)
-	ln -sf $(abspath $<) $@
+$(APP): busybox
+	ln -sf $(abspath $(BUSYBOX_ELF)) $@

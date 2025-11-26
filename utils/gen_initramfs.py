@@ -21,7 +21,7 @@ def find_dependencies(executable, sysroot, rootfsimg):
         readelf_output = subprocess.check_output(['readelf', '-d', executable]).decode('utf-8')
         dependencies = []
         for line in readelf_output.splitlines():
-            if 'Shared library:' in line:
+            if '(NEEDED)' in line:
                 lib_name = line.split('[')[1].split(']')[0]
                 lib_path = find_library_path(lib_name, sysroot, rootfsimg)
                 if lib_path:
@@ -49,12 +49,14 @@ def link_dependencies_to_rootfsimg(rootfsimg_path, sysroot_path, f):
     if not os.path.exists(ld_linux_dst):
         os.symlink(ld_linux_src, ld_linux_dst)
 
-    for subdir in ['bin', 'sbin', 'usr/bin', 'usr/sbin', 'root']:
+    for subdir in ['bin', 'sbin', 'usr/bin', 'usr/sbin', 'root', 'lib', 'usr/lib']:
         full_dir_path = os.path.join(rootfsimg_path, subdir)
         if os.path.exists(full_dir_path):
             for file in os.listdir(full_dir_path):
                 file_path = os.path.join(full_dir_path, file)
-                if os.path.isfile(file_path) and os.access(file_path, os.X_OK):
+                if os.path.islink(file_path) and not os.path.exists(file_path):
+                    raise FileNotFoundError(f"SymLink {file_path} is broken")
+                if os.path.isfile(file_path) and (os.access(file_path, os.X_OK) or file_path.split('.')[1] == 'so'):
                     dependencies = find_dependencies(file_path, sysroot_path, rootfsimg_path)
                     for dep in dependencies:
                         if dep.startswith(sysroot_path):
@@ -83,7 +85,7 @@ def import_files_to_initramfs(rootfsimg_path, f):
     f.write("# Import initramfs files\n")
     for root, _, files in os.walk(rootfsimg_path):
         for file in files:
-            if fnmatch.fnmatch(file, 'initramfs*.txt') or fnmatch.fnmatch(file, '.gitignore'):
+            if fnmatch.fnmatch(file, 'initramfs*.txt') or fnmatch.fnmatch(file, '.git*'):
                 continue
             file_path = os.path.join(root, file)
             relative_path = os.path.relpath(file_path, rootfsimg_path).replace(os.sep, '/')

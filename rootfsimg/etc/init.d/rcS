@@ -1,9 +1,13 @@
 #!/bin/bash
 
-# Mount virtual file system
-mount -t proc proc /proc
-mount -t sysfs sysfs /sys
-mount -t tmpfs tmpfs /tmp
+# Mount file systems
+mount -a
+mdev -s
+
+# Configure network
+if [ -f /etc/init.d/setup-network.sh ]; then
+    sh /etc/init.d/setup-network.sh
+fi
 
 # Set environment variables
 export SHELL=/bin/bash
