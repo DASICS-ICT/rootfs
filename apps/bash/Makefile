@@ -21,7 +21,5 @@ bash: $(BASH_CONFIG)
 $(BASH_CONFIG):
 	cd $(BASH_REPO) && ./configure --host=$(CROSS_COMPILE)
 
-$(BASH_ELF): bash
-
-$(APP): $(BASH_ELF)
-	ln -sf $(abspath $<) $@
+$(APP): bash
+	ln -sf $(abspath $(BASH_ELF)) $@
