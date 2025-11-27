@@ -54,6 +54,8 @@ def link_dependencies_to_rootfsimg(rootfsimg_path, sysroot_path, f):
         if os.path.exists(full_dir_path):
             for file in os.listdir(full_dir_path):
                 file_path = os.path.join(full_dir_path, file)
+                if os.path.islink(file_path) and not os.path.exists(file_path):
+                    raise FileNotFoundError(f"SymLink {file_path} is broken")
                 if os.path.isfile(file_path) and (os.access(file_path, os.X_OK) or file_path.split('.')[1] == 'so'):
                     dependencies = find_dependencies(file_path, sysroot_path, rootfsimg_path)
                     for dep in dependencies:
