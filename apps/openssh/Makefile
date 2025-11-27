@@ -29,11 +29,8 @@ $(OPENSSH_CONFIG):
 			--disable-etc-default-login \
 			--without-zlib-version-check --without-openssl-header-check
 
-$(OPENSSH_ELF): openssh
-	# FIXME: Deleting this comment will cause unexpected compiler errors.
-
-$(APP): $(OPENSSH_ELF)
-	@ln -sf $(abspath $<) $@
+$(APP): openssh
+	@ln -sf $(abspath $(OPENSSH_ELF)) $@
 
 install:: $(APP)
 	@ln -sf $(OPENSSH_REPO)/sshd $(RISCV_ROOTFS_HOME)/rootfsimg/usr/local/sbin/sshd
