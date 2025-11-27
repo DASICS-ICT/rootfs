@@ -43,6 +43,16 @@ make clean
 
 This command cleans up the build directories of the specified applications and removes any generated `initramfs` files from the `rootfsimg` directory.
 
+### Cleaning submodules
+
+To remove all generated files inside submodules, run:
+
+```bash
+make repoclean
+```
+
+This command not only initiates a `make clean` operation but also extends its reach to clean up any generated files residing within the submodules.
+
 ### Deinitialization
 
 To deinitialize and remove all git submodules, run:
@@ -52,3 +62,13 @@ make distclean
 ```
 
 This command forcefully deinitializes all submodules, which is useful when you are about to switch git branches.
+
+### Generating initramfs manually
+
+To manually generate initramfs.txt, use:
+
+```bash
+make initramfs
+```
+
+This command is particularly useful when you need to modify or update the rootfsimg either after `make all` or independently of it.
