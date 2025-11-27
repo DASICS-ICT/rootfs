@@ -15,6 +15,7 @@ OPENSSL_DIR    = $(LIBS_DIR)/openssl/build
 
 OPENSSH_REPO   = $(abspath repo)
 OPENSSH_CONFIG = $(OPENSSH_REPO)/config.h
+OPENSSH_ELF    = $(OPENSSH_REPO)/ssh
 
 .PHONY: openssh
 
@@ -28,7 +29,10 @@ $(OPENSSH_CONFIG):
 			--disable-etc-default-login \
 			--without-zlib-version-check --without-openssl-header-check
 
-$(APP): openssh
+$(OPENSSH_ELF): openssh
+	# FIXME: Deleting this comment will cause unexpected compiler errors.
+
+$(APP): $(OPENSSH_ELF)
 	@ln -sf $(abspath $<) $@
 
 install:: $(APP)
