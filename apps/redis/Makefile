@@ -19,10 +19,8 @@ REDIS_BENCH = $(REDIS_REPO)/src/redis-benchmark
 redis:
 	$(MAKE) -C $(REDIS_REPO) CC=$(CROSS_COMPILE)gcc CXX=$(CROSS_COMPILE)g++ MALLOC=libc USE_SYSTEMD=no
 
-$(REDIS_SRV): redis
-
-$(APP): $(REDIS_SRV)
-	ln -sf $(abspath $<) $@
+$(APP): redis
+	ln -sf $(abspath $(REDIS_SRV)) $@
 
 # redis-server is installed in Makefile.app, thus we install redis.conf and redis-cli here
 install:: $(APP)
