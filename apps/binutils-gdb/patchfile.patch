@@ -1,0 +1,84 @@
+diff --git a/gdb/nat/riscv-linux-tdesc.c b/gdb/nat/riscv-linux-tdesc.c
+index d676233cc31..aa7875579e0 100644
+--- a/gdb/nat/riscv-linux-tdesc.c
++++ b/gdb/nat/riscv-linux-tdesc.c
+@@ -43,41 +43,44 @@ riscv_linux_read_features (int tid)
+   /* Figuring out xlen is easy.  */
+   features.xlen = sizeof (elf_greg_t);
+ 
+-  /* Start with no f-registers.  */
+-  features.flen = 0;
+-
+-  /* How much worth of f-registers can we fetch if any?  */
+-  for (flen = sizeof (regs.__f.__f[0]); ; flen *= 2)
+-    {
+-      size_t regset_size;
+-      struct iovec iov;
+-
+-      /* Regsets have a uniform slot size, so we count FSCR like
+-	 an FP data register.  */
+-      regset_size = ELF_NFPREG * flen;
+-      if (regset_size > sizeof (regs))
+-	break;
+-
+-      iov.iov_base = &regs;
+-      iov.iov_len = regset_size;
+-      if (ptrace (PTRACE_GETREGSET, tid, NT_FPREGSET,
+-		  (PTRACE_TYPE_ARG3) &iov) == -1)
+-	{
+-	  switch (errno)
+-	    {
+-	    case EINVAL:
+-	      continue;
+-	    case EIO:
+-	      break;
+-	    default:
+-	      perror_with_name (_("Couldn't get registers"));
+-	      break;
+-	    }
+-	}
+-      else
+-	features.flen = flen;
+-      break;
+-    }
++  // /* Start with no f-registers.  */
++  // features.flen = 0;
++
++  // /* How much worth of f-registers can we fetch if any?  */
++  // for (flen = sizeof (regs.__f.__f[0]); ; flen *= 2)
++  //   {
++  //     size_t regset_size;
++  //     struct iovec iov;
++
++  //     /* Regsets have a uniform slot size, so we count FSCR like
++	//  an FP data register.  */
++  //     regset_size = ELF_NFPREG * flen;
++  //     if (regset_size > sizeof (regs))
++	// break;
++
++  //     iov.iov_base = &regs;
++  //     iov.iov_len = regset_size;
++  //     if (ptrace (PTRACE_GETREGSET, tid, NT_FPREGSET,
++	// 	  (PTRACE_TYPE_ARG3) &iov) == -1)
++	// {
++	//   switch (errno)
++	//     {
++	//     case EINVAL:
++	//       continue;
++	//     case EIO:
++	//       break;
++	//     default:
++	//       perror_with_name (_("Couldn't get registers"));
++	//       break;
++	//     }
++	// }
++  //     else
++	// features.flen = flen;
++  //     break;
++  //   }
++
++  /* FIXME: Hardcode FLEN to 8 for now */
++  features.flen = 8;
+ 
+   return features;
+ }
