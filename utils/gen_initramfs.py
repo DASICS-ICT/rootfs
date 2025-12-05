@@ -131,4 +131,4 @@ if __name__ == "__main__":
 
     # Start to generate initramfs.txt
     generate_initramfs_txt(rootfsimg_path, sysroot_path, output_file)
-    print(f"initramfs.txt has been generated successfully at {output_file}")
+    print(f"[INFO] initramfs.txt has been generated successfully at {output_file}")
