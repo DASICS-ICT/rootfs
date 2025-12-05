@@ -16,6 +16,9 @@ BINUTILS_CONFIG = $(BINUTILS_REPO)/config.status
 GMP_BUILD = $(abspath $(RISCV_ROOTFS_HOME)/libs/gmp/build)
 MPFR_BUILD = $(abspath $(RISCV_ROOTFS_HOME)/libs/mpfr/build)
 
+# Sysroot path for finding libthread_db and other system libraries
+SYSROOT = $(RISCV)/sysroot
+
 .PHONY: binutils-gdb
 
 binutils-gdb: $(BINUTILS_CONFIG)
@@ -26,7 +29,8 @@ $(BINUTILS_CONFIG):
 		./configure --host=$(CROSS_COMPILE) --target=$(CROSS_COMPILE) \
 			--prefix=$(DST_DIR) \
 			--with-gmp=$(GMP_BUILD) --with-mpfr=$(MPFR_BUILD) \
-			--with-python=no
+			--with-python=no \
+			--with-sysroot=$(SYSROOT)
 
 $(APP): binutils-gdb
 	$(MAKE) -C $(BINUTILS_REPO) install

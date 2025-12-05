@@ -48,6 +48,12 @@ def link_dependencies_to_rootfsimg(rootfsimg_path, sysroot_path, f):
     if not os.path.exists(ld_linux_dst):
         os.symlink(ld_linux_src, ld_linux_dst)
 
+    # Create default link for libthread_db.so.1
+    libthread_db_src = os.path.join(sysroot_path, 'lib', 'libthread_db.so.1')
+    libthread_db_dst = os.path.join(rootfsimg_path, 'lib', 'libthread_db.so.1')
+    if not os.path.exists(libthread_db_dst):
+        os.symlink(libthread_db_src, libthread_db_dst)
+
     for subdir in ['bin', 'sbin', 'usr/bin', 'usr/sbin', 'root', 'lib', 'usr/lib']:
         full_dir_path = os.path.join(rootfsimg_path, subdir)
         if os.path.exists(full_dir_path):
