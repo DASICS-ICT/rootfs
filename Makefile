@@ -1,6 +1,6 @@
 include Makefile.check
 
-APPS = busybox
+APPS = busybox binutils-gdb
 APPS_DIR = $(addprefix apps/, $(APPS))
 LIBS = gmp
 LIBS_DIR = $(addprefix libs/, $(LIBS))

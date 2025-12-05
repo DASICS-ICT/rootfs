@@ -11,3 +11,8 @@
 	url = https://github.com/DASICS-ICT/mpfr.git
 	branch = mpfr-4.2.1
 	ignore = all
+[submodule "binutils-gdb-14"]
+	path = apps/binutils-gdb/repo
+	url = https://sourceware.org/git/binutils-gdb.git
+	branch = gdb-14-branch
+	ignore = all
