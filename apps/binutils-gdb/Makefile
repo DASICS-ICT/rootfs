@@ -30,3 +30,6 @@ $(BINUTILS_CONFIG):
 
 $(APP): binutils-gdb
 	$(MAKE) -C $(BINUTILS_REPO) install
+	@echo "Stripping binaries in $(DST_DIR)/bin ..."
+	@find $(DST_DIR)/bin -type f -executable -exec $(CROSS_COMPILE)-strip {} \; 2>/dev/null || true
+	@find $(DST_DIR)/bin -type f ! -executable | xargs file 2>/dev/null | grep -i "elf\|executable" | cut -d: -f1 | xargs -r $(CROSS_COMPILE)-strip 2>/dev/null || true
