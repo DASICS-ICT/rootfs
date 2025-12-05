@@ -27,10 +27,14 @@ $(DST_DIR)/%.o: %.c
 	@echo + CC $<
 	@mkdir -p $(dir $@)
 	@$(CC) $(CFLAGS) -c -o $@ $<
+$(DST_DIR)/%.o: %.S
+	@echo + CC $<
+	@mkdir -p $(dir $@)
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
 $(APP): $(OBJS)
 	@echo + LD $@
-	@$(LD) $(LDFLAGS) -o $(APP) $(OBJS)
+	@$(LD) -o $(APP) $(OBJS) $(LDFLAGS)
 	@$(OBJDUMP) -d $@ > $(patsubst %,%.txt,$@)
 
 # Dependencies
