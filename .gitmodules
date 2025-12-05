@@ -6,3 +6,8 @@
 	path = libs/gmp/repo
 	url = https://github.com/DASICS-ICT/gmp.git
 	ignore = all
+[submodule "mpfr-4_2_1"]
+	path = libs/mpfr/repo
+	url = https://github.com/DASICS-ICT/mpfr.git
+	branch = mpfr-4.2.1
+	ignore = all

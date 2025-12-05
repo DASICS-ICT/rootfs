@@ -4,7 +4,7 @@ APPS = busybox
 APPS_DIR = $(addprefix apps/, $(APPS))
 LIBS = gmp
 LIBS_DIR = $(addprefix libs/, $(LIBS))
-LIBS_DEP =
+LIBS_DEP = mpfr
 LIBS_DEP_DIR = $(addprefix libs/, $(LIBS_DEP))
 ROOTFSIMG_DIR = $(abspath rootfsimg)
 UTILS_DIR = $(abspath utils)
@@ -33,6 +33,9 @@ init:
 
 all: $(APPS_DIR) network
 	$(MAKE) -s -C $(RISCV_ROOTFS_HOME) initramfs
+
+libs/mpfr: libs/gmp
+	$(MAKE) -s -C $@ install
 
 $(APPS_DIR): %: $(LIBS_DIR) $(LIBS_DEP_DIR)
 	$(MAKE) -s -C $@ install
