@@ -1,0 +1,66 @@
+#!/bin/sh
+
+# ================= Configuration Area =================
+# Path to the test program (Use absolute path if not in PATH, e.g., ./build/dpdk-simpleperf)
+CMD="dpdk-simpleperf"
+
+# Test parameters
+SIZES="64 1024"
+MBUF_COUNTS="4096 8192 16384 32768 65536"
+SECONDS=15
+ITERATIONS=3
+# ======================================================
+
+echo "Starting mbuf sensitivity test..."
+echo "Test duration: ${SECONDS}s, Iterations per config: ${ITERATIONS}"
+echo "-------------------------------------------------------------------------------------------------"
+# Print header (Added 'Mbufs' column)
+printf "%-10s | %-10s | %-15s | %-15s | %-15s | %-15s\n" "Size" "Mbufs" "Run 1 (Mbps)" "Run 2 (Mbps)" "Run 3 (Mbps)" "Average (Mbps)"
+echo "-------------------------------------------------------------------------------------------------"
+
+for size in $SIZES; do
+    for mbuf in $MBUF_COUNTS; do
+        # Initialize sum variable
+        sum_bw=0
+        
+        # Variables to store results of 3 runs for printing
+        r1=0
+        r2=0
+        r3=0
+
+        # Inner loop: Run 3 times
+        for i in 1 2 3; do
+            # Run test command and capture output
+            # Note: Assuming dpdk-simpleperf outputs to stdout. Added 2>&1 just in case.
+            # Added --mbufs parameter here
+            output=$($CMD -- --size $size --mbufs $mbuf --seconds $SECONDS 2>&1)
+            
+            # Use awk to extract the value after 'Bandwidth:'
+            # Matching line example: Bandwidth:     716.748 Mbps
+            # $1 is Bandwidth:, $2 is the value, $3 is the unit
+            bw=$(echo "$output" | awk '/Bandwidth:/ {print $2}')
+            
+            # If extraction fails (e.g., program error), default to 0
+            if [ -z "$bw" ]; then
+                bw=0
+            fi
+
+            # Record individual results
+            if [ "$i" -eq 1 ]; then r1=$bw; fi
+            if [ "$i" -eq 2 ]; then r2=$bw; fi
+            if [ "$i" -eq 3 ]; then r3=$bw; fi
+
+            # Accumulate bandwidth (Shell doesn't support float, using awk)
+            sum_bw=$(awk "BEGIN {print $sum_bw + $bw}")
+        done
+
+        # Calculate average
+        avg_bw=$(awk "BEGIN {print $sum_bw / $ITERATIONS}")
+
+        # Format and print the result for the current Size and Mbuf count
+        printf "%-10s | %-10s | %-15s | %-15s | %-15s | %-15s\n" "$size" "$mbuf" "$r1" "$r2" "$r3" "$avg_bw"
+    done
+done
+
+echo "-------------------------------------------------------------------------------------------------"
+echo "Test finished"

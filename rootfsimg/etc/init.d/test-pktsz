@@ -1,7 +1,5 @@
 #!/bin/sh
 
-# ================= 配置区域 =================
-# 测试程序路径 (如果不在当前环境变量中，请改为绝对路径，例如 ./build/dpdk-simpleperf)
 CMD="dpdk-simpleperf"
 
 # 测试参数
@@ -18,45 +16,43 @@ printf "%-10s | %-15s | %-15s | %-15s | %-15s\n" "Size" "Run 1 (Mbps)" "Run 2 (M
 echo "----------------------------------------------------------------------------------"
 
 for size in $SIZES; do
-    # 初始化总和变量
+    # initialize sum variable
     sum_bw=0
     
-    # 用于存储3次结果的变量，方便最后打印
     r1=0
     r2=0
     r3=0
 
-    # 内部循环：运行3次
     for i in 1 2 3; do
-        # 运行测试命令并捕获输出
-        # 注意：这里假设 dpdk-simpleperf 输出到 stdout。如果它输出到 stderr，需要加 2>&1
+        # run the command and capture output
+        # notice: assuming dpdk-simpleperf outputs to stdout. If it outputs to stderr, add 2>&1
         output=$($CMD -- --size $size --seconds $SECONDS 2>&1)
         
-        # 使用 awk 提取 Bandwidth 后的数值
-        # 匹配行：Bandwidth:     716.748 Mbps
-        # $1是Bandwidth:, $2是数值, $3是单位
+        # use awk to extract the bandwidth value from the output
+        # matching line: Bandwidth:     716.748 Mbps
+        # $1 is Bandwidth:, $2 is the value, $3 is the unit
         bw=$(echo "$output" | awk '/Bandwidth:/ {print $2}')
         
-        # 如果获取失败（比如程序报错），默认为0
+        # if extraction fails (e.g., program error), default to 0
         if [ -z "$bw" ]; then
             bw=0
         fi
 
-        # 记录单次结果
+        # record individual run results
         if [ "$i" -eq 1 ]; then r1=$bw; fi
         if [ "$i" -eq 2 ]; then r2=$bw; fi
         if [ "$i" -eq 3 ]; then r3=$bw; fi
 
-        # 累加带宽 (Shell不支持浮点运算，使用awk进行累加)
+        # accumulate sum
         sum_bw=$(awk "BEGIN {print $sum_bw + $bw}")
     done
 
-    # 计算平均值
+    # calculate average
     avg_bw=$(awk "BEGIN {print $sum_bw / $ITERATIONS}")
 
-    # 格式化输出当前Size的测试结果
+    # format and print the results for the current Size
     printf "%-10s | %-15s | %-15s | %-15s | %-15s\n" "$size" "$r1" "$r2" "$r3" "$avg_bw"
 done
 
 echo "----------------------------------------------------------------------------------"
-echo "test finished"
+echo "test-pktsz finished"
