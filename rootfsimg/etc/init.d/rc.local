@@ -2,9 +2,13 @@
 
 true
 
-echo 128 > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
+echo 256 > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
 mkdir -p /dev/hugepages
 mount -t hugetlbfs none /dev/hugepages
 # echo "0000:01:00.0" > /sys/bus/pci/drivers/igb/unbind
 echo "8086 1521" > /sys/bus/pci/drivers/igb_uio/new_id
 mknod /dev/uio1 c 252 1
+
+# if [ -f /etc/init.d/test-pktsz ]; then
+#     sh /etc/init.d/test-pktsz
+# fi

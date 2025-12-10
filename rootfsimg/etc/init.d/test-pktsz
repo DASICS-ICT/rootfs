@@ -1,0 +1,62 @@
+#!/bin/sh
+
+# ================= 配置区域 =================
+# 测试程序路径 (如果不在当前环境变量中，请改为绝对路径，例如 ./build/dpdk-simpleperf)
+CMD="dpdk-simpleperf"
+
+# 测试参数
+SIZES="16 32 64 128 256 512 1024 1460"
+SECONDS=15
+ITERATIONS=3
+# ===========================================
+
+echo "start test-pktsz.."
+echo "test duration: ${SECONDS}s, each Size test iterations: ${ITERATIONS}"
+echo "----------------------------------------------------------------------------------"
+# Print header
+printf "%-10s | %-15s | %-15s | %-15s | %-15s\n" "Size" "Run 1 (Mbps)" "Run 2 (Mbps)" "Run 3 (Mbps)" "Average (Mbps)"
+echo "----------------------------------------------------------------------------------"
+
+for size in $SIZES; do
+    # 初始化总和变量
+    sum_bw=0
+    
+    # 用于存储3次结果的变量，方便最后打印
+    r1=0
+    r2=0
+    r3=0
+
+    # 内部循环：运行3次
+    for i in 1 2 3; do
+        # 运行测试命令并捕获输出
+        # 注意：这里假设 dpdk-simpleperf 输出到 stdout。如果它输出到 stderr，需要加 2>&1
+        output=$($CMD -- --size $size --seconds $SECONDS 2>&1)
+        
+        # 使用 awk 提取 Bandwidth 后的数值
+        # 匹配行：Bandwidth:     716.748 Mbps
+        # $1是Bandwidth:, $2是数值, $3是单位
+        bw=$(echo "$output" | awk '/Bandwidth:/ {print $2}')
+        
+        # 如果获取失败（比如程序报错），默认为0
+        if [ -z "$bw" ]; then
+            bw=0
+        fi
+
+        # 记录单次结果
+        if [ "$i" -eq 1 ]; then r1=$bw; fi
+        if [ "$i" -eq 2 ]; then r2=$bw; fi
+        if [ "$i" -eq 3 ]; then r3=$bw; fi
+
+        # 累加带宽 (Shell不支持浮点运算，使用awk进行累加)
+        sum_bw=$(awk "BEGIN {print $sum_bw + $bw}")
+    done
+
+    # 计算平均值
+    avg_bw=$(awk "BEGIN {print $sum_bw / $ITERATIONS}")
+
+    # 格式化输出当前Size的测试结果
+    printf "%-10s | %-15s | %-15s | %-15s | %-15s\n" "$size" "$r1" "$r2" "$r3" "$avg_bw"
+done
+
+echo "----------------------------------------------------------------------------------"
+echo "test finished"
