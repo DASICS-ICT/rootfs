@@ -1,0 +1,109 @@
+#!/bin/sh
+
+CMD="dpdk-simpleperf"
+
+# Test parameters
+SIZES="64 128 256 512 1024 1460"
+SECONDS=15
+ITERATIONS=5
+
+# ===========================================
+
+echo "Starting test-pkts..."
+echo "Test duration: ${SECONDS}s, Iterations per size: ${ITERATIONS}"
+echo "Result calculation: (Sum - Max - Min) / 3"
+echo "----------------------------------------------------------------------------------"
+
+# Initialize the final report variable with the header
+# Use printf to format the string initially
+FINAL_REPORT=$(printf "%-10s | %-12s | %-12s | %-12s | %-12s | %-12s | %-15s" "Size" "Run 1" "Run 2" "Run 3" "Run 4" "Run 5" "Avg(No Min/Max)")
+# Append separator line (sh does not support +=, use VAR="${VAR}...")
+FINAL_REPORT="${FINAL_REPORT}
+------------------------------------------------------------------------------------------------------------------"
+
+for size in $SIZES; do
+    # String to hold the raw bandwidth values for this packet size (space separated)
+    raw_values=""
+
+    echo ">> Testing Packet Size: $size"
+
+    # Fix: Use 'while' loop instead of C-style for loop for 'sh' compatibility
+    i=1
+    while [ "$i" -le "$ITERATIONS" ]; do
+        echo "   [Iteration $i/$ITERATIONS] Running..."
+        
+        # Run the command.
+        # We capture the output into the variable 'run_output' for parsing.
+        # Simultaneously, 'tee /dev/stderr' prints the output to the screen so the user can see it in real-time.
+        run_output=$($CMD -- --size "$size" --seconds "$SECONDS" 2>&1 | tee /dev/stderr)
+        
+        # Extract bandwidth using awk from the captured variable
+        bw=$(echo "$run_output" | awk '/Bandwidth:/ {print $2}')
+        
+        # If extraction fails, default to 0
+        if [ -z "$bw" ]; then
+            bw=0
+        fi
+
+        # Append the value to our list of raw values
+        raw_values="$raw_values $bw"
+        
+        echo "   -> Result: $bw Mbps"
+        echo "" 
+
+        # Increment counter (POSIX arithmetic)
+        i=$((i+1))
+    done
+
+    # Calculate the result for this packet size using awk
+    result_row=$(echo "$raw_values" | awk -v size="$size" '
+    {
+        # Initialize variables
+        min = $1
+        max = $1
+        sum = 0
+        
+        # Iterate through all fields (the 5 bandwidth values)
+        for (i = 1; i <= NF; i++) {
+            val = $i + 0 # force numeric context
+            sum += val
+            
+            if (val < min) min = val
+            if (val > max) max = val
+        }
+        
+        # Calculate Average: (Sum - Max - Min) / (Count - 2)
+        if (NF > 2) {
+            avg = (sum - max - min) / (NF - 2)
+        } else {
+            avg = 0 
+        }
+
+        # Format the output line
+        printf "%-10s | %-12s | %-12s | %-12s | %-12s | %-12s | %-15.3f", size, $1, $2, $3, $4, $5, avg
+    }')
+
+    # Append the calculated row to the final report
+    # Note: We add a literal newline inside the quotes for sh compatibility
+    FINAL_REPORT="${FINAL_REPORT}
+${result_row}"
+
+done
+
+# ===========================================
+# Final Output Section
+# ===========================================
+
+echo ""
+echo "=================================================================================================================="
+echo "                                            FINAL TEST REPORT                                                     "
+echo "=================================================================================================================="
+echo "Parameters:"
+echo "  Duration per run : ${SECONDS} seconds"
+echo "  Iterations       : ${ITERATIONS}"
+echo "  Calculation      : Average of middle 3 values (removing Min and Max)"
+echo "------------------------------------------------------------------------------------------------------------------"
+# Print the accumulated report
+echo "$FINAL_REPORT"
+echo "------------------------------------------------------------------------------------------------------------------"
+echo "test-pkts finished"
