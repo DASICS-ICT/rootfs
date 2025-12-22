@@ -108,7 +108,7 @@ index 0000000..806dffb
 +#endif // FIT_H
 \ No newline at end of file
 diff --git a/include/udasics.h b/include/udasics.h
-index 2448aa0..2425731 100644
+index a6e47fb..cbf58af 100644
 --- a/include/udasics.h
 +++ b/include/udasics.h
 @@ -16,6 +16,7 @@ extern "C" {
@@ -318,7 +318,7 @@ index 0000000..5b6b07f
 +}
 \ No newline at end of file
 diff --git a/src/udasics/udasics.c b/src/udasics/udasics.c
-index 76be029..245f833 100644
+index 8707b7d..dcf652c 100644
 --- a/src/udasics/udasics.c
 +++ b/src/udasics/udasics.c
 @@ -7,6 +7,7 @@
@@ -329,19 +329,22 @@ index 76be029..245f833 100644
  
  uint64_t umaincall_helper;
  
-@@ -194,4 +195,12 @@ uint64_t dasics_umaincall_helper(UmaincallTypes type, ...)
+@@ -194,6 +195,15 @@ uint64_t dasics_umaincall_helper(UmaincallTypes type, ...)
      // Judge This is a dynamic call
      uint64_t retval = 0;
  
 +    // Check whether the maincall is allowed to be called by the function closure
++    uint64_t maincall_pc = (uint64_t)(__builtin_return_address(0)) - 4;  // 4 is the length of jal
 +    if (fit_check_maincall(type) != 0) {
-+        printf("[DASICS MAINCALL] Invalid maincall %d, cancel this maincall\n", \
-+            type);
++        printf("[DASICS MAINCALL] Invalid maincall %d at %lx, cancel this maincall\n", \
++            type, maincall_pc);
 +        return -1;
 +    }
 +
 +    // Perform the maincall
      va_list args;
+     va_start(args, type);
+ 
 diff --git a/src/utrap/ecall.c b/src/utrap/ecall.c
 index c0f117a..0f53645 100644
 --- a/src/utrap/ecall.c
