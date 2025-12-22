@@ -60,7 +60,7 @@ index 0000000..75990a5
 \ No newline at end of file
 diff --git a/include/fit.h b/include/fit.h
 new file mode 100644
-index 0000000..5238a68
+index 0000000..806dffb
 --- /dev/null
 +++ b/include/fit.h
 @@ -0,0 +1,55 @@
@@ -115,8 +115,8 @@ index 0000000..5238a68
 +extern void fit_destroy(void);
 +extern void fit_print(void);
 +extern uint64_t fit_switchto(void *func, ...);
-+extern int fit_check_syscall(int sysno, uint64_t epc);
-+extern int fit_check_maincall(int maincall, uint64_t epc);
++extern int fit_check_syscall(int sysno);
++extern int fit_check_maincall(int maincall);
 +
 +#endif // FIT_H
 \ No newline at end of file
@@ -190,7 +190,7 @@ index d62e2eb..9b83693 100644
                                      unsigned long, \
 diff --git a/src/fit/fit.c b/src/fit/fit.c
 new file mode 100644
-index 0000000..088bf27
+index 0000000..5b6b07f
 --- /dev/null
 +++ b/src/fit/fit.c
 @@ -0,0 +1,191 @@
@@ -342,7 +342,7 @@ index 0000000..088bf27
 +    return ret;
 +}
 +
-+int fit_check_syscall(int sysno, uint64_t epc) {
++int fit_check_syscall(int sysno) {
 +    // Check if syscall number is valid
 +    if (sysno < 0 || sysno >= __NR_syscalls) {
 +        printf("Invalid syscall number %d\n", sysno);
@@ -364,7 +364,7 @@ index 0000000..088bf27
 +    }
 +}
 +
-+int fit_check_maincall(int maincall, uint64_t epc) {
++int fit_check_maincall(int maincall) {
 +    // Check if maincall number is valid
 +    if (maincall < 0 || maincall >= Umaincall_UNKNOWN) {
 +        printf("Invalid maincall number %d\n", maincall);
@@ -441,7 +441,7 @@ index 15faf97..b9c17db 100644
 +    addi   sp, sp, STACK_FRAME_SIZE_LIBCALL
      ret
 diff --git a/src/udasics/udasics.c b/src/udasics/udasics.c
-index 76be029..296c750 100644
+index 76be029..245f833 100644
 --- a/src/udasics/udasics.c
 +++ b/src/udasics/udasics.c
 @@ -7,6 +7,7 @@
@@ -458,7 +458,7 @@ index 76be029..296c750 100644
  
 +    // Check whether the maincall is allowed to be called by the function closure
 +    uint64_t maincall_pc = (uint64_t)regs->ra - 4;  // 4 is the length of jalr
-+    if (fit_check_maincall(regs->a0, maincall_pc) != 0) {
++    if (fit_check_maincall(regs->a0) != 0) {
 +        printf("[DASICS MAINCALL] Invalid maincall %d at %lx, cancel this maincall\n", \
 +            regs->a0, maincall_pc);
 +        regs->t1 = regs->ra;
@@ -471,7 +471,7 @@ index 76be029..296c750 100644
  
      va_list args;
 diff --git a/src/utrap/ecall.c b/src/utrap/ecall.c
-index c0f117a..1d22a58 100644
+index c0f117a..0f53645 100644
 --- a/src/utrap/ecall.c
 +++ b/src/utrap/ecall.c
 @@ -1,12 +1,20 @@
@@ -486,7 +486,7 @@ index c0f117a..1d22a58 100644
    regs->uepc += 4;  
  
 +  // Check whether the function closure is allowed to call the syscall
-+  if (fit_check_syscall(regs->a7, regs->uepc - 4) != 0)
++  if (fit_check_syscall(regs->a7) != 0)
 +  {
 +    // Invalid syscall
 +    printf("[DASICS EXCEPTION] Invalid syscall %d at %lx, cancel this syscall\n", regs->a7, regs->uepc - 4);
