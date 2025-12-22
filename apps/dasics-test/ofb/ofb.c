@@ -44,7 +44,7 @@ int main() {
     // Allocate permissions for stack
     uint64_t frame_addr, badfunc_stack_top;
     asm volatile("mv %0, sp" : "=r"(frame_addr));
-    badfunc_stack_top = frame_addr - 0x8;  // 0x8 is the stack size of lib_call
+    badfunc_stack_top = frame_addr - 72;  // 72 is the stack size of lib_call
     int idx_stack = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, badfunc_stack_top - 32, badfunc_stack_top);
 
     // Call the test function
