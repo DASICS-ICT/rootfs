@@ -4,7 +4,7 @@ CMD="dpdk-simpleperf"
 
 # Test parameters
 SIZES="64 128 256 512 1024 1460"
-SECONDS=15
+SECONDS=30
 ITERATIONS=5
 
 # ===========================================
@@ -34,8 +34,8 @@ for size in $SIZES; do
         
         # Run the command.
         # We capture the output into the variable 'run_output' for parsing.
-        # Simultaneously, 'tee /dev/stderr' prints the output to the screen so the user can see it in real-time.
-        run_output=$($CMD -- --size "$size" --seconds "$SECONDS" 2>&1 | tee /dev/stderr)
+        # Simultaneously, 'tee /dev/tty' prints the output to the screen so the user can see it in real-time.
+        run_output=$($CMD -- --size "$size" --seconds "$SECONDS" 2>&1 | tee /dev/tty)
         
         # Extract bandwidth using awk from the captured variable
         bw=$(echo "$run_output" | awk '/Bandwidth:/ {print $2}')

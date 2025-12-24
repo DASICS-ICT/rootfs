@@ -6,19 +6,19 @@ CMD="dpdk-simpleperf"
 # Test Parameters
 # ===========================================
 SIZES="64 1460"
-MBUFS_LIST="4096 8192 16384 32768 65000"
-SECONDS=30
+BURST_LIST="1 2 4 8 16 32 64 128"
+SECONDS=15
 ITERATIONS=5
 # ===========================================
 
-echo "Starting test-pktsz with mbufs variation..."
+echo "Starting test-pktsz with burst size variation..."
 echo "Test duration: ${SECONDS}s, Iterations per combo: ${ITERATIONS}"
 echo "Result calculation: (Sum - Max - Min) / 3"
 echo "----------------------------------------------------------------------------------"
 
 # Initialize the final report variable with the header
-# Adjusted width to accommodate the new Mbufs column
-FINAL_REPORT=$(printf "%-6s | %-8s | %-10s | %-10s | %-10s | %-10s | %-10s | %-15s" "Size" "Mbufs" "Run 1" "Run 2" "Run 3" "Run 4" "Run 5" "Avg(No Min/Max)")
+# Changed second column to "Burst"
+FINAL_REPORT=$(printf "%-6s | %-8s | %-10s | %-10s | %-10s | %-10s | %-10s | %-15s" "Size" "Burst" "Run 1" "Run 2" "Run 3" "Run 4" "Run 5" "Avg(No Min/Max)")
 
 # Append separator line (sh compatible concatenation)
 FINAL_REPORT="${FINAL_REPORT}
@@ -27,22 +27,22 @@ FINAL_REPORT="${FINAL_REPORT}
 # Outer loop: Packet Size
 for size in $SIZES; do
     
-    # Inner loop: Mbufs size
-    for mbufs in $MBUFS_LIST; do
+    # Inner loop: Burst size
+    for burst in $BURST_LIST; do
         
         # String to hold the raw bandwidth values for this combo
         raw_values=""
 
-        echo ">> Testing Packet Size: $size | Mbufs: $mbufs"
+        echo ">> Testing Packet Size: $size | Burst: $burst"
 
         # Iteration loop (using while for sh compatibility)
         i=1
         while [ "$i" -le "$ITERATIONS" ]; do
             echo "   [Iteration $i/$ITERATIONS] Running..."
             
-            # Run the command with both size and mbufs parameters
+            # Run the command with size and burst parameters
             # 2>&1 | tee /dev/tty allows seeing output in real-time while capturing it
-            run_output=$($CMD -- --size "$size" --mbufs "$mbufs" --seconds "$SECONDS" 2>&1 | tee /dev/tty)
+            run_output=$($CMD -- --size "$size" --burst "$burst" --seconds "$SECONDS" 2>&1 | tee /dev/tty)
             
             # Extract bandwidth using awk
             bw=$(echo "$run_output" | awk '/Bandwidth:/ {print $2}')
@@ -62,8 +62,8 @@ for size in $SIZES; do
         done
 
         # Calculate result for this row
-        # We pass both size and mbufs to awk
-        result_row=$(echo "$raw_values" | awk -v size="$size" -v mbufs="$mbufs" '
+        # We pass both size and burst to awk
+        result_row=$(echo "$raw_values" | awk -v size="$size" -v burst="$burst" '
         {
             min = $1
             max = $1
@@ -82,8 +82,8 @@ for size in $SIZES; do
                 avg = 0 
             }
 
-            # Print formatted row including the Mbufs column
-            printf "%-6s | %-8s | %-10s | %-10s | %-10s | %-10s | %-10s | %-15.3f", size, mbufs, $1, $2, $3, $4, $5, avg
+            # Print formatted row including the Burst column
+            printf "%-6s | %-8s | %-10s | %-10s | %-10s | %-10s | %-10s | %-15.3f", size, burst, $1, $2, $3, $4, $5, avg
         }')
 
         # Append row to final report
