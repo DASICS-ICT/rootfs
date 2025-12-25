@@ -1,0 +1,128 @@
+#!/bin/sh
+
+CMD="dpdk-simpleperf"
+
+# Test parameters
+SIZES="64 128 256 512 1024 1460"
+BURST=128
+SECONDS=30
+ITERATIONS=5
+
+# ===========================================
+
+echo "Starting test-cpu-time..."
+echo "Test duration: ${SECONDS}s, Iterations per size: ${ITERATIONS}"
+echo "Metrics: Activate CPU Time & Deactivate CPU Time"
+echo "Result calculation: (Sum - Max - Min) / 3 (Trimmed Mean)"
+echo "----------------------------------------------------------------------------------"
+
+# Initialize the final report variable with the header
+# Adjusting header to show both Average times
+FINAL_REPORT=$(printf "%-10s | %-20s | %-20s" "Size" "Avg Activate Time" "Avg Deactivate Time")
+FINAL_REPORT="${FINAL_REPORT}
+----------------------------------------------------------------------------------"
+
+for size in $SIZES; do
+    # Strings to hold the collected values for this packet size
+    act_cpu_values=""
+    deact_cpu_values=""
+
+    echo ">> Testing Packet Size: $size"
+
+    i=1
+    while [ "$i" -le "$ITERATIONS" ]; do
+        echo "   [Iteration $i/$ITERATIONS] Running..."
+        
+        # Run the command and capture output
+        # tee /dev/tty allows user to see raw output in real-time
+        run_output=$($CMD -- --size "$size" --burst "$BURST" --seconds "$SECONDS" 2>&1 | tee /dev/tty)
+        
+        # Extract Duration, Activate CPU Time, and Deactivate CPU Time using awk
+        # Target format assumption:
+        # Duration:              15.000474 s      -> $2
+        # Activate CPU Time:     123456           -> $4 (Activate=1, CPU=2, Time:=3, Val=4)
+        # Deactivate CPU Time:   654321           -> $4 (Deactivate=1, CPU=2, Time:=3, Val=4)
+        
+        metrics=$(echo "$run_output" | awk '
+            /Duration:/ { dur = $2 }
+            /Activate CPU Time:/ { act = $4 }
+            /Deactivate CPU Time:/ { deact = $4 }
+            END {
+                # Ensure we captured values, default to 0 if missing
+                if (dur == "") dur = 0;
+                if (act == "") act = 0;
+                if (deact == "") deact = 0;
+                print dur, act, deact
+            }
+        ')
+
+        # Read the extracted values into shell variables
+        dur=$(echo "$metrics" | cut -d' ' -f1)
+        act_val=$(echo "$metrics" | cut -d' ' -f2)
+        deact_val=$(echo "$metrics" | cut -d' ' -f3)
+
+        # Append to list for final calculation
+        act_cpu_values="$act_cpu_values $act_val"
+        deact_cpu_values="$deact_cpu_values $deact_val"
+        
+        echo "   -> Parsed: Dur=${dur}s, Activate=${act_val}, Deactivate=${deact_val}"
+        echo "" 
+
+        i=$((i+1))
+    done
+
+    # Function-like awk script to calculate trimmed mean
+    # Logic: Remove Min, Remove Max, Average the rest
+    calc_trimmed_avg() {
+        echo "$1" | awk '
+        {
+            if (NF == 0) { print "0"; exit }
+            min = $1; max = $1; sum = 0;
+            for (j = 1; j <= NF; j++) {
+                val = $j + 0;
+                sum += val;
+                if (val < min) min = val;
+                if (val > max) max = val;
+            }
+            # (Sum - Max - Min) / (Count - 2)
+            if (NF > 2) {
+                avg = (sum - max - min) / (NF - 2);
+            } else if (NF > 0) {
+                # Fallback if iterations <= 2 (just average them)
+                avg = sum / NF; 
+            } else {
+                avg = 0;
+            }
+            # Print as float with 1 decimal place
+            printf "%.1f", avg
+        }'
+    }
+
+    # Calculate final averages for both metrics
+    avg_act=$(calc_trimmed_avg "$act_cpu_values")
+    avg_deact=$(calc_trimmed_avg "$deact_cpu_values")
+
+    # Format the output line for the final report
+    result_row=$(printf "%-10s | %-20s | %-20s" "$size" "$avg_act" "$avg_deact")
+
+    FINAL_REPORT="${FINAL_REPORT}
+${result_row}"
+
+done
+
+# ===========================================
+# Final Output Section
+# ===========================================
+
+echo ""
+echo "=================================================================================="
+echo "                                FINAL TEST REPORT                                 "
+echo "=================================================================================="
+echo "Parameters:"
+echo "  Duration per run : ${SECONDS} seconds"
+echo "  Iterations       : ${ITERATIONS}"
+echo "  Calculation      : Average of middle 3 values (removing Min and Max)"
+echo "----------------------------------------------------------------------------------"
+echo "$FINAL_REPORT"
+echo "----------------------------------------------------------------------------------"
+echo "test-cpu-time finished"
