@@ -2,12 +2,12 @@
 	path = apps/busybox/repo
 	url = https://github.com/mirror/busybox.git
 	branch = 1_32_stable
-[submodule "apps/dpdk/repo"]
-	path = apps/dpdk/repo
-	url = https://github.com/DASICS-ICT/dpdk
 [submodule "libs/LibDASICS/repo"]
 	path = libs/LibDASICS/repo
 	url = https://github.com/DASICS-ICT/LibDASICS
-[submodule "dperf"]
-	path = apps/dperf/repo
-	url = https://github.com/DASICS-ICT/dperf.git
+[submodule "spdk"]
+	path = apps/spdk/repo
+	url = https://github.com/DASICS-ICT/spdk.git
+[submodule "libfuse"]
+	path = libs/libfuse/repo
+	url = https://github.com/libfuse/libfuse.git
