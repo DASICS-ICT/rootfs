@@ -11,3 +11,12 @@
 [submodule "libfuse"]
 	path = libs/libfuse/repo
 	url = https://github.com/libfuse/libfuse.git
+[submodule "openssl-3_4_0"]
+	path = libs/openssl/repo
+	url = https://github.com/openssl/openssl.git
+[submodule "cunit"]
+	path = libs/cunit/repo
+	url = https://github.com/jacklicn/CUnit.git
+[submodule "libnuma"]
+	path = libs/libnuma/repo
+	url = https://github.com/numactl/numactl.git

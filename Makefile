@@ -2,9 +2,7 @@ include Makefile.check
 
 APPS = busybox dpdk
 APPS_DIR = $(addprefix apps/, $(APPS))
-APPS_DEP = dperf
-APPS_DEP_DIR = $(addprefix apps/, $(APPS_DEP))
-LIBS = LibDASICS
+LIBS = openssl libfuse libuuid 
 LIBS_DIR = $(addprefix libs/, $(LIBS))
 LIBS_DEP =
 LIBS_DEP_DIR = $(addprefix libs/, $(LIBS_DEP))
