@@ -41,3 +41,6 @@
 	path = apps/nginx-no-dasics/repo
 	url = https://github.com/nginx/nginx.git
 	ignore = all
+[submodule "libs/sqlite3/repo"]
+	path = libs/sqlite3/repo
+	url = https://github.com/sqlite/sqlite.git
