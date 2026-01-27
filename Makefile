@@ -1,6 +1,6 @@
 include Makefile.check
 
-APPS = busybox dpdk
+APPS = busybox dpdk cdma_demo
 APPS_DIR = $(addprefix apps/, $(APPS))
 APPS_DEP = dperf
 APPS_DEP_DIR = $(addprefix apps/, $(APPS_DEP))

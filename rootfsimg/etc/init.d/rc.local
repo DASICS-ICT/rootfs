@@ -17,7 +17,7 @@ echo "8086 1521" > /sys/bus/pci/drivers/igb_uio/new_id
 
 # create device node (added error suppression to prevent errors if the file already exists)
 mknod /dev/uio1 c 252 1 2>/dev/null || true
-
+mknod /dev/uio2 c 252 2 2>/dev/null || true
 # run test script
 # if [ -f "$TEST_SCRIPT" ]; then
 #     echo "Running test script: $TEST_SCRIPT"
