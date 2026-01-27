@@ -1,6 +1,6 @@
 
 NAME    = cdma_demo
-SRCS    = axicdma_mmio_demo.c
+SRCS    = uio_utils.c dbchecker.c cdma_demo_poc.c
 IST_DIR = $(abspath $(RISCV_ROOTFS_HOME)/rootfsimg/bin)
 DASICS_SUPPORT = $(abspath $(RISCV_ROOTFS_HOME)/libs/LibDASICS)
 INC_DIR += $(DASICS_SUPPORT)/repo/include

@@ -12,6 +12,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "uio_utils.h"
+
 /* Minimal AXI CDMA register layout (copied from xaxicdma_hw.h). */
 #define XAXICDMA_CR_OFFSET          0x00
 #define XAXICDMA_SR_OFFSET          0x04
@@ -41,22 +43,12 @@ struct phys_map {
     size_t page_offset;
 };
 
-static uint32_t cdma_read(volatile uint8_t *regs, off_t offset)
-{
-    return *(volatile uint32_t *)(regs + offset);
-}
-
-static void cdma_write(volatile uint8_t *regs, off_t offset, uint32_t value)
-{
-    *(volatile uint32_t *)(regs + offset) = value;
-}
-
 static int cdma_reset(volatile uint8_t *regs)
 {
-    cdma_write(regs, XAXICDMA_CR_OFFSET, XAXICDMA_CR_RESET_MASK);
+    mmio_write32((void *)regs, XAXICDMA_CR_OFFSET, XAXICDMA_CR_RESET_MASK);
 
     for (int i = 0; i < RESET_TRIES; ++i) {
-        if ((cdma_read(regs, XAXICDMA_CR_OFFSET) & XAXICDMA_CR_RESET_MASK) == 0) {
+        if ((mmio_read32(regs, XAXICDMA_CR_OFFSET) & XAXICDMA_CR_RESET_MASK) == 0) {
             return 0;
         }
         usleep(RESET_WAIT_US);
@@ -69,7 +61,7 @@ static int cdma_reset(volatile uint8_t *regs)
 static void cdma_clear_errors(volatile uint8_t *regs)
 {
     /* Write 1s to clear sticky status bits. */
-    cdma_write(regs, XAXICDMA_SR_OFFSET, XAXICDMA_SR_ERR_ALL_MASK | XAXICDMA_XR_IRQ_ALL_MASK);
+    mmio_write32((void *)regs, XAXICDMA_SR_OFFSET, XAXICDMA_SR_ERR_ALL_MASK | XAXICDMA_XR_IRQ_ALL_MASK);
 }
 
 static int cdma_wait_idle(volatile uint8_t *regs, int timeout_ms)
@@ -77,7 +69,7 @@ static int cdma_wait_idle(volatile uint8_t *regs, int timeout_ms)
     int waited_ms = 0;
 
     while (waited_ms <= timeout_ms) {
-        uint32_t sr = cdma_read(regs, XAXICDMA_SR_OFFSET);
+        uint32_t sr = mmio_read32(regs, XAXICDMA_SR_OFFSET);
 
         if (sr & XAXICDMA_SR_ERR_ALL_MASK) {
             fprintf(stderr, "CDMA error: status=0x%08x\n", sr);
@@ -103,7 +95,7 @@ static int cdma_simple_transfer(volatile uint8_t *regs, uint64_t src, uint64_t d
         return -EINVAL;
     }
 
-    uint32_t cr = cdma_read(regs, XAXICDMA_CR_OFFSET);
+    uint32_t cr = mmio_read32(regs, XAXICDMA_CR_OFFSET);
     if (cr & XAXICDMA_CR_SGMODE_MASK) {
         fprintf(stderr, "CDMA is in scatter-gather mode; simple mode required\n");
         return -EINVAL;
@@ -117,13 +109,13 @@ static int cdma_simple_transfer(volatile uint8_t *regs, uint64_t src, uint64_t d
         return rc;
     }
 
-    cdma_write(regs, XAXICDMA_SRCADDR_OFFSET, (uint32_t)(src & 0xFFFFFFFFu));
-    cdma_write(regs, XAXICDMA_SRCADDR_MSB_OFFSET, (uint32_t)(src >> 32));
-    cdma_write(regs, XAXICDMA_DSTADDR_OFFSET, (uint32_t)(dst & 0xFFFFFFFFu));
-    cdma_write(regs, XAXICDMA_DSTADDR_MSB_OFFSET, (uint32_t)(dst >> 32));
+    mmio_write32((void *)regs, XAXICDMA_SRCADDR_OFFSET, (uint32_t)(src & 0xFFFFFFFFu));
+    mmio_write32((void *)regs, XAXICDMA_SRCADDR_MSB_OFFSET, (uint32_t)(src >> 32));
+    mmio_write32((void *)regs, XAXICDMA_DSTADDR_OFFSET, (uint32_t)(dst & 0xFFFFFFFFu));
+    mmio_write32((void *)regs, XAXICDMA_DSTADDR_MSB_OFFSET, (uint32_t)(dst >> 32));
 
     /* Writing BTT kicks off the transfer. */
-    cdma_write(regs, XAXICDMA_BTT_OFFSET, length);
+    mmio_write32((void *)regs, XAXICDMA_BTT_OFFSET, length);
 
     rc = cdma_wait_idle(regs, timeout_ms);
     if (rc) {
@@ -131,64 +123,6 @@ static int cdma_simple_transfer(volatile uint8_t *regs, uint64_t src, uint64_t d
     }
 
     return rc;
-}
-
-static const char *basename_const(const char *path)
-{
-    const char *slash = strrchr(path, '/');
-    return slash ? slash + 1 : path;
-}
-
-static int read_sysfs_hex(const char *path, uint64_t *value)
-{
-    FILE *f = fopen(path, "r");
-    if (!f) {
-        return -errno;
-    }
-
-    unsigned long long temp = 0;
-    int n = fscanf(f, "%llx", &temp);
-    fclose(f);
-
-    if (n != 1) {
-        return -EINVAL;
-    }
-
-    *value = (uint64_t)temp;
-    return 0;
-}
-
-static int map_uio_regs(const char *uio_path, volatile uint8_t **regs_out, size_t *size_out)
-{
-    char size_path[256];
-    const char *uio_name = basename_const(uio_path);
-    snprintf(size_path, sizeof(size_path), "/sys/class/uio/%s/maps/map0/size", uio_name);
-
-    uint64_t map_size = 0;
-    int rc = read_sysfs_hex(size_path, &map_size);
-    if (rc) {
-        fprintf(stderr, "Warning: could not read %s (%s), falling back to one page\n",
-                size_path, strerror(-rc));
-        map_size = (uint64_t)getpagesize();
-    }
-
-    int fd = open(uio_path, O_RDWR | O_SYNC);
-    if (fd < 0) {
-        perror("open uio");
-        return -errno;
-    }
-
-    void *regs = mmap(NULL, map_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    close(fd);
-
-    if (regs == MAP_FAILED) {
-        perror("mmap uio");
-        return -errno;
-    }
-
-    *regs_out = (volatile uint8_t *)regs;
-    *size_out = (size_t)map_size;
-    return 0;
 }
 
 static int map_phys_range(int memfd, uint64_t phys, size_t len, struct phys_map *out)
@@ -242,7 +176,7 @@ static void usage(const char *prog)
 
 int main(int argc, char **argv)
 {
-    const char *uio_path = "/dev/uio1";
+    const char *uio_path = NULL;
     const char *mem_path = "/dev/mem";
     uint64_t src_phys = 0;
     uint64_t dst_phys = 0;
@@ -305,9 +239,19 @@ int main(int argc, char **argv)
         verify_len = (size_t)length;
     }
 
+    char auto_uio[256];
+    if (!uio_path) {
+        if (find_uio_device_by_name("axi_cdma_uio", auto_uio, sizeof(auto_uio)) == 0) {
+            uio_path = auto_uio;
+         } else {
+            printf("error: no CDMA UIO device\n");
+            return 1;
+        }
+    }
+
     volatile uint8_t *regs = NULL;
     size_t regs_size = 0;
-    int rc = map_uio_regs(uio_path, &regs, &regs_size);
+    int rc = uio_map_regs(uio_path, &regs, &regs_size);
     if (rc) {
         return 1;
     }
