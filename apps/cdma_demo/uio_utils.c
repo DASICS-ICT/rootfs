@@ -21,7 +21,7 @@ int find_uio_device_by_name(const char *target_name, char *out_dev, size_t len)
     while ((ent = readdir(d)) != NULL) {
         if (strncmp(ent->d_name, "uio", 3) != 0)
             continue;
-        char name_path[256];
+        char name_path[300];
         snprintf(name_path, sizeof(name_path), "%s/%s/name", sys_uio, ent->d_name);
         FILE *f = fopen(name_path, "r");
         if (!f) continue;
@@ -100,31 +100,4 @@ int uio_map_regs(const char *uio_path, volatile uint8_t **regs_out, size_t *size
     return 0;
 }
 
-uint32_t mmio_read32(const volatile void *base, size_t offset)
-{
-    const volatile uint32_t *p = (const volatile uint32_t *)((const uint8_t *)base + offset);
-    return *p;
-}
-
-void mmio_write32(volatile void *base, size_t offset, uint32_t value)
-{
-    volatile uint32_t *p = (volatile uint32_t *)((volatile uint8_t *)base + offset);
-    *p = value;
-}
-
-uint64_t mmio_read64_lo_hi(const volatile void *base, size_t offset)
-{
-    const volatile uint32_t *plo = (const volatile uint32_t *)((const uint8_t *)base + offset);
-    const volatile uint32_t *phi = (const volatile uint32_t *)((const uint8_t *)base + offset + 4);
-    uint32_t lo = *plo;
-    uint32_t hi = *phi;
-    return ((uint64_t)hi << 32) | lo;
-}
-
-void mmio_write64_lo_hi(volatile void *base, size_t offset, uint64_t value)
-{
-    volatile uint32_t *plo = (volatile uint32_t *)((volatile uint8_t *)base + offset);
-    volatile uint32_t *phi = (volatile uint32_t *)((volatile uint8_t *)base + offset + 4);
-    *plo = (uint32_t)(value & 0xFFFFFFFFULL);
-    *phi = (uint32_t)((value >> 32) & 0xFFFFFFFFULL);
-}
+/* MMIO access is provided via macros in uio_utils.h now. */

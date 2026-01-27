@@ -37,15 +37,12 @@
 #define IDLE_POLL_US                1000
 
 /* Fixed PoC parameters: adjust to your platform. */
-
-static char *secret = "SECRET_DATA_1234\0";
-
 #define POC_SRC_PHYS                0xF1000000ULL
 #define POC_DST_PHYS                0xF1001000ULL
-#define POC_SRC_VIRT                (g_ctx.src_map.virt + g_ctx.src_map.page_offset)
-#define POC_DST_VIRT                (g_ctx.dst_map.virt + g_ctx.dst_map.page_offset)
+#define POC_SRC_VIRT                ((uint64_t)(g_ctx.src_map.virt + g_ctx.src_map.page_offset))
+#define POC_DST_VIRT                ((uint64_t)(g_ctx.dst_map.virt + g_ctx.dst_map.page_offset))
 #define POC_LEN_BYTES               (strlen(secret) + 1)
-#define POC_TIMEOUT_MS              1000
+#define POC_TIMEOUT_CYCLE           1000000
 
 struct phys_map {
     uint8_t *virt;
@@ -61,86 +58,12 @@ struct cdma_context {
     struct phys_map dst_map;
 };
 
-static struct cdma_context ATTR_ULIB_DATA g_ctx = {
+static struct cdma_context g_ctx = {
     .memfd = -1,
 };
 
-static int cdma_reset(volatile uint8_t *regs)
-{
-    mmio_write32((void *)regs, XAXICDMA_CR_OFFSET, XAXICDMA_CR_RESET_MASK);
 
-    for (int i = 0; i < RESET_TRIES; ++i) {
-        if ((mmio_read32(regs, XAXICDMA_CR_OFFSET) & XAXICDMA_CR_RESET_MASK) == 0) {
-            return 0;
-        }
-        usleep(RESET_WAIT_US);
-    }
-
-    fprintf(stderr, "CDMA reset timed out\n");
-    return -ETIMEDOUT;
-}
-
-static int cdma_wait_idle(volatile uint8_t *regs, int timeout_ms)
-{
-    int waited_ms = 0;
-
-    while (waited_ms <= timeout_ms) {
-        uint32_t sr = mmio_read32(regs, XAXICDMA_SR_OFFSET);
-
-        if (sr & XAXICDMA_SR_ERR_ALL_MASK) {
-            fprintf(stderr, "CDMA error: status=0x%08x\n", sr);
-            return -EIO;
-        }
-
-        if (sr & XAXICDMA_SR_IDLE_MASK) {
-            return 0;
-        }
-
-        usleep(IDLE_POLL_US);
-        waited_ms += IDLE_POLL_US / 1000;
-    }
-
-    return -ETIMEDOUT;
-}
-
-static int cdma_simple_transfer(volatile uint8_t *regs, uint64_t src, uint64_t dst,
-                                uint32_t length, int timeout_ms)
-{
-    if (length == 0) {
-        fprintf(stderr, "Length must be non-zero\n");
-        return -EINVAL;
-    }
-
-    uint32_t cr = mmio_read32(regs, XAXICDMA_CR_OFFSET);
-    if (cr & XAXICDMA_CR_SGMODE_MASK) {
-        fprintf(stderr, "CDMA is in scatter-gather mode; simple mode required\n");
-        return -EINVAL;
-    }
-
-    /* clear err: Write 1s to clear sticky status bits. */
-    mmio_write32((void *)regs, XAXICDMA_SR_OFFSET, XAXICDMA_SR_ERR_ALL_MASK | XAXICDMA_XR_IRQ_ALL_MASK);
-
-    int rc = cdma_wait_idle(regs, timeout_ms);
-    if (rc) {
-        fprintf(stderr, "CDMA not idle before start (%d)\n", rc);
-        return rc;
-    }
-
-    mmio_write32((void *)regs, XAXICDMA_SRCADDR_OFFSET, (uint32_t)(src & 0xFFFFFFFFu));
-    mmio_write32((void *)regs, XAXICDMA_SRCADDR_MSB_OFFSET, (uint32_t)(src >> 32));
-    mmio_write32((void *)regs, XAXICDMA_DSTADDR_OFFSET, (uint32_t)(dst & 0xFFFFFFFFu));
-    mmio_write32((void *)regs, XAXICDMA_DSTADDR_MSB_OFFSET, (uint32_t)(dst >> 32));
-
-    /* Writing BTT kicks off the transfer. */
-    mmio_write32((void *)regs, XAXICDMA_BTT_OFFSET, length);
-
-    rc = cdma_wait_idle(regs, timeout_ms);
-    if (rc) {
-        fprintf(stderr, "CDMA timed out waiting for completion (%d)\n", rc);
-    }
-
-    return rc;
-}
+static char ATTR_ULIB_DATA secret[100] = "SECRET_DATA_1234\0";
 
 static int map_phys_range(int memfd, uint64_t phys, size_t len, struct phys_map *out)
 {
@@ -221,6 +144,21 @@ static int cdma_init(void)
     return 0;
 }
 
+static int cdma_reset(volatile uint8_t *regs)
+{
+    mmio_write32((void *)regs, XAXICDMA_CR_OFFSET, XAXICDMA_CR_RESET_MASK);
+
+    for (int i = 0; i < RESET_TRIES; ++i) {
+        if ((mmio_read32(regs, XAXICDMA_CR_OFFSET) & XAXICDMA_CR_RESET_MASK) == 0) {
+            return 0;
+        }
+        usleep(RESET_WAIT_US);
+    }
+
+    fprintf(stderr, "CDMA reset timed out\n");
+    return -ETIMEDOUT;
+}
+
 static void cdma_exit(void)
 {
     struct cdma_context *ctx = &g_ctx;
@@ -230,45 +168,70 @@ static void cdma_exit(void)
     if (ctx->regs) munmap((void *)ctx->regs, ctx->regs_size);
 }
 
-static int cdma_verify(void)
+int ATTR_ULIB_TEXT cdma_wait_poll(volatile uint8_t *regs, int timeout_cycle)
 {
-    struct cdma_context *ctx = &g_ctx;
-    if (!ctx->src_map.virt || !ctx->dst_map.virt) return -EINVAL;
+    int waited_cycle = 0;
 
-    msync(ctx->dst_map.virt, ctx->dst_map.map_len, MS_SYNC);
+    while (waited_cycle <= timeout_cycle) {
+        uint32_t sr = mmio_read32(regs, XAXICDMA_SR_OFFSET);
 
-    uint8_t *src_ptr = ctx->src_map.virt + ctx->src_map.page_offset;
-    uint8_t *dst_ptr = ctx->dst_map.virt + ctx->dst_map.page_offset;
-    for (size_t i = 0; i < POC_LEN_BYTES; ++i) {
-        if (dst_ptr[i] != src_ptr[i]) {
-            fprintf(stderr, "Mismatch at byte %zu: dst=0x%02x src=0x%02x\n",
-                    i, dst_ptr[i], src_ptr[i]);
+        if (sr & XAXICDMA_SR_ERR_ALL_MASK) {
             return -EIO;
         }
+
+        if (sr & XAXICDMA_SR_IDLE_MASK) {
+            return 0;
+        }
+        waited_cycle++;
     }
-    printf("Data verified successfully.\n");
-    return 0;
+    return -ETIMEDOUT;
 }
 
-
-int origin_attack(void){
-    // simple mem/dev attack without any protection; can be better
-    printf("[ORIGIN_ULIB] try mem attack\n");
-    printf("secret in origin buffer: %s\n", (char *)POC_SRC_VIRT);
-    printf("[ORIGIN_ULIB] try dev attack\n");
-    if (cdma_simple_transfer(g_ctx.regs, POC_SRC_PHYS, POC_DST_PHYS, POC_LEN_BYTES, POC_TIMEOUT_MS) == 0) {
-        printf("[CDMA] Transfer completed.\n");
-        printf("secret in copied buffer: %s\n", (char *)POC_DST_VIRT);
+int ATTR_ULIB_TEXT cdma_simple_transfer(volatile uint8_t *regs, uint64_t src, uint64_t dst,
+                                uint32_t length, int timeout_cycle)
+{
+    if (length == 0) {
+        return -EINVAL;
     }
-    else return -1;
+    uint32_t cr = mmio_read32(regs, XAXICDMA_CR_OFFSET);
+    if (cr & XAXICDMA_CR_SGMODE_MASK) {
+        return -EINVAL;
+    }
+    /* clear err: Write 1s to clear sticky status bits. */
+    mmio_write32((void *)regs, XAXICDMA_SR_OFFSET, XAXICDMA_SR_ERR_ALL_MASK | XAXICDMA_XR_IRQ_ALL_MASK);
+    int rc = cdma_wait_poll(regs, timeout_cycle);
+    if (rc) {
+        return rc;
+    }
+
+    mmio_write32((void *)regs, XAXICDMA_SRCADDR_OFFSET, (uint32_t)(src & 0xFFFFFFFFu));
+    mmio_write32((void *)regs, XAXICDMA_SRCADDR_MSB_OFFSET, (uint32_t)(src >> 32));
+    mmio_write32((void *)regs, XAXICDMA_DSTADDR_OFFSET, (uint32_t)(dst & 0xFFFFFFFFu));
+    mmio_write32((void *)regs, XAXICDMA_DSTADDR_MSB_OFFSET, (uint32_t)(dst >> 32));
+    /* Writing BTT kicks off the transfer. */
+    mmio_write32((void *)regs, XAXICDMA_BTT_OFFSET, length);
+    rc = cdma_wait_poll(regs, timeout_cycle);
+    return rc;
 }
 
 int ATTR_ULIB_TEXT dasics_attack(void){
-    //......
+    dasics_umaincall(Umaincall_PRINT, "[ULIB] try mem attack\n");
+    dasics_umaincall(Umaincall_PRINT, "secret in origin buffer: %s\n", secret);
+    dasics_umaincall(Umaincall_PRINT, "[ULIB] try dev attack\n");
+    if (cdma_simple_transfer(g_ctx.regs, POC_SRC_PHYS, POC_DST_PHYS, POC_LEN_BYTES, POC_TIMEOUT_CYCLE) == 0) {
+        dasics_umaincall(Umaincall_PRINT, "[CDMA] Transfer completed.\n");
+        dasics_umaincall(Umaincall_PRINT, "secret in copied buffer: %s\n", (char *)POC_DST_VIRT);
+        return 0;
+    }
+    else{
+        dasics_umaincall(Umaincall_PRINT, "[CDMA] Transfer failed.\n");
+        return -1;
+    } 
 }
 
 int main(void)
 {
+    printf("DASICS + DBChecker CDMA PoC starting...\n");
     int rc;
     // initialize cdma
     if ((rc = cdma_init())){
@@ -280,46 +243,61 @@ int main(void)
         goto done;
     }
 
-    printf("DASICS + DBChecker CDMA PoC starting...\n");
-
     //prepare secret data
     strncpy((char *)POC_SRC_VIRT, secret, POC_LEN_BYTES);
-    printf("Prepared secret data: %s.\n", (char *)POC_SRC_VIRT);
-
+    printf("Prepared secret data in %p: %s.\n", (void *)POC_SRC_VIRT, (char *)POC_SRC_VIRT);
+    memset((void *)POC_DST_VIRT, 0, POC_LEN_BYTES); // clear dst buffer
+    printf("dest buffer at %p cleared.\n", (void *)POC_DST_VIRT);
 /*
-    Todo PoC:
-    1. no dasics, no dbchecker: mem/dev attack complete
-    2. with dasics, no dbchecker: mem attack blocked, dev attack complete
-    3. with dasics + dbchecker: mem/dev attack blocked
+    PoC:
+    1. with dasics, no dbchecker: mem attack blocked, dev attack complete
+    2. with dasics + dbchecker: mem/dev attack blocked
 */ 
 
-    printf("Case 1: no DASICS, no DBChecker\n");
-    origin_attack();
-
-    printf("Case 2: with DASICS, no DBChecker\n");
+    printf("Case 1: with DASICS, no DBChecker\n");
     register_udasics(0);
-    // ... (alloc dasics metadata)
-    dasics_attack();
-
-    printf("Case 3: with DASICS + DBChecker\n");
-    if (dbchecker_init()) return 1;
-    // ... (alloc dbchecker metadata)
-    dasics_attack();
-
-    // ===== ref code =====
-    // rc = cdma_simple_transfer(g_ctx.regs, POC_SRC_PHYS, POC_DST_PHYS, POC_LEN_BYTES, POC_TIMEOUT_MS);
-    // if (rc == 0) {
-    //     printf("Transfer completed.\n");
-    // }
-
-    // if (rc == 0) {
-    //     rc = cdma_verify();
-    // }
-    // ====================
     
-    if (!rc) printf("DASICS + DBChecker CDMA PoC: Test done.\n");
+    // Allocate jump bound for .ulibtext section
+    extern char __ULIBTEXT_BEGIN__, __ULIBTEXT_END__;
+    int idx_ulibtext = dasics_jumpcfg_alloc((uint64_t)&__ULIBTEXT_BEGIN__, (uint64_t)&__ULIBTEXT_END__);
+    // Allocate permissions for stack
+    uint64_t frame_addr, badfunc_stack_top;
+    asm volatile("mv %0, sp" : "=r"(frame_addr));
+    badfunc_stack_top = frame_addr - 72;  // 72 is the stack size of lib_call
+    int idx_stack = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, badfunc_stack_top - 32, badfunc_stack_top);
 
+
+    int idx_secret = dasics_libcfg_alloc(0, (uint64_t)&secret, (uint64_t)&secret + sizeof(secret));
+    // Allocate metadata for dst buffer
+    // the untrusted device only knows the dst buffer physical / userspace virtual address
+    int idx_dstbuf_ptr = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)&(g_ctx.dst_map), (uint64_t)&(g_ctx.dst_map) + sizeof(g_ctx.dst_map));
+    int idx_dstbuf = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, POC_DST_VIRT, POC_DST_VIRT + POC_LEN_BYTES);
+    int idx_cdma_ptr  = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)&(g_ctx.regs), (uint64_t)&(g_ctx.regs) + sizeof(g_ctx.regs));
+    int idx_cdma = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, (uint64_t)g_ctx.regs, (uint64_t)g_ctx.regs + g_ctx.regs_size);
+
+    // Call the test function
+    lib_call(&dasics_attack);
+
+    memset((void *)POC_DST_VIRT, 0, POC_LEN_BYTES); // clear dst buffer
+
+    printf("Case 2: with DASICS + DBChecker\n");
+    if ((rc = dbchecker_init(0xF0))) { // dev 4: cdma_simple; dev 5: cdma_sg
+        goto done;
+    }
+    // ... (alloc dbchecker metadata)
+    lib_call(&dasics_attack);
+    dbchecker_err_handler();
+
+    dasics_libcfg_free(idx_secret);
+    dasics_libcfg_free(idx_cdma_ptr);
+    dasics_libcfg_free(idx_cdma);;
+    dasics_libcfg_free(idx_dstbuf_ptr);
+    dasics_libcfg_free(idx_dstbuf);
+    dasics_libcfg_free(idx_stack);
+    dasics_jumpcfg_free(idx_ulibtext);
  done:
+    if (!rc) printf("DASICS + DBChecker CDMA PoC: Test done.\n");
+    else printf("DASICS + DBChecker CDMA PoC: Test failed with rc=%d.\n", rc);
     unregister_udasics();
     dbchecker_exit();
     cdma_exit();

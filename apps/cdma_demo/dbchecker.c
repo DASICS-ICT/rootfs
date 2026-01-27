@@ -317,7 +317,7 @@ int dbchecker_deactivate_mtdt(dma_addr_t addr){
 // }
 
 /* Initialize user-space DBChecker (open UIO, start poll thread) */
-int dbchecker_init(void)
+int dbchecker_init(int enable_mask)
 {
 
     /* try to locate device by name "dbchecker_uio" */
@@ -348,7 +348,7 @@ int dbchecker_init(void)
 
     mmio_write32(uio_map, DBCHECKER_DBTE_MB_LO_OFFSET, (uint32_t)(DBTE_TABLE_PHYS_ADDR & 0xFFFFFFFFUL));
     mmio_write32(uio_map, DBCHECKER_DBTE_MB_HI_OFFSET, (uint32_t)(DBTE_TABLE_PHYS_ADDR >> 32));
-    dbchecker_en_set(DBCHECKER_ENABLE_MASK);
+    dbchecker_en_set(enable_mask);
     dbchecker_enable = 1;
     printf("DBCHECKER (userspace): init, using %s\n", uio_device);
     return 0;

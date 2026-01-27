@@ -98,7 +98,7 @@ typedef union {
     uint32_t raw; // 整个 4 字节视图
 } __attribute__((packed, aligned(4))) dbchecker_cmd_u;
 
-#define DBCHECKER_ENABLE_MASK 0x3UL /* bypass device 31 by default */
+// #define DBCHECKER_ENABLE_MASK 0x3UL /* bypass device 31 by default */
 #define DBCHECKER_DISABLE_MASK 0x0UL
 #define UNTRUST_DEV_ID 0x0U
 
@@ -113,7 +113,7 @@ typedef union {
 #define wmb()		__asm__ __volatile__ ("fence w, w" : : : "memory")
 
 /* Public API */
-int dbchecker_init(void);
+int dbchecker_init(int enable_mask);
 void dbchecker_exit(void);
 int dbchecker_command(uint32_t cmd);
 void dbchecker_en_set(uint32_t dev_mask);
