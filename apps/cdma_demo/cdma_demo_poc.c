@@ -41,7 +41,7 @@
 #define POC_DST_PHYS                0xF1001000ULL
 #define POC_SRC_VIRT                ((uint64_t)(g_ctx.src_map.virt + g_ctx.src_map.page_offset))
 #define POC_DST_VIRT                ((uint64_t)(g_ctx.dst_map.virt + g_ctx.dst_map.page_offset))
-#define POC_LEN_BYTES               (strlen(secret) + 1)
+#define POC_LEN_BYTES               20
 #define POC_TIMEOUT_CYCLE           1000000
 
 struct phys_map {
@@ -63,7 +63,7 @@ static struct cdma_context g_ctx = {
 };
 
 
-static char ATTR_ULIB_DATA secret[100] = "SECRET_DATA_1234\0";
+static char secret[100] = "SECRET_DATA_1234\0";
 
 static int map_phys_range(int memfd, uint64_t phys, size_t len, struct phys_map *out)
 {
@@ -215,12 +215,22 @@ int ATTR_ULIB_TEXT cdma_simple_transfer(volatile uint8_t *regs, uint64_t src, ui
 }
 
 int ATTR_ULIB_TEXT dasics_attack(void){
+    char local_buf[POC_LEN_BYTES] = {0};    
     dasics_umaincall(Umaincall_PRINT, "[ULIB] try mem attack\n");
-    dasics_umaincall(Umaincall_PRINT, "secret in origin buffer: %s\n", secret);
+    for (int i=0; i<POC_LEN_BYTES; i++){
+        local_buf[i] = *((char *)POC_SRC_VIRT + i);
+    }
+    dasics_umaincall(Umaincall_PRINT, "[ULIB] secret in origin buffer: %s\n", local_buf);
+    for (int i=0; i<POC_LEN_BYTES; i++){
+        local_buf[i] = 0;
+    }
     dasics_umaincall(Umaincall_PRINT, "[ULIB] try dev attack\n");
     if (cdma_simple_transfer(g_ctx.regs, POC_SRC_PHYS, POC_DST_PHYS, POC_LEN_BYTES, POC_TIMEOUT_CYCLE) == 0) {
         dasics_umaincall(Umaincall_PRINT, "[CDMA] Transfer completed.\n");
-        dasics_umaincall(Umaincall_PRINT, "secret in copied buffer: %s\n", (char *)POC_DST_VIRT);
+        for (int i=0; i<POC_LEN_BYTES; i++){
+           local_buf[i] = *((char *)POC_DST_VIRT + i);
+        }
+        dasics_umaincall(Umaincall_PRINT, "[ULIB] secret in copied buffer: %s\n", local_buf);
         return 0;
     }
     else{
@@ -231,56 +241,58 @@ int ATTR_ULIB_TEXT dasics_attack(void){
 
 int main(void)
 {
-    printf("DASICS + DBChecker CDMA PoC starting...\n");
+    printf("[MAIN] DASICS + DBChecker CDMA PoC starting...\n");
     int rc;
     // initialize cdma
     if ((rc = cdma_init())){
-        fprintf(stderr, "CDMA init failed: %d\n", rc);
+        fprintf(stderr, "[MAIN] CDMA init failed: %d\n", rc);
         goto done;
     }
     if ((rc = cdma_reset(g_ctx.regs))) {
-        fprintf(stderr, "CDMA reset failed: %d\n", rc);
+        fprintf(stderr, "[MAIN] CDMA reset failed: %d\n", rc);
         goto done;
     }
 
     //prepare secret data
     strncpy((char *)POC_SRC_VIRT, secret, POC_LEN_BYTES);
-    printf("Prepared secret data in %p: %s.\n", (void *)POC_SRC_VIRT, (char *)POC_SRC_VIRT);
+    printf("[MAIN] Prepared secret data in %p: %s.\n", (void *)POC_SRC_VIRT, (char *)POC_SRC_VIRT);
     memset((void *)POC_DST_VIRT, 0, POC_LEN_BYTES); // clear dst buffer
-    printf("dest buffer at %p cleared.\n", (void *)POC_DST_VIRT);
+    printf("[MAIN] dest buffer at %p cleared.\n", (void *)POC_DST_VIRT);
 /*
     PoC:
     1. with dasics, no dbchecker: mem attack blocked, dev attack complete
     2. with dasics + dbchecker: mem/dev attack blocked
 */ 
 
-    printf("Case 1: with DASICS, no DBChecker\n");
+    printf("[MAIN] ======== Test Case 1: with DASICS, no DBChecker ======== \n");
+
     register_udasics(0);
     
     // Allocate jump bound for .ulibtext section
     extern char __ULIBTEXT_BEGIN__, __ULIBTEXT_END__;
     int idx_ulibtext = dasics_jumpcfg_alloc((uint64_t)&__ULIBTEXT_BEGIN__, (uint64_t)&__ULIBTEXT_END__);
+
+    // Allocate metadata for dst buffer
+    // the untrusted device only knows the g_ctx, but have no access of POC_SRC_VIRT
+    int idx_ctx = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)&g_ctx, (uint64_t)&g_ctx + sizeof(g_ctx));
+    int idx_dstbuf = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, POC_DST_VIRT, POC_DST_VIRT + POC_LEN_BYTES);
+    int idx_cdma = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, (uint64_t)g_ctx.regs, (uint64_t)g_ctx.regs + g_ctx.regs_size);
+
     // Allocate permissions for stack
     uint64_t frame_addr, badfunc_stack_top;
     asm volatile("mv %0, sp" : "=r"(frame_addr));
     badfunc_stack_top = frame_addr - 72;  // 72 is the stack size of lib_call
-    int idx_stack = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, badfunc_stack_top - 32, badfunc_stack_top);
-
-
-    int idx_secret = dasics_libcfg_alloc(0, (uint64_t)&secret, (uint64_t)&secret + sizeof(secret));
-    // Allocate metadata for dst buffer
-    // the untrusted device only knows the dst buffer physical / userspace virtual address
-    int idx_dstbuf_ptr = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)&(g_ctx.dst_map), (uint64_t)&(g_ctx.dst_map) + sizeof(g_ctx.dst_map));
-    int idx_dstbuf = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, POC_DST_VIRT, POC_DST_VIRT + POC_LEN_BYTES);
-    int idx_cdma_ptr  = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)&(g_ctx.regs), (uint64_t)&(g_ctx.regs) + sizeof(g_ctx.regs));
-    int idx_cdma = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, (uint64_t)g_ctx.regs, (uint64_t)g_ctx.regs + g_ctx.regs_size);
+    int idx_stack = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, badfunc_stack_top - 512, badfunc_stack_top);
 
     // Call the test function
     lib_call(&dasics_attack);
 
     memset((void *)POC_DST_VIRT, 0, POC_LEN_BYTES); // clear dst buffer
 
-    printf("Case 2: with DASICS + DBChecker\n");
+    printf("[MAIN] ======== Test Case 1 Ended ======== \n");
+
+    printf("[MAIN] ======== Test Case 2: with DASICS + DBChecker ======== \n");
+
     if ((rc = dbchecker_init(0xF0))) { // dev 4: cdma_simple; dev 5: cdma_sg
         goto done;
     }
@@ -288,16 +300,15 @@ int main(void)
     lib_call(&dasics_attack);
     dbchecker_err_handler();
 
-    dasics_libcfg_free(idx_secret);
-    dasics_libcfg_free(idx_cdma_ptr);
+    printf("[MAIN] ======== Test Case 2 Ended ======== \n");
     dasics_libcfg_free(idx_cdma);;
-    dasics_libcfg_free(idx_dstbuf_ptr);
     dasics_libcfg_free(idx_dstbuf);
+    dasics_libcfg_free(idx_ctx);
     dasics_libcfg_free(idx_stack);
     dasics_jumpcfg_free(idx_ulibtext);
  done:
-    if (!rc) printf("DASICS + DBChecker CDMA PoC: Test done.\n");
-    else printf("DASICS + DBChecker CDMA PoC: Test failed with rc=%d.\n", rc);
+    if (!rc) printf("[MAIN] DASICS + DBChecker CDMA PoC: Test done.\n");
+    else printf("[MAIN] DASICS + DBChecker CDMA PoC: Test failed with rc=%d.\n", rc);
     unregister_udasics();
     dbchecker_exit();
     cdma_exit();
