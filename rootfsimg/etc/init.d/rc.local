@@ -1,3 +1,21 @@
 #!/bin/sh
 
-true
+TEST_BIN=/root/test_dasics
+TEST_ARG=-dasics
+
+echo "[DASICS-TEST] START: ${TEST_BIN} ${TEST_ARG}"
+
+if [ ! -x "$TEST_BIN" ]; then
+    echo "[DASICS-TEST] MISSING: $TEST_BIN"
+    exit 0
+fi
+
+"$TEST_BIN" "$TEST_ARG"
+ret=$?
+if [ "$ret" -eq 0 ]; then
+    echo "[DASICS-TEST] PASS"
+else
+    echo "[DASICS-TEST] FAIL(code=$ret)"
+fi
+
+exit 0
