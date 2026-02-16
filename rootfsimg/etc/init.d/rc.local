@@ -1,21 +1,37 @@
 #!/bin/sh
 
-TEST_BIN=/root/test_dasics
-TEST_ARG=-dasics
+TEST_BINS="
+/root/test_sreg_guard_no_protect
+/root/test_sreg_guard_eager
+/root/test_sreg_guard_lazy
+/root/test_sreg_guard_proposed
+"
 
-echo "[DASICS-TEST] START: ${TEST_BIN} ${TEST_ARG}"
+echo "[DASICS-TEST] START: software-stage s-register guard suite"
 
-if [ ! -x "$TEST_BIN" ]; then
-    echo "[DASICS-TEST] MISSING: $TEST_BIN"
-    exit 0
-fi
+fail_count=0
+for test_bin in $TEST_BINS; do
+    if [ ! -x "$test_bin" ]; then
+        echo "[DASICS-TEST] MISSING: $test_bin"
+        fail_count=$((fail_count + 1))
+        continue
+    fi
 
-"$TEST_BIN" "$TEST_ARG"
-ret=$?
-if [ "$ret" -eq 0 ]; then
+    echo "[DASICS-TEST] RUN: $test_bin"
+    "$test_bin"
+    ret=$?
+    if [ "$ret" -eq 0 ]; then
+        echo "[DASICS-TEST] CASE PASS: $test_bin"
+    else
+        echo "[DASICS-TEST] CASE FAIL(code=$ret): $test_bin"
+        fail_count=$((fail_count + 1))
+    fi
+done
+
+if [ "$fail_count" -eq 0 ]; then
     echo "[DASICS-TEST] PASS"
 else
-    echo "[DASICS-TEST] FAIL(code=$ret)"
+    echo "[DASICS-TEST] FAIL(total_fail=$fail_count)"
 fi
 
 exit 0

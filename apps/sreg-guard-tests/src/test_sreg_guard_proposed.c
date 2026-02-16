@@ -1,0 +1,46 @@
+#include "sreg_guard_common.h"
+
+#include <stdio.h>
+
+int main(void) {
+    uint64_t saved_on_first_touch[SREG_COUNT];
+    uint64_t after[SREG_COUNT];
+    uint64_t integrity_tag = 0;
+    int rc = 0;
+
+    rc = sreg_guard_runtime_init("test_sreg_guard_proposed");
+    if (rc != 0) {
+        return 1;
+    }
+
+    sreg_set_pattern(0x5000);
+    sreg_call_untrusted_save_then_use();
+
+    /* Software proxy for lazy first-touch capture with integrity tag. */
+    sreg_take_snapshot(saved_on_first_touch);
+    integrity_tag = sreg_simple_tag(saved_on_first_touch);
+    sreg_call_untrusted_overwrite();
+
+    if (sreg_simple_tag(saved_on_first_touch) != integrity_tag) {
+        printf("[CHECK] integrity_tag: FAIL\n");
+        sreg_guard_runtime_fini();
+        printf("[RESULT] FAIL\n");
+        printf("[Finish] test dasics finished\n");
+        return 2;
+    }
+    printf("[CHECK] integrity_tag: PASS\n");
+
+    sreg_restore_snapshot(saved_on_first_touch);
+    sreg_take_snapshot(after);
+
+    rc = sreg_expect_match("proposed_restore_with_integrity_gate", saved_on_first_touch, after);
+    sreg_guard_runtime_fini();
+
+    if (rc == 0) {
+        printf("[RESULT] PASS\n");
+    } else {
+        printf("[RESULT] FAIL\n");
+    }
+    printf("[Finish] test dasics finished\n");
+    return rc;
+}
