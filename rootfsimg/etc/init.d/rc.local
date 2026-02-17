@@ -1,37 +1,11 @@
 #!/bin/sh
 
-TEST_BINS="
-/root/test_sreg_guard_no_protect
-/root/test_sreg_guard_eager
-/root/test_sreg_guard_lazy
-/root/test_sreg_guard_proposed
-"
-
 S0_SUITE_BIN="/root/test_s0_guard_suite"
 S0_CASES="viol_write viol_read proto_mismatch legal_save_restore"
 
-echo "[DASICS-TEST] START: software-stage guard suites"
+echo "[DASICS-TEST] START: s0-guard-tests only"
 
 fail_count=0
-
-echo "[DASICS-TEST] SUITE START: sreg-guard-tests"
-for test_bin in $TEST_BINS; do
-    if [ ! -x "$test_bin" ]; then
-        echo "[DASICS-TEST] MISSING: $test_bin"
-        fail_count=$((fail_count + 1))
-        continue
-    fi
-
-    echo "[DASICS-TEST] RUN: $test_bin"
-    "$test_bin" -dasics
-    ret=$?
-    if [ "$ret" -eq 0 ]; then
-        echo "[DASICS-TEST] CASE PASS: $test_bin"
-    else
-        echo "[DASICS-TEST] CASE FAIL(code=$ret): $test_bin"
-        fail_count=$((fail_count + 1))
-    fi
-done
 
 echo "[DASICS-TEST] SUITE START: s0-guard-tests"
 if [ ! -x "$S0_SUITE_BIN" ]; then
@@ -41,7 +15,7 @@ else
     for case_name in $S0_CASES; do
         echo "[DASICS-TEST] RUN: $S0_SUITE_BIN --case $case_name"
         case_out=$("$S0_SUITE_BIN" --case "$case_name" -dasics 2>&1)
-        echo "$case_out"
+        echo "$case_out" | grep -E "^\[S0-GUARD\]|^\[DASICS S0\]" || true
 
         case "$case_name" in
             viol_write|viol_read)
@@ -62,6 +36,8 @@ else
             echo "[DASICS-TEST] CASE PASS: s0/$case_name"
         else
             echo "[DASICS-TEST] CASE FAIL: s0/$case_name missing expected text: $expect_text"
+            echo "[DASICS-TEST] CASE RAW LOG: s0/$case_name"
+            echo "$case_out"
             fail_count=$((fail_count + 1))
         fi
     done

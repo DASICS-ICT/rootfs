@@ -70,6 +70,7 @@ int s0_guard_runtime_init(const char *case_name) {
 
     g_runtime_ready = 1;
     printf("[S0-GUARD] MODE: %s\n", case_name);
+    fflush(stdout);
     return 0;
 }
 
@@ -99,27 +100,31 @@ int s0_guard_call_untrusted(void (*fn)(void)) {
 }
 
 int s0_case_viol_write(void) {
-    printf("[S0-GUARD] case01_viol_write: trigger (expect fault)\n");
+    printf("[S0-GUARD] case01_viol_write: step1 call untrusted (expect VIOL fault)\n");
+    fflush(stdout);
     s0_guard_call_untrusted(s0_untrusted_viol_write);
     printf("[S0-GUARD] case01_viol_write: FAIL (unexpected return)\n");
     return 1;
 }
 
 int s0_case_viol_read(void) {
-    printf("[S0-GUARD] case02_viol_read: trigger (expect fault)\n");
+    printf("[S0-GUARD] case02_viol_read: step1 call untrusted (expect VIOL fault)\n");
+    fflush(stdout);
     s0_guard_call_untrusted(s0_untrusted_viol_read);
     printf("[S0-GUARD] case02_viol_read: FAIL (unexpected return)\n");
     return 1;
 }
 
 int s0_case_proto_mismatch(void) {
-    printf("[S0-GUARD] case03_proto_mismatch: trigger (expect fault)\n");
+    printf("[S0-GUARD] case03_proto_mismatch: step1 call untrusted (expect PROTO fault)\n");
+    fflush(stdout);
     s0_guard_call_untrusted(s0_untrusted_proto_mismatch);
     printf("[S0-GUARD] case03_proto_mismatch: FAIL (unexpected return)\n");
     return 1;
 }
 
 int s0_case_legal_save_restore(void) {
-    printf("[S0-GUARD] case04_legal_save_restore: trigger (expect success)\n");
+    printf("[S0-GUARD] case04_legal_save_restore: step1 call untrusted (expect success)\n");
+    fflush(stdout);
     return s0_guard_call_untrusted(s0_untrusted_legal_save_restore);
 }
