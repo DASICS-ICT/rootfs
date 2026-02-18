@@ -1,6 +1,6 @@
 include Makefile.check
 
-APPS = busybox sreg-guard-tests s0-guard-tests
+APPS = busybox sreg-guard-tests sreg-guard-suite
 APPS_DIR = $(addprefix apps/, $(APPS))
 LIBS =
 LIBS_DIR = $(addprefix libs/, $(LIBS))

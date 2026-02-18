@@ -1,45 +1,48 @@
 #!/bin/sh
 
-S0_SUITE_BIN="/root/test_s0_guard_suite"
-S0_CASES="viol_write viol_read proto_mismatch legal_save_restore"
+SREG_SUITE_BIN="/root/test_sreg_guard_suite"
+SREG_LIST="s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11"
+SREG_CASES="viol_write viol_read proto_mismatch legal_save_restore"
 
-echo "[DASICS-TEST] START: s0-guard-tests only"
+echo "[DASICS-TEST] START: sreg-guard-suite only"
 
 fail_count=0
 
-echo "[DASICS-TEST] SUITE START: s0-guard-tests"
-if [ ! -x "$S0_SUITE_BIN" ]; then
-    echo "[DASICS-TEST] MISSING: $S0_SUITE_BIN"
+echo "[DASICS-TEST] SUITE START: sreg-guard-suite"
+if [ ! -x "$SREG_SUITE_BIN" ]; then
+    echo "[DASICS-TEST] MISSING: $SREG_SUITE_BIN"
     fail_count=$((fail_count + 1))
 else
-    for case_name in $S0_CASES; do
-        echo "[DASICS-TEST] RUN: $S0_SUITE_BIN --case $case_name"
-        case_out=$("$S0_SUITE_BIN" --case "$case_name" -dasics 2>&1)
-        echo "$case_out" | grep -E "^\[S0-GUARD\]|^\[DASICS S0\]" || true
+    for reg_name in $SREG_LIST; do
+        for case_name in $SREG_CASES; do
+            echo "[DASICS-TEST] RUN: $SREG_SUITE_BIN --reg $reg_name --case $case_name"
+            case_out=$("$SREG_SUITE_BIN" --reg "$reg_name" --case "$case_name" -dasics 2>&1)
+            echo "$case_out" | grep -E "^\[SREG-GUARD\]|^\[DASICS SREG\]" || true
 
-        case "$case_name" in
-            viol_write|viol_read)
-                expect_text="[DASICS S0] VIOL fault"
-                ;;
-            proto_mismatch)
-                expect_text="[DASICS S0] PROTO fault"
-                ;;
-            legal_save_restore)
-                expect_text="[S0-GUARD] RESULT: PASS (legal_save_restore)"
-                ;;
-            *)
-                expect_text=""
-                ;;
-        esac
+            case "$case_name" in
+                viol_write|viol_read)
+                    expect_text="[DASICS SREG] VIOL fault"
+                    ;;
+                proto_mismatch)
+                    expect_text="[DASICS SREG] PROTO fault"
+                    ;;
+                legal_save_restore)
+                    expect_text="[SREG-GUARD] RESULT: PASS ($reg_name/$case_name)"
+                    ;;
+                *)
+                    expect_text=""
+                    ;;
+            esac
 
-        if [ -n "$expect_text" ] && echo "$case_out" | grep -Fq "$expect_text"; then
-            echo "[DASICS-TEST] CASE PASS: s0/$case_name"
-        else
-            echo "[DASICS-TEST] CASE FAIL: s0/$case_name missing expected text: $expect_text"
-            echo "[DASICS-TEST] CASE RAW LOG: s0/$case_name"
-            echo "$case_out"
-            fail_count=$((fail_count + 1))
-        fi
+            if [ -n "$expect_text" ] && echo "$case_out" | grep -Fq "$expect_text"; then
+                echo "[DASICS-TEST] CASE PASS: $reg_name/$case_name"
+            else
+                echo "[DASICS-TEST] CASE FAIL: $reg_name/$case_name missing expected text: $expect_text"
+                echo "[DASICS-TEST] CASE RAW LOG: $reg_name/$case_name"
+                echo "$case_out"
+                fail_count=$((fail_count + 1))
+            fi
+        done
     done
 fi
 
