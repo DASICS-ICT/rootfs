@@ -25,7 +25,9 @@ static const char *const g_sreg_names[] = {
     void sreg_untrusted_viol_write_##reg_name(void); \
     void sreg_untrusted_viol_read_##reg_name(void); \
     void sreg_untrusted_proto_mismatch_##reg_name(void); \
-    void sreg_untrusted_legal_save_restore_##reg_name(void)
+    void sreg_untrusted_legal_save_restore_##reg_name(void); \
+    void sreg_untrusted_auth_tamper_bitflip_##reg_name(void); \
+    void sreg_untrusted_auth_tamper_overwrite_##reg_name(void)
 
 DECLARE_SREG_CASES(s0);
 DECLARE_SREG_CASES(s1);
@@ -74,6 +76,24 @@ static sreg_untrusted_fn_t const g_legal_save_restore_fns[SREG_GUARD_REG_COUNT] 
     sreg_untrusted_legal_save_restore_s6, sreg_untrusted_legal_save_restore_s7,
     sreg_untrusted_legal_save_restore_s8, sreg_untrusted_legal_save_restore_s9,
     sreg_untrusted_legal_save_restore_s10, sreg_untrusted_legal_save_restore_s11,
+};
+
+static sreg_untrusted_fn_t const g_auth_tamper_bitflip_fns[SREG_GUARD_REG_COUNT] = {
+    sreg_untrusted_auth_tamper_bitflip_s0, sreg_untrusted_auth_tamper_bitflip_s1,
+    sreg_untrusted_auth_tamper_bitflip_s2, sreg_untrusted_auth_tamper_bitflip_s3,
+    sreg_untrusted_auth_tamper_bitflip_s4, sreg_untrusted_auth_tamper_bitflip_s5,
+    sreg_untrusted_auth_tamper_bitflip_s6, sreg_untrusted_auth_tamper_bitflip_s7,
+    sreg_untrusted_auth_tamper_bitflip_s8, sreg_untrusted_auth_tamper_bitflip_s9,
+    sreg_untrusted_auth_tamper_bitflip_s10, sreg_untrusted_auth_tamper_bitflip_s11,
+};
+
+static sreg_untrusted_fn_t const g_auth_tamper_overwrite_fns[SREG_GUARD_REG_COUNT] = {
+    sreg_untrusted_auth_tamper_overwrite_s0, sreg_untrusted_auth_tamper_overwrite_s1,
+    sreg_untrusted_auth_tamper_overwrite_s2, sreg_untrusted_auth_tamper_overwrite_s3,
+    sreg_untrusted_auth_tamper_overwrite_s4, sreg_untrusted_auth_tamper_overwrite_s5,
+    sreg_untrusted_auth_tamper_overwrite_s6, sreg_untrusted_auth_tamper_overwrite_s7,
+    sreg_untrusted_auth_tamper_overwrite_s8, sreg_untrusted_auth_tamper_overwrite_s9,
+    sreg_untrusted_auth_tamper_overwrite_s10, sreg_untrusted_auth_tamper_overwrite_s11,
 };
 
 static void reset_cfg_ids(void)
@@ -247,4 +267,28 @@ int sreg_case_legal_save_restore(int reg_index)
            reg_name);
     fflush(stdout);
     return sreg_guard_call_untrusted(sreg_lookup_fn(g_legal_save_restore_fns, reg_index));
+}
+
+int sreg_case_auth_tamper_bitflip(int reg_index)
+{
+    const char *reg_name = sreg_guard_reg_name(reg_index);
+
+    printf("[SREG-GUARD] reg=%s case05_auth_tamper_bitflip: step1 call untrusted (expect AUTH fault)\n",
+           reg_name);
+    fflush(stdout);
+    sreg_guard_call_untrusted(sreg_lookup_fn(g_auth_tamper_bitflip_fns, reg_index));
+    printf("[SREG-GUARD] reg=%s case05_auth_tamper_bitflip: FAIL (unexpected return)\n", reg_name);
+    return 1;
+}
+
+int sreg_case_auth_tamper_overwrite(int reg_index)
+{
+    const char *reg_name = sreg_guard_reg_name(reg_index);
+
+    printf("[SREG-GUARD] reg=%s case06_auth_tamper_overwrite: step1 call untrusted (expect AUTH fault)\n",
+           reg_name);
+    fflush(stdout);
+    sreg_guard_call_untrusted(sreg_lookup_fn(g_auth_tamper_overwrite_fns, reg_index));
+    printf("[SREG-GUARD] reg=%s case06_auth_tamper_overwrite: FAIL (unexpected return)\n", reg_name);
+    return 1;
 }

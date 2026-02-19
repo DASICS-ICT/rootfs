@@ -41,6 +41,29 @@ sreg_untrusted_legal_save_restore_\suffix:
     ld \reg, 0(sp)
     addi sp, sp, 16
     ret
+
+    .global sreg_untrusted_auth_tamper_bitflip_\suffix
+    .type sreg_untrusted_auth_tamper_bitflip_\suffix, @function
+sreg_untrusted_auth_tamper_bitflip_\suffix:
+    addi sp, sp, -16
+    sd \reg, 0(sp)
+    lbu t0, 0(sp)
+    xori t0, t0, 1
+    sb t0, 0(sp)
+    ld \reg, 0(sp)
+    addi sp, sp, 16
+    ret
+
+    .global sreg_untrusted_auth_tamper_overwrite_\suffix
+    .type sreg_untrusted_auth_tamper_overwrite_\suffix, @function
+sreg_untrusted_auth_tamper_overwrite_\suffix:
+    addi sp, sp, -16
+    sd \reg, 0(sp)
+    li t0, 0
+    sd t0, 0(sp)
+    ld \reg, 0(sp)
+    addi sp, sp, 16
+    ret
     .endm
 
     DEFINE_SREG_CASES s0,  s0,  0x123
