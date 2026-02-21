@@ -1,5 +1,14 @@
 #!/bin/sh
 
+if grep -qw "dasics_test=sreg_switch" /proc/cmdline 2>/dev/null; then
+    if [ -x /etc/init.d/rc.sreg-switch ]; then
+        exec /etc/init.d/rc.sreg-switch
+    fi
+    echo "[SREG-SWITCH-TEST] MISSING: /etc/init.d/rc.sreg-switch"
+    echo "[SREG-SWITCH-TEST] FAIL(total_fail=1)"
+    exit 0
+fi
+
 SREG_SUITE_BIN="/root/test_sreg_guard_suite"
 SREG_LIST="s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11"
 SREG_CASES="viol_write viol_read proto_mismatch legal_save_restore auth_tamper_bitflip auth_tamper_overwrite"
