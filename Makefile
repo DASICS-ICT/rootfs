@@ -2,7 +2,7 @@ include Makefile.check
 
 APPS = busybox dasics-test/rwx dasics-test/syscall dasics-test/argbound dasics-test/share
 APPS_DIR = $(addprefix apps/, $(APPS))
-LIBS = LibDASICS
+LIBS = LibDASICS mimalloc
 LIBS_DIR = $(addprefix libs/, $(LIBS))
 LIBS_DEP =
 LIBS_DEP_DIR = $(addprefix libs/, $(LIBS_DEP))
