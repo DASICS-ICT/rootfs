@@ -1,0 +1,930 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 0d780fa1..a2f6da95 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -35,6 +35,9 @@ option(MI_INSTALL_TOPLEVEL  "Install directly into $CMAKE_INSTALL_PREFIX instead
+ option(MI_NO_THP            "Disable transparent huge pages support on Linux/Android for the mimalloc process only" OFF)
+ option(MI_EXTRA_CPPDEFS     "Extra pre-processor definitions (use as `-DMI_EXTRA_CPPDEFS=\"opt1=val1;opt2=val2\"`)" "")
+
++# add options FOR DASICS
++option(MI_DASICS            "Use extra functions and parameters FOR DASICS" ON)
++
+ # negated options for vcpkg features
+ option(MI_NO_USE_CXX        "Use plain C compilation (has priority over MI_USE_CXX)" OFF)
+ option(MI_NO_OPT_ARCH       "Do not use architecture specific optimizations (like '-march=armv8.1-a' for example) (has priority over MI_OPT_ARCH)" OFF)
+@@ -275,6 +278,11 @@ if(MI_GUARDED)
+   endif()
+ endif()
+
++if(MI_DASICS)
++  message(STATUS "Compile DASICS extra functions (MI_DASICS=ON)")
++  list(APPEND mi_defines MI_DASICS=1)
++endif()
++
+ if(MI_SEE_ASM)
+   message(STATUS "Generate assembly listings (MI_SEE_ASM=ON)")
+   list(APPEND mi_cflags -save-temps)
+@@ -530,6 +538,9 @@ endif()
+ if(MI_TRACK_ASAN)
+   set(mi_libname "${mi_libname}-asan")
+ endif()
++if(MI_DASICS)
++  set(mi_libname "${mi_libname}-dasics")
++endif()
+ string(TOLOWER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_LC)
+ list(APPEND mi_defines "MI_CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE_LC}")  #todo: multi-config project needs $<CONFIG> ?
+ if(NOT(CMAKE_BUILD_TYPE_LC MATCHES "^(release|relwithdebinfo|minsizerel|none)$"))
+diff --git a/include/mimalloc.h b/include/mimalloc.h
+index ae6ae262..ff7a39bb 100644
+--- a/include/mimalloc.h
++++ b/include/mimalloc.h
+@@ -10,6 +10,11 @@ terms of the MIT license. A copy of the license can be found in the file
+
+ #define MI_MALLOC_VERSION 222   // major + 2 digits minor
+
++// add options FOR DASICS
++#if !defined(MI_DASICS)
++#define MI_DASICS 0
++#endif
++
+ // ------------------------------------------------------
+ // Compiler specific attributes
+ // ------------------------------------------------------
+@@ -323,6 +328,31 @@ mi_decl_export int mi_reserve_huge_os_pages(size_t pages, double max_secs, size_
+ mi_decl_export void mi_collect_reduce(size_t target_thread_owned) mi_attr_noexcept;
+
+
++// ------------------------------------------------------
++// APIs FOR DASICS
++// ------------------------------------------------------
++#if MI_DASICS
++
++// Fucntions for getting counters
++mi_decl_export int mi_get_heap_alloc_count_dasics(uint32_t library_id) mi_attr_noexcept;
++mi_decl_export int mi_get_heap_free_count_dasics(uint32_t library_id) mi_attr_noexcept;
++
++// find relative page and page size based on given library id and closure id
++mi_decl_export int mi_get_mem_area_dasics(uint32_t library_id, uint32_t closure_id, void** p, size_t* area_size) mi_attr_noexcept;
++
++
++// add external function for push libraray id into stack
++extern uint32_t global_library_id, global_closure_id;
++
++// add pointer boundery check functions
++#define OPT_LIBRARY 0
++#define OPT_CLOSURE 1
++mi_decl_export void mi_set_id_dasics(uint32_t id, uint32_t option) mi_attr_noexcept;
++mi_decl_export void mi_set_ids_dasics(uint32_t library_id, uint32_t closure_id) mi_attr_noexcept;
++mi_decl_export uint32_t mi_get_id_dasics(uint32_t option) mi_attr_noexcept;
++
++#endif
++
+
+ // ------------------------------------------------------
+ // Convenience
+diff --git a/include/mimalloc/internal.h b/include/mimalloc/internal.h
+index c53c841a..481d820e 100644
+--- a/include/mimalloc/internal.h
++++ b/include/mimalloc/internal.h
+@@ -252,6 +252,17 @@ void        _mi_padding_shrink(const mi_page_t* page, const mi_block_t* block, c
+ bool        _mi_page_is_valid(mi_page_t* page);
+ #endif
+
++// add internal functions FOR DASICS
++#if MI_DASICS
++// Searching functions
++mi_heap_t*  _mi_find_match_heap_and_retry_dasics(uint32_t library_id);
++mi_heap_t*  _mi_find_match_heap_dasics(uint32_t library_id);
++
++mi_segment_t * _mi_find_id_segment_dasics(mi_segments_tld_t * tld, uint32_t closure_id);
++void _mi_insert_segment_queue(mi_segments_tld_t * tld, mi_segment_t* segment);
++void _mi_remove_segment_queue(mi_segments_tld_t * tld, mi_segment_t* segment);
++#endif
++
+
+ // ------------------------------------------------------
+ // Branches
+@@ -1100,5 +1111,4 @@ static inline void _mi_memzero_aligned(void* dst, size_t n) {
+ }
+ #endif
+
+-
+ #endif
+diff --git a/include/mimalloc/types.h b/include/mimalloc/types.h
+index 1f4adc07..314b4958 100644
+--- a/include/mimalloc/types.h
++++ b/include/mimalloc/types.h
+@@ -242,6 +242,12 @@ typedef uintptr_t  mi_encoded_t;
+ // thread id's
+ typedef size_t     mi_threadid_t;
+
++// Add closure id and library id FOR DASICS
++#if MI_DASICS
++typedef uint32_t  mi_closure_id_t;
++typedef uint32_t  mi_library_id_t;
++#endif
++
+ // free lists contain blocks
+ typedef struct mi_block_s {
+   mi_encoded_t next;
+@@ -332,6 +338,11 @@ typedef struct mi_page_s {
+   uint8_t               free_is_zero:1;    // `true` if the blocks in the free list are zero initialized
+   uint8_t               retire_expire:7;   // expiration count for retired blocks
+
++  #if MI_DASICS
++  mi_library_id_t       library_id;        // library id FOR DASICS
++  mi_closure_id_t       closure_id;        // function closure id FOR DASICS
++  #endif
++
+   mi_block_t*           free;              // list of available free blocks (`malloc` allocates from this list)
+   mi_block_t*           local_free;        // list of deferred free blocks by this thread (migrates to `free`)
+   uint16_t              used;              // number of blocks in use (including blocks in `thread_free`)
+@@ -475,6 +486,13 @@ typedef struct mi_segment_s {
+   mi_commit_mask_t  purge_mask;         // slices that can be purged
+   mi_commit_mask_t  commit_mask;        // slices that are currently committed
+
++  #if MI_DASICS
++  mi_library_id_t       library_id;        // library id FOR DASICS
++  mi_closure_id_t       closure_id;        // function closure id FOR DASICS
++  struct mi_segment_s*  prev_segment;       // to prev segment
++  struct mi_segment_s*  next_segment;       // to next segment
++  #endif
++
+   // from here is zero initialized
+   struct mi_segment_s* next;            // the list of freed segments in the cache (must be first field, see `segment.c:mi_segment_init`)
+   bool              was_reclaimed;      // true if it was reclaimed (used to limit on-free reclamation)
+@@ -574,6 +592,11 @@ struct mi_heap_s {
+   size_t                guarded_sample_seed;                 // starting sample count
+   size_t                guarded_sample_count;                // current sample count (counting down to 0)
+   #endif
++  #if MI_DASICS
++  mi_library_id_t       library_id;                          // library id FOR DASICS
++  long                  alloc_count;                         // how often is memory alloc is called (including generic alloc and small alloc), FOR DASICS
++  long                  free_count;                          // how often is free called, FOR DASICS
++  #endif
+   mi_page_t*            pages_free_direct[MI_PAGES_DIRECT];  // optimize: array where every entry points a page with possibly free blocks in the corresponding queue for that size.
+   mi_page_queue_t       pages[MI_BIN_FULL + 1];              // queue of pages for each size class (or "bin")
+ };
+@@ -600,6 +623,16 @@ struct mi_subproc_s {
+ // Thread Local data
+ // ------------------------------------------------------
+
++#if MI_DASICS
++#define MAX_LIBRARYS 32
++#define MAX_CLOSURES 32
++typedef struct mi_bitvec_s {
++  uint32_t bit_array[MAX_LIBRARYS];
++} mi_bitvec_t;
++
++
++#endif
++
+ // A "span" is is an available range of slices. The span queues keep
+ // track of slice spans of at most the given `slice_count` (but more than the previous size class).
+ typedef struct mi_span_queue_s {
+@@ -618,6 +651,12 @@ typedef struct mi_segments_tld_s {
+   size_t              current_size; // current size of all segments
+   size_t              peak_size;    // peak size of all segments
+   size_t              reclaim_count;// number of reclaimed (abandoned) segments
++  // add closure track bit vector for segments
++  #if MI_DASICS
++  mi_bitvec_t*        seg_bit_vectors;// track bit vector for segments
++  mi_segment_t*       first_segment;
++  mi_segment_t*       last_segment;
++  #endif
+   mi_subproc_t*       subproc;      // sub-process this thread belongs to.
+   mi_stats_t*         stats;        // points to tld stats
+ } mi_segments_tld_t;
+@@ -668,6 +707,12 @@ void _mi_assert_fail(const char* assertion, const char* fname, unsigned int line
+ #define mi_assert_expensive(x)
+ #endif
+
++// add assert FOR DASICS
++#if (MI_DASICS)
++// use our own assertion to print without memory allocation
++void _mi_assert_fail_dasics(const char* assertion, const char* fname, unsigned int line, const char* func );
++#define mi_assert_dasics(expr)     ((expr) ? (void)0 : _mi_assert_fail_dasics(#expr,__FILE__,__LINE__,__func__))
++#endif
+
+ // ------------------------------------------------------
+ // Statistics
+diff --git a/src/alloc.c b/src/alloc.c
+index 2350dc9c..43d94eb3 100644
+--- a/src/alloc.c
++++ b/src/alloc.c
+@@ -143,7 +143,13 @@ static inline mi_decl_restrict void* mi_heap_malloc_small_zero(mi_heap_t* heap,
+
+   // get page in constant time, and allocate from it
+   mi_page_t* page = _mi_heap_get_free_small_page(heap, size + MI_PADDING_SIZE);
++  #if MI_DASICS
++  void* const p = ((page->library_id != global_library_id) || (page->closure_id != global_closure_id)) ?
++                 _mi_malloc_generic(heap, size + MI_PADDING_SIZE, zero, 0/*huge alignment*/) :
++                 _mi_page_malloc_zero(heap, page, size + MI_PADDING_SIZE, zero);
++  #else
+   void* const p = _mi_page_malloc_zero(heap, page, size + MI_PADDING_SIZE, zero);
++  #endif
+   mi_track_malloc(p,size,zero);
+
+   #if MI_STAT>1
+@@ -166,11 +172,21 @@ mi_decl_nodiscard extern inline mi_decl_restrict void* mi_heap_malloc_small(mi_h
+ }
+
+ mi_decl_nodiscard extern inline mi_decl_restrict void* mi_malloc_small(size_t size) mi_attr_noexcept {
++  #if MI_DASICS
++    mi_heap_t* heap = _mi_find_match_heap_and_retry_dasics(global_library_id);
++    if (heap == NULL) return NULL;
++    return mi_heap_malloc_small(heap, size);
++  #else
+   return mi_heap_malloc_small(mi_prim_get_default_heap(), size);
++  #endif
+ }
+
+ // The main allocation function
+ extern inline void* _mi_heap_malloc_zero_ex(mi_heap_t* heap, size_t size, bool zero, size_t huge_alignment) mi_attr_noexcept {
++  #if MI_DASICS
++  // add malloc counter here?
++  heap->alloc_count++;
++  #endif
+   // fast path for small objects
+   if mi_likely(size <= MI_SMALL_SIZE_MAX) {
+     mi_assert_internal(huge_alignment == 0);
+@@ -212,12 +228,24 @@ mi_decl_nodiscard extern inline mi_decl_restrict void* mi_heap_malloc(mi_heap_t*
+ }
+
+ mi_decl_nodiscard extern inline mi_decl_restrict void* mi_malloc(size_t size) mi_attr_noexcept {
++  #if MI_DASICS
++  mi_heap_t* heap = _mi_find_match_heap_and_retry_dasics(global_library_id);
++  if (heap == NULL) return NULL;
++  return mi_heap_malloc(heap, size);
++  #else
+   return mi_heap_malloc(mi_prim_get_default_heap(), size);
++  #endif
+ }
+
+ // zero initialized small block
+ mi_decl_nodiscard mi_decl_restrict void* mi_zalloc_small(size_t size) mi_attr_noexcept {
++  #if MI_DASICS
++    mi_heap_t* heap = _mi_find_match_heap_and_retry_dasics(global_library_id);
++    if (heap == NULL) return NULL;
++    return mi_heap_malloc_small_zero(heap, size, true);
++  #else
+   return mi_heap_malloc_small_zero(mi_prim_get_default_heap(), size, true);
++  #endif
+ }
+
+ mi_decl_nodiscard extern inline mi_decl_restrict void* mi_heap_zalloc(mi_heap_t* heap, size_t size) mi_attr_noexcept {
+@@ -225,7 +253,13 @@ mi_decl_nodiscard extern inline mi_decl_restrict void* mi_heap_zalloc(mi_heap_t*
+ }
+
+ mi_decl_nodiscard mi_decl_restrict void* mi_zalloc(size_t size) mi_attr_noexcept {
++  #if MI_DASICS
++    mi_heap_t* heap = _mi_find_match_heap_and_retry_dasics(global_library_id);
++    if (heap == NULL) return NULL;
++    return mi_heap_zalloc(heap, size);
++  #else
+   return mi_heap_zalloc(mi_prim_get_default_heap(),size);
++  #endif
+ }
+
+
+@@ -236,7 +270,13 @@ mi_decl_nodiscard extern inline mi_decl_restrict void* mi_heap_calloc(mi_heap_t*
+ }
+
+ mi_decl_nodiscard mi_decl_restrict void* mi_calloc(size_t count, size_t size) mi_attr_noexcept {
++  #if MI_DASICS
++    mi_heap_t* heap = _mi_find_match_heap_and_retry_dasics(global_library_id);
++    if (heap == NULL) return NULL;
++    return mi_heap_calloc(heap, count, size);
++  #else
+   return mi_heap_calloc(mi_prim_get_default_heap(),count,size);
++  #endif
+ }
+
+ // Uninitialized `calloc`
+@@ -247,7 +287,13 @@ mi_decl_nodiscard extern mi_decl_restrict void* mi_heap_mallocn(mi_heap_t* heap,
+ }
+
+ mi_decl_nodiscard mi_decl_restrict void* mi_mallocn(size_t count, size_t size) mi_attr_noexcept {
++  #if MI_DASICS
++    mi_heap_t* heap = _mi_find_match_heap_and_retry_dasics(global_library_id);
++    if (heap == NULL) return NULL;
++    return mi_heap_mallocn(heap, count, size);
++  #else
+   return mi_heap_mallocn(mi_prim_get_default_heap(),count,size);
++  #endif
+ }
+
+ // Expand (or shrink) in place (or fail)
+@@ -326,24 +372,54 @@ mi_decl_nodiscard void* mi_heap_recalloc(mi_heap_t* heap, void* p, size_t count,
+
+
+ mi_decl_nodiscard void* mi_realloc(void* p, size_t newsize) mi_attr_noexcept {
++  #if MI_DASICS
++  mi_heap_t* heap = _mi_find_match_heap_and_retry_dasics(global_library_id);
++  if (heap == NULL) return NULL;
++  return mi_heap_realloc(heap, p, newsize);
++  #else
+   return mi_heap_realloc(mi_prim_get_default_heap(),p,newsize);
++  #endif
+ }
+
+ mi_decl_nodiscard void* mi_reallocn(void* p, size_t count, size_t size) mi_attr_noexcept {
++  #if MI_DASICS
++  mi_heap_t* heap = _mi_find_match_heap_and_retry_dasics(global_library_id);
++  if (heap == NULL) return NULL;
++  return mi_heap_reallocn(heap, p, count, size);
++  #else
+   return mi_heap_reallocn(mi_prim_get_default_heap(),p,count,size);
++  #endif
+ }
+
+ // Reallocate but free `p` on errors
+ mi_decl_nodiscard void* mi_reallocf(void* p, size_t newsize) mi_attr_noexcept {
++  #if MI_DASICS
++  mi_heap_t* heap = _mi_find_match_heap_and_retry_dasics(global_library_id);
++  if (heap == NULL) return NULL;
++  return mi_heap_reallocf(heap, p, newsize);
++  #else
+   return mi_heap_reallocf(mi_prim_get_default_heap(),p,newsize);
++  #endif
+ }
+
+ mi_decl_nodiscard void* mi_rezalloc(void* p, size_t newsize) mi_attr_noexcept {
++  #if MI_DASICS
++  mi_heap_t* heap = _mi_find_match_heap_and_retry_dasics(global_library_id);
++  if (heap == NULL) return NULL;
++  return mi_heap_rezalloc(heap, p, newsize);
++  #else
+   return mi_heap_rezalloc(mi_prim_get_default_heap(), p, newsize);
++  #endif
+ }
+
+ mi_decl_nodiscard void* mi_recalloc(void* p, size_t count, size_t size) mi_attr_noexcept {
++  #if MI_DASICS
++  mi_heap_t* heap = _mi_find_match_heap_and_retry_dasics(global_library_id);
++  if (heap == NULL) return NULL;
++  return mi_heap_recalloc(heap, p, count, size);
++  #else
+   return mi_heap_recalloc(mi_prim_get_default_heap(), p, count, size);
++  #endif
+ }
+
+
+@@ -679,6 +755,55 @@ mi_decl_restrict void* _mi_heap_malloc_guarded(mi_heap_t* heap, size_t size, boo
+ }
+ #endif
+
++// add malloc functions FOR DASICS
++#if MI_DASICS
++mi_heap_t* _mi_find_match_heap_and_retry_dasics(uint32_t library_id) {
++
++  // different from default malloc function, we should search heap for same library id
++  mi_heap_t *heap = mi_prim_get_default_heap();
++  // NOTE: If we add additional heaps, default heap is the last heap of tld heaps list,
++  //       since new heap is added to list head
++  mi_heap_t *first_heap = heap->tld->heaps;  // switch to heap list head
++  // searching matching heap (default library id is 0, for user main function)
++  while (first_heap != NULL) {
++    if (first_heap->library_id == library_id) break;
++    first_heap = first_heap->next;
++  }
++  // add additional step
++  // if we don't find related heap, we try to alloc a new one
++  if (first_heap == NULL) {
++      mi_set_id_dasics(library_id, OPT_LIBRARY);
++      first_heap = mi_heap_new();
++  }
++  return first_heap;
++}
++
++mi_heap_t* _mi_find_match_heap_dasics(uint32_t library_id) {
++  // only contains find function ,u sed for new heap alloc
++  // If we use retry version will cause dead lock
++  // FIXBUG: we may find some uninitialized heap
++  mi_heap_t *heap = mi_prim_get_default_heap();
++
++  mi_heap_t *first_heap = heap->tld->heaps;  // switch to heap list head
++
++  while (first_heap != NULL) {
++    if (!mi_heap_is_initialized(first_heap)) continue;
++    if (first_heap->library_id == library_id) break;
++    first_heap = first_heap->next;
++  }
++
++  return first_heap;
++}
++
++mi_decl_export int mi_get_heap_alloc_count_dasics(uint32_t library_id) mi_attr_noexcept {
++  // different from default malloc function, we should search heap for same library id
++  mi_heap_t* heap = _mi_find_match_heap_and_retry_dasics(library_id);
++  if (heap == NULL) return -1;
++  return heap->alloc_count;
++}
++
++#endif
++
+ // ------------------------------------------------------
+ // ensure explicit external inline definitions are emitted!
+ // ------------------------------------------------------
+diff --git a/src/free.c b/src/free.c
+index 3aa6e369..b15ee9f5 100644
+--- a/src/free.c
++++ b/src/free.c
+@@ -156,6 +156,16 @@ void mi_free(void* p) mi_attr_noexcept
+   const bool is_local = (_mi_prim_thread_id() == mi_atomic_load_relaxed(&segment->thread_id));
+   mi_page_t* const page = _mi_segment_page_of(segment, p);
+
++  #if MI_DASICS
++    // add id check and free counters
++    mi_assert((page->library_id == global_library_id) && (page->closure_id == global_closure_id));
++    if ((page->library_id != global_library_id) || (page->closure_id != global_closure_id)) return;
++    mi_heap_t* const heap = _mi_find_match_heap_and_retry_dasics(global_library_id);
++    mi_assert((heap != NULL));
++    if (heap == NULL) return;
++    heap->free_count++;
++  #endif
++
+   if mi_likely(is_local) {                        // thread-local free?
+     if mi_likely(page->flags.full_aligned == 0) { // and it is not a full page (full pages need to move from the full bin), nor has aligned blocks (aligned blocks need to be unaligned)
+       // thread-local, aligned, and not a full page
+@@ -569,3 +579,14 @@ static void mi_block_unguard(mi_page_t* page, mi_block_t* block, void* p) {
+   _mi_os_unprotect(gpage, psize);
+ }
+ #endif
++
++// add free functions FOR DASICS
++#if MI_DASICS
++
++mi_decl_export int mi_get_heap_free_count_dasics(uint32_t library_id) mi_attr_noexcept {
++  // different from default malloc function, we should search heap for same library id
++  mi_heap_t* heap = _mi_find_match_heap_and_retry_dasics(library_id);
++  if (heap == NULL) return -1;
++  return heap->free_count;
++}
++#endif
+\ No newline at end of file
+diff --git a/src/heap.c b/src/heap.c
+index bd3a1e2a..8da72796 100644
+--- a/src/heap.c
++++ b/src/heap.c
+@@ -253,8 +253,17 @@ mi_decl_nodiscard mi_heap_t* mi_heap_new_in_arena(mi_arena_id_t arena_id) {
+ }
+
+ mi_decl_nodiscard mi_heap_t* mi_heap_new(void) {
++  #if MI_DASICS
++  mi_heap_t* new_heap = mi_heap_new_ex(0 /* default heap tag */, true /* no reclaim */, _mi_arena_id_none());
++
++  if (new_heap != NULL) {
++    new_heap->library_id = global_library_id;
++  }
++  return new_heap;
++  #else
+   // don't reclaim abandoned memory or otherwise destroy is unsafe
+   return mi_heap_new_ex(0 /* default heap tag */, true /* no reclaim */, _mi_arena_id_none());
++  #endif
+ }
+
+ bool _mi_heap_memid_is_suitable(mi_heap_t* heap, mi_memid_t memid) {
+@@ -283,6 +292,10 @@ static void mi_heap_free(mi_heap_t* heap) {
+   if (heap==NULL || !mi_heap_is_initialized(heap)) return;
+   if (mi_heap_is_backing(heap)) return; // dont free the backing heap
+
++  #if MI_DASICS
++    mi_assert (heap->library_id == global_library_id);
++    if (heap->library_id != global_library_id) return;
++  #endif
+   // reset default
+   if (mi_heap_is_default(heap)) {
+     _mi_heap_set_default_direct(heap->tld->heap_backing);
+@@ -388,6 +401,10 @@ void mi_heap_destroy(mi_heap_t* heap) {
+   mi_assert(heap->no_reclaim);
+   mi_assert_expensive(mi_heap_is_valid(heap));
+   if (heap==NULL || !mi_heap_is_initialized(heap)) return;
++  #if MI_DASICS
++    mi_assert (heap->library_id == global_library_id);
++    if (heap->library_id != global_library_id) return;
++  #endif
+   #if MI_GUARDED
+   // _mi_warning_message("'mi_heap_destroy' called but MI_GUARDED is enabled -- using `mi_heap_delete` instead (heap at %p)\n", heap);
+   mi_heap_delete(heap);
+@@ -479,6 +496,10 @@ void mi_heap_delete(mi_heap_t* heap)
+   mi_assert_expensive(mi_heap_is_valid(heap));
+   if (heap==NULL || !mi_heap_is_initialized(heap)) return;
+
++  #if MI_DASICS
++    mi_assert (heap->library_id == global_library_id);
++    if (heap->library_id != global_library_id) return;
++  #endif
+   mi_heap_t* bheap = heap->tld->heap_backing;
+   if (bheap != heap && mi_heaps_are_compatible(bheap,heap)) {
+     // transfer still used pages to the backing heap
+diff --git a/src/init.c b/src/init.c
+index b0fb2e66..05c44b25 100644
+--- a/src/init.c
++++ b/src/init.c
+@@ -21,6 +21,10 @@ const mi_page_t _mi_page_empty = {
+   { 0 },   // flags
+   false,   // is_zero
+   0,       // retire_expire
++  #if MI_DASICS
++  0,       // library id FOR DASICS
++  0,       // closure id FOR DASICS
++  #endif
+   NULL,    // free
+   NULL,    // local_free
+   0,       // used
+@@ -108,12 +112,30 @@ const mi_page_t _mi_page_empty = {
+ // may lead to allocation itself on some platforms)
+ // --------------------------------------------------------
+
++#if MI_DASICS
++
++mi_decl_cache_align const mi_bitvec_t mi_bitvec_empty = {
++{ 0,0,0,0,0,0,0,0,
++  0,0,0,0,0,0,0,0,
++  0,0,0,0,0,0,0,0,
++  0,0,0,0,0,0,0,0 }
++};
++
++mi_decl_cache_align mi_bitvec_t mi_bitvec_main = {
++{ 0,0,0,0,0,0,0,0,
++  0,0,0,0,0,0,0,0,
++  0,0,0,0,0,0,0,0,
++  0,0,0,0,0,0,0,0 }
++};
++#endif
++
++
+ mi_decl_hidden mi_decl_cache_align const mi_heap_t _mi_heap_empty = {
+   NULL,
+   MI_ATOMIC_VAR_INIT(NULL),
+   0,                // tid
+-  0,                // cookie
+   0,                // arena id
++  0,                // cookie
+   { 0, 0 },         // keys
+   { {0}, {0}, 0, true }, // random
+   0,                // page count
+@@ -125,6 +147,10 @@ mi_decl_hidden mi_decl_cache_align const mi_heap_t _mi_heap_empty = {
+   #if MI_GUARDED
+   0, 0, 0, 0, 1,    // count is 1 so we never write to it (see `internal.h:mi_heap_malloc_use_guarded`)
+   #endif
++  #if MI_DASICS
++  0,                // library id FOR DASICS
++  0, 0,             // alloc/free count FOR DASICS
++  #endif
+   MI_SMALL_PAGES_EMPTY,
+   MI_PAGE_QUEUES_EMPTY
+ };
+@@ -137,7 +163,11 @@ mi_decl_cache_align static const mi_tld_t tld_empty = {
+   0,
+   false,
+   NULL, NULL,
+-  { MI_SEGMENT_SPAN_QUEUES_EMPTY, 0, 0, 0, 0, 0, &mi_subproc_default, tld_empty_stats }, // segments
++  { MI_SEGMENT_SPAN_QUEUES_EMPTY, 0, 0, 0, 0, 0,
++    #if MI_DASICS
++    (mi_bitvec_t*)&mi_bitvec_empty, NULL, NULL,
++    #endif
++    &mi_subproc_default, tld_empty_stats }, // segments
+   { MI_STAT_VERSION, MI_STATS_NULL }       // stats
+ };
+
+@@ -153,7 +183,11 @@ extern mi_decl_hidden mi_heap_t _mi_heap_main;
+ static mi_decl_cache_align mi_tld_t tld_main = {
+   0, false,
+   &_mi_heap_main, & _mi_heap_main,
+-  { MI_SEGMENT_SPAN_QUEUES_EMPTY, 0, 0, 0, 0, 0, &mi_subproc_default, &tld_main.stats }, // segments
++  { MI_SEGMENT_SPAN_QUEUES_EMPTY, 0, 0, 0, 0, 0,
++    #if MI_DASICS
++    &mi_bitvec_main, NULL, NULL,
++    #endif
++    &mi_subproc_default, &tld_main.stats }, // segments
+   { MI_STAT_VERSION, MI_STATS_NULL }       // stats
+ };
+
+@@ -161,8 +195,8 @@ mi_decl_cache_align mi_heap_t _mi_heap_main = {
+   &tld_main,
+   MI_ATOMIC_VAR_INIT(NULL),
+   0,                // thread id
+-  0,                // initial cookie
+   0,                // arena id
++  0,                // initial cookie
+   { 0, 0 },         // the key of the main heap can be fixed (unlike page keys that need to be secure!)
+   { {0x846ca68b}, {0}, 0, true },  // random
+   0,                // page count
+@@ -174,6 +208,10 @@ mi_decl_cache_align mi_heap_t _mi_heap_main = {
+   #if MI_GUARDED
+   0, 0, 0, 0, 0,
+   #endif
++  #if MI_DASICS
++  0,                // library id FOR DASICS
++  0, 0,             // alloc/free count FOR DASICS
++  #endif
+   MI_SMALL_PAGES_EMPTY,
+   MI_PAGE_QUEUES_EMPTY
+ };
+@@ -221,6 +259,31 @@ void _mi_heap_guarded_init(mi_heap_t* heap) {
+ }
+ #endif
+
++#if MI_DASICS
++// add global registers FOR DASICS
++uint32_t global_library_id = 0;
++uint32_t global_closure_id = 0;
++
++mi_decl_export void mi_set_id_dasics(uint32_t id, uint32_t option) mi_attr_noexcept
++{
++  if (option == OPT_LIBRARY) global_library_id = id;
++  else if (option == OPT_CLOSURE) global_closure_id = id;
++}
++
++mi_decl_export void mi_set_ids_dasics(uint32_t library_id, uint32_t closure_id) mi_attr_noexcept
++{
++  global_library_id = library_id;
++  global_closure_id = closure_id;
++}
++
++mi_decl_export uint32_t mi_get_id_dasics(uint32_t option) mi_attr_noexcept
++{
++  if (option == OPT_LIBRARY) return global_library_id;
++  else if (option == OPT_CLOSURE) return global_closure_id;
++  return -1; // default return -1, if option is invalid
++}
++
++#endif
+
+ static void mi_heap_main_init(void) {
+   if (_mi_heap_main.cookie == 0) {
+@@ -385,7 +448,7 @@ void _mi_thread_data_collect(void) {
+ }
+
+ // Initialize the thread local default heap, called from `mi_thread_init`
+-static bool _mi_thread_heap_init(void) {
++static bool _mi_thread_heap_init(void) { /// need to modify? currently all thread use 1 tld
+   if (mi_heap_is_initialized(mi_prim_get_default_heap())) return true;
+   if (_mi_is_main_thread()) {
+     // mi_assert_internal(_mi_heap_main.thread_id != 0);  // can happen on freeBSD where alloc is called before any initialization
+diff --git a/src/options.c b/src/options.c
+index 4759e0b0..9f82873a 100644
+--- a/src/options.c
++++ b/src/options.c
+@@ -531,6 +531,13 @@ void _mi_assert_fail(const char* assertion, const char* fname, unsigned line, co
+ }
+ #endif
+
++#if MI_DASICS
++void _mi_assert_fail_dasics(const char* assertion, const char* fname, unsigned line, const char* func ) {
++  _mi_fprintf(NULL, NULL, "mimalloc: dasics assertion failed: at \"%s\":%u, %s\n  dasics assertion: \"%s\"\n", fname, line, (func==NULL?"":func), assertion);
++  abort();
++}
++#endif
++
+ // --------------------------------------------------------
+ // Errors
+ // --------------------------------------------------------
+diff --git a/src/page.c b/src/page.c
+index 8db2463f..001585a3 100644
+--- a/src/page.c
++++ b/src/page.c
+@@ -294,6 +294,12 @@ static mi_page_t* mi_page_fresh_alloc(mi_heap_t* heap, mi_page_queue_t* pq, size
+   mi_heap_stat_increase(heap, page_bins[mi_page_bin(page)], 1);
+   if (pq != NULL) { mi_page_queue_push(heap, pq, page); }
+   mi_assert_expensive(_mi_page_is_valid(page));
++
++  #if MI_DASICS
++    page->library_id = global_library_id;
++    page->closure_id = global_closure_id;
++  #endif
++
+   return page;
+ }
+
+@@ -770,6 +776,14 @@ static mi_page_t* mi_page_queue_find_free_ex(mi_heap_t* heap, mi_page_queue_t* p
+     // collect freed blocks by us and other threads
+     _mi_page_free_collect(page, false);
+
++    #if MI_DASICS
++    // check FOR DASICS
++    if (page->library_id != global_library_id || page->closure_id != global_closure_id) {
++      page = page->next;
++      continue;
++    }
++    #endif
++
+   #if MI_MAX_CANDIDATE_SEARCH > 1
+     // search up to N pages for a best candidate
+
+@@ -855,6 +869,12 @@ static inline mi_page_t* mi_find_free_page(mi_heap_t* heap, size_t size) {
+   // check the first page: we even do this with candidate search or otherwise we re-search every time
+   mi_page_t* page = pq->first;
+   if (page != NULL) {
++   #if MI_DASICS
++    //FIXBUG: add id check here, else different closure share same page
++    if (page->library_id != global_library_id || page->closure_id != global_closure_id) {
++      return mi_page_queue_find_free_ex(heap, pq, true);
++    }
++   #endif
+    #if (MI_SECURE>=3) // in secure mode, we extend half the time to increase randomness
+     if (page->capacity < page->reserved && ((_mi_heap_random_next(heap) & 1) == 1)) {
+       mi_page_extend_free(heap, page, heap->tld);
+@@ -1041,3 +1061,8 @@ void* _mi_malloc_generic(mi_heap_t* heap, size_t size, bool zero, size_t huge_al
+   }
+   return p;
+ }
++
++// external functions FOR DASICS
++#if MI_DASICS
++
++#endif
+\ No newline at end of file
+diff --git a/src/segment.c b/src/segment.c
+index 29502bcd..1f4c83bb 100644
+--- a/src/segment.c
++++ b/src/segment.c
+@@ -402,11 +402,27 @@ static void mi_segments_track_size(long segment_size, mi_segments_tld_t* tld) {
+   if (tld->count > tld->peak_count) tld->peak_count = tld->count;
+   tld->current_size += segment_size;
+   if (tld->current_size > tld->peak_size) tld->peak_size = tld->current_size;
++
++  // modify closure track bit vector
++  #if MI_DASICS
++  uint32_t bitvec = tld->seg_bit_vectors->bit_array[global_library_id];
++  if (segment_size >= 0) bitvec |=  (1 << global_closure_id);  // set relative closure bit
++                    else bitvec &= ~(1 << global_closure_id);  // clear relative closure bit
++  tld->seg_bit_vectors->bit_array[global_library_id] = bitvec;
++
++  #endif
+ }
+
+ static void mi_segment_os_free(mi_segment_t* segment, mi_segments_tld_t* tld) {
+   segment->thread_id = 0;
+   _mi_segment_map_freed_at(segment);
++
++  #if MI_DASICS
++  mi_set_ids_dasics(segment->library_id, segment->closure_id);
++
++  _mi_remove_segment_queue(tld, segment);
++  #endif
++
+   mi_segments_track_size(-((long)mi_segment_size(segment)),tld);
+   if (segment->was_reclaimed) {
+     tld->reclaim_count--;
+@@ -800,6 +816,12 @@ static mi_page_t* mi_segments_page_find_and_allocate(size_t slice_count, mi_aren
+       if (slice->slice_count >= slice_count) {
+         // found one
+         mi_segment_t* segment = _mi_ptr_segment(slice);
++
++        // check segment closure_id
++        #if MI_DASICS
++        if (segment->closure_id != global_closure_id) continue; //???
++        #endif
++
+         if (_mi_arena_memid_is_suitable(segment->memid, req_arena_id)) {
+           // found a suitable page span
+           mi_span_queue_delete(sq, slice);
+@@ -884,6 +906,13 @@ static mi_segment_t* mi_segment_os_alloc( size_t required, size_t page_alignment
+   segment->purge_expire = 0;
+   mi_commit_mask_create_empty(&segment->purge_mask);
+
++  #if MI_DASICS
++  segment->library_id = global_library_id;
++  segment->closure_id = global_closure_id;
++
++  _mi_insert_segment_queue(tld, segment);
++  #endif
++
+   mi_segments_track_size((long)(segment_size), tld);
+   _mi_segment_map_allocated_at(segment);
+   return segment;
+@@ -1121,6 +1150,12 @@ static void mi_segment_abandon(mi_segment_t* segment, mi_segments_tld_t* tld) {
+
+   // all pages in the segment are abandoned; add it to the abandoned list
+   _mi_stat_increase(&tld->stats->segments_abandoned, 1);
++
++  #if MI_DASICS
++  mi_set_ids_dasics(segment->library_id, segment->closure_id);
++  _mi_remove_segment_queue(tld, segment);
++  #endif
++
+   mi_segments_track_size(-((long)mi_segment_size(segment)), tld);
+   segment->thread_id = 0;
+   segment->abandoned_visits = 1;   // from 0 to 1 to signify it is abandoned
+@@ -1214,6 +1249,13 @@ static mi_segment_t* mi_segment_reclaim(mi_segment_t* segment, mi_heap_t* heap,
+   segment->abandoned_visits = 0;
+   segment->was_reclaimed = true;
+   tld->reclaim_count++;
++
++  #if MI_DASICS
++  segment->library_id = global_library_id;
++  segment->closure_id = global_closure_id;
++  _mi_insert_segment_queue(tld, segment);
++  #endif
++
+   mi_segments_track_size((long)mi_segment_size(segment), tld);
+   mi_assert_internal(segment->next == NULL);
+   _mi_stat_decrease(&tld->stats->segments_abandoned, 1);
+@@ -1537,6 +1579,26 @@ static mi_page_t* mi_segments_page_alloc(mi_heap_t* heap, mi_page_kind_t page_ki
+   size_t page_size = _mi_align_up(required, (required > MI_MEDIUM_PAGE_SIZE ? MI_MEDIUM_PAGE_SIZE : MI_SEGMENT_SLICE_SIZE));
+   size_t slices_needed = page_size / MI_SEGMENT_SLICE_SIZE;
+   mi_assert_internal(slices_needed * MI_SEGMENT_SLICE_SIZE == page_size);
++
++  // check segment bit vector first
++  // if we could not find segment with matching closure_id, we should force reclaim or alloc a new segment
++  #if MI_DASICS
++
++  uint32_t bitvec = tld->seg_bit_vectors->bit_array[global_library_id];
++  bool has_match_segment = ( bitvec & (1 << global_closure_id)) != 0;
++  if (!has_match_segment) {
++    // no free page, allocate a new segment and try again
++    if (mi_segment_reclaim_or_alloc(heap, slices_needed, block_size, tld) == NULL) {
++      // OOM or reclaimed a good page in the heap
++      return NULL;
++    }
++    else {
++      // otherwise try again
++      return mi_segments_page_alloc(heap, page_kind, required, block_size, tld);
++    }
++  }
++  #endif
++
+   mi_page_t* page = mi_segments_page_find_and_allocate(slices_needed, heap->arena_id, tld); //(required <= MI_SMALL_SIZE_MAX ? 0 : slices_needed), tld);
+   if (page==NULL) {
+     // no free page, allocate a new segment and try again
+@@ -1699,3 +1761,76 @@ bool _mi_segment_visit_blocks(mi_segment_t* segment, int heap_tag, bool visit_bl
+   }
+   return true;
+ }
++
++
++#if MI_DASICS
++
++mi_segment_t * _mi_find_id_segment_dasics(mi_segments_tld_t * tld, uint32_t closure_id) {
++  if (tld->count == 0) return NULL;
++  mi_segment_t * first = tld->first_segment;
++  mi_segment_t * last = tld->last_segment;
++  mi_segment_t * result = NULL;
++
++  mi_assert (first != NULL && last != NULL);
++  // odd : first = last
++  // even: first->next = last && last->prev = first
++
++  size_t loop = (tld->count+1) >> 1;
++  for (size_t i = 0; i < loop; i++) {
++   if (first->closure_id == closure_id) {
++      result = first; break;
++   } else if (last->closure_id == closure_id) {
++      result = last; break;
++   }
++    first = first->next_segment;
++    last = last->prev_segment;
++  }
++  return result;
++}
++
++void _mi_insert_segment_queue(mi_segments_tld_t * tld, mi_segment_t* segment) {
++  segment->prev_segment = tld->first_segment;
++  segment->next_segment = tld->last_segment;
++  if (tld->first_segment != NULL) tld->first_segment->next_segment = segment;
++  if (tld->last_segment != NULL) tld->last_segment->prev_segment = segment;
++  tld->first_segment = segment;
++  tld->last_segment = segment;
++}
++
++void _mi_remove_segment_queue(mi_segments_tld_t * tld, mi_segment_t* segment) {
++
++  segment->prev_segment->next_segment = segment->next_segment;
++  segment->next_segment->prev_segment = segment->prev_segment;
++
++  if(tld->first_segment == segment) tld->first_segment = segment->prev_segment;
++  if(tld->last_segment == segment) tld->last_segment = segment->next_segment;
++
++  segment->prev_segment = NULL;
++  segment->next_segment = NULL;
++
++}
++
++
++int mi_get_mem_area_dasics(uint32_t library_id, uint32_t closure_id, void** p, size_t* area_size) {
++    mi_heap_t * heap = _mi_find_match_heap_dasics(library_id);
++    // get heap tld
++    mi_segments_tld_t * tld = &(heap->tld->segments);
++
++    // get bitvec
++    bool isExist = (tld->seg_bit_vectors->bit_array[library_id] & (1 << closure_id)) != 0;
++    if (!isExist) {
++      *p = NULL;
++      *area_size = 0;
++      return -1;
++    }
++
++    // how to quick find related segment?
++    // add segment double queue?
++
++    mi_segment_t * segment = _mi_find_id_segment_dasics(tld, closure_id);
++    *p = segment;
++    *area_size = (segment == NULL) ? 0 : segment->segment_size;
++    return 0;
++
++}
++#endif
+\ No newline at end of file
