@@ -1,6 +1,5 @@
 import os
 import subprocess
-import sys
 import datetime
 import fnmatch
 
@@ -119,9 +118,11 @@ def generate_initramfs_txt(rootfsimg_path, sysroot_path, output_file):
 
 if __name__ == "__main__":
     # Check environment variables
-    if not os.getenv("RISCV_ROOTFS_HOME") or not os.getenv("RISCV"):
-        print("Error: Environment variables RISCV_ROOTFS_HOME and RISCV must be set!")
-        sys.exit(1)
+    if not os.getenv("RISCV_ROOTFS_HOME"):
+        raise ValueError("Environment variable RISCV_ROOTFS_HOME is not set")
+
+    if not os.getenv("RISCV"):
+        raise ValueError("Environment variable RISCV is not set")
 
     # Initialize paths
     rootfsimg_path = os.path.join(os.getenv("RISCV_ROOTFS_HOME"), "rootfsimg")
@@ -130,4 +131,4 @@ if __name__ == "__main__":
 
     # Start to generate initramfs.txt
     generate_initramfs_txt(rootfsimg_path, sysroot_path, output_file)
-    print(f"initramfs.txt has been generated successfully at {output_file}")
+    print(f"[INFO] initramfs.txt has been generated successfully at {output_file}")

@@ -1,3 +1,6 @@
 .vscode
 .idea
+.cursor
+.cache
+compile_commands.json
 build
