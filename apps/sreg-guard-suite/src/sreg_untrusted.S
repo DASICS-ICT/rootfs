@@ -57,6 +57,15 @@ sreg_untrusted_post_save_cipher_read_\suffix:
     addi sp, sp, 16
     ret
 
+    .global sreg_untrusted_missing_restore_return_\suffix
+    .type sreg_untrusted_missing_restore_return_\suffix, @function
+sreg_untrusted_missing_restore_return_\suffix:
+    addi sp, sp, -16
+    sd \reg, 0(sp)
+    addi \reg, \reg, 1
+    addi sp, sp, 16
+    ret
+
     .global sreg_untrusted_auth_tamper_bitflip_\suffix
     .type sreg_untrusted_auth_tamper_bitflip_\suffix, @function
 sreg_untrusted_auth_tamper_bitflip_\suffix:

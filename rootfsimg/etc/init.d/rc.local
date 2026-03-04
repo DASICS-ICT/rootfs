@@ -11,7 +11,7 @@ fi
 
 SREG_SUITE_BIN="/root/test_sreg_guard_suite"
 SREG_LIST="s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11"
-SREG_CASES="viol_write viol_read proto_mismatch legal_save_restore post_save_cipher_read auth_tamper_bitflip auth_tamper_overwrite"
+SREG_CASES="viol_write viol_read proto_mismatch legal_save_restore post_save_cipher_read missing_restore_return auth_tamper_bitflip auth_tamper_overwrite"
 
 echo "[DASICS-TEST] START: sreg-guard-suite only"
 
@@ -32,7 +32,7 @@ else
                 viol_write|viol_read)
                     expect_text="[DASICS SREG] VIOL fault"
                     ;;
-                proto_mismatch)
+                proto_mismatch|missing_restore_return)
                     expect_text="[DASICS SREG] PROTO fault"
                     ;;
                 auth_tamper_bitflip|auth_tamper_overwrite)

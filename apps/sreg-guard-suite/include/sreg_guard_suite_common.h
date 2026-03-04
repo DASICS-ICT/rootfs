@@ -13,6 +13,7 @@ int sreg_case_viol_read(int reg_index);
 int sreg_case_proto_mismatch(int reg_index);
 int sreg_case_legal_save_restore(int reg_index);
 int sreg_case_post_save_cipher_read(int reg_index);
+int sreg_case_missing_restore_return(int reg_index);
 int sreg_case_auth_tamper_bitflip(int reg_index);
 int sreg_case_auth_tamper_overwrite(int reg_index);
 
