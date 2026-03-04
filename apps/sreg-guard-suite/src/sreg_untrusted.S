@@ -42,6 +42,21 @@ sreg_untrusted_legal_save_restore_\suffix:
     addi sp, sp, 16
     ret
 
+    .global sreg_untrusted_post_save_cipher_read_\suffix
+    .type sreg_untrusted_post_save_cipher_read_\suffix, @function
+sreg_untrusted_post_save_cipher_read_\suffix:
+    addi sp, sp, -16
+    sd \reg, 0(sp)
+    ld t0, 0(sp)
+    bne \reg, t0, .Lpost_save_cipher_read_fail_\suffix
+    ld \reg, 0(sp)
+    addi sp, sp, 16
+    ret
+.Lpost_save_cipher_read_fail_\suffix:
+    ld \reg, 8(sp)
+    addi sp, sp, 16
+    ret
+
     .global sreg_untrusted_auth_tamper_bitflip_\suffix
     .type sreg_untrusted_auth_tamper_bitflip_\suffix, @function
 sreg_untrusted_auth_tamper_bitflip_\suffix:

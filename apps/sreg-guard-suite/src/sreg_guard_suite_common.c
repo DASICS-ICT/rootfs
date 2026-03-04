@@ -26,6 +26,7 @@ static const char *const g_sreg_names[] = {
     void sreg_untrusted_viol_read_##reg_name(void); \
     void sreg_untrusted_proto_mismatch_##reg_name(void); \
     void sreg_untrusted_legal_save_restore_##reg_name(void); \
+    void sreg_untrusted_post_save_cipher_read_##reg_name(void); \
     void sreg_untrusted_auth_tamper_bitflip_##reg_name(void); \
     void sreg_untrusted_auth_tamper_overwrite_##reg_name(void)
 
@@ -76,6 +77,15 @@ static sreg_untrusted_fn_t const g_legal_save_restore_fns[SREG_GUARD_REG_COUNT] 
     sreg_untrusted_legal_save_restore_s6, sreg_untrusted_legal_save_restore_s7,
     sreg_untrusted_legal_save_restore_s8, sreg_untrusted_legal_save_restore_s9,
     sreg_untrusted_legal_save_restore_s10, sreg_untrusted_legal_save_restore_s11,
+};
+
+static sreg_untrusted_fn_t const g_post_save_cipher_read_fns[SREG_GUARD_REG_COUNT] = {
+    sreg_untrusted_post_save_cipher_read_s0, sreg_untrusted_post_save_cipher_read_s1,
+    sreg_untrusted_post_save_cipher_read_s2, sreg_untrusted_post_save_cipher_read_s3,
+    sreg_untrusted_post_save_cipher_read_s4, sreg_untrusted_post_save_cipher_read_s5,
+    sreg_untrusted_post_save_cipher_read_s6, sreg_untrusted_post_save_cipher_read_s7,
+    sreg_untrusted_post_save_cipher_read_s8, sreg_untrusted_post_save_cipher_read_s9,
+    sreg_untrusted_post_save_cipher_read_s10, sreg_untrusted_post_save_cipher_read_s11,
 };
 
 static sreg_untrusted_fn_t const g_auth_tamper_bitflip_fns[SREG_GUARD_REG_COUNT] = {
@@ -267,6 +277,16 @@ int sreg_case_legal_save_restore(int reg_index)
            reg_name);
     fflush(stdout);
     return sreg_guard_call_untrusted(sreg_lookup_fn(g_legal_save_restore_fns, reg_index));
+}
+
+int sreg_case_post_save_cipher_read(int reg_index)
+{
+    const char *reg_name = sreg_guard_reg_name(reg_index);
+
+    printf("[SREG-GUARD] reg=%s case05_post_save_cipher_read: step1 call untrusted (expect success with sreg=cipher after save)\n",
+           reg_name);
+    fflush(stdout);
+    return sreg_guard_call_untrusted(sreg_lookup_fn(g_post_save_cipher_read_fns, reg_index));
 }
 
 int sreg_case_auth_tamper_bitflip(int reg_index)

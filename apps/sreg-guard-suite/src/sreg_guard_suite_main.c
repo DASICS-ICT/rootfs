@@ -4,7 +4,7 @@
 #include <string.h>
 
 static void print_usage(const char *prog) {
-    printf("Usage: %s --reg <s0|s1|...|s11> --case <viol_write|viol_read|proto_mismatch|legal_save_restore|auth_tamper_bitflip|auth_tamper_overwrite>\n",
+    printf("Usage: %s --reg <s0|s1|...|s11> --case <viol_write|viol_read|proto_mismatch|legal_save_restore|post_save_cipher_read|auth_tamper_bitflip|auth_tamper_overwrite>\n",
            prog);
 }
 
@@ -49,6 +49,8 @@ int main(int argc, char **argv) {
         rc = sreg_case_proto_mismatch(reg_index);
     } else if (strcmp(case_name, "legal_save_restore") == 0) {
         rc = sreg_case_legal_save_restore(reg_index);
+    } else if (strcmp(case_name, "post_save_cipher_read") == 0) {
+        rc = sreg_case_post_save_cipher_read(reg_index);
     } else if (strcmp(case_name, "auth_tamper_bitflip") == 0) {
         rc = sreg_case_auth_tamper_bitflip(reg_index);
     } else if (strcmp(case_name, "auth_tamper_overwrite") == 0) {
