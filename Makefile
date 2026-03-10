@@ -1,6 +1,6 @@
 include Makefile.check
 
-APPS = busybox dasics-test/rwx dasics-test/syscall dasics-test/argbound dasics-test/share
+APPS = busybox dasics-test/rwx dasics-test/syscall dasics-test/argbound dasics-test/share dasics-test/heap-guard
 APPS_DIR = $(addprefix apps/, $(APPS))
 LIBS = LibDASICS mimalloc
 LIBS_DIR = $(addprefix libs/, $(LIBS))
