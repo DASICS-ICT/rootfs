@@ -70,6 +70,9 @@ int fit_init_static(void) {
     // Set argument bound allocation and deallocation functions
     entry->argbound_alloc = fit_argbound_alloc_test_argbound;
     entry->argbound_free = fit_argbound_free_test_argbound;
+    entry->library_id = 0;
+    entry->closure_id = 1;
+    entry->heap_alloc_done = 0;
 
     // Calculate bitmap size and allocate
     entry->syscalls_size = (__NR_syscalls + 7) / 8;

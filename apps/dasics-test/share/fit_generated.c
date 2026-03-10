@@ -45,6 +45,9 @@ int fit_init_static(void) {
     // Set argument bound allocation and deallocation functions
     entry_test_rwx1->argbound_alloc = NULL;
     entry_test_rwx1->argbound_free = NULL;
+    entry_test_rwx1->library_id = 0;
+    entry_test_rwx1->closure_id = 1;
+    entry_test_rwx1->heap_alloc_done = 0;
 
     // Calculate bitmap size and allocate
     entry_test_rwx1->syscalls_size = (__NR_syscalls + 7) / 8;
@@ -136,6 +139,9 @@ int fit_init_static(void) {
     // Set argument bound allocation and deallocation functions
     entry_test_rwx2->argbound_alloc = NULL;
     entry_test_rwx2->argbound_free = NULL;
+    entry_test_rwx2->library_id = 0;
+    entry_test_rwx2->closure_id = 2;
+    entry_test_rwx2->heap_alloc_done = 0;
 
     // Calculate bitmap size and allocate
     entry_test_rwx2->syscalls_size = (__NR_syscalls + 7) / 8;
