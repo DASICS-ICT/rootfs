@@ -3,7 +3,31 @@
 #include <asm/unistd.h>
 #include <fit.h>
 
-#define BOUNDS_SLOTS 16
+/* Only add a bound when begin and end symbols differ (non-empty region) */
+#define ADD_CODE_BOUND(e, perm_bits, begin, end) do { \
+    if ((uint64_t)&(begin) != (uint64_t)&(end) && (e)->code_bounds_num < FIT_CODE_BOUNDS_MAX) { \
+        (e)->code_bounds[(e)->code_bounds_num].perm = (perm_bits); \
+        (e)->code_bounds[(e)->code_bounds_num].lo = (uint64_t)&(begin); \
+        (e)->code_bounds[(e)->code_bounds_num].hi = (uint64_t)&(end); \
+        (e)->code_bounds_num++; \
+    } \
+} while (0)
+#define ADD_MEM_BOUND(e, perm_bits, begin, end) do { \
+    if ((uint64_t)&(begin) != (uint64_t)&(end) && (e)->mem_bounds_num < FIT_MEM_BOUNDS_MAX) { \
+        (e)->mem_bounds[(e)->mem_bounds_num].perm = (perm_bits); \
+        (e)->mem_bounds[(e)->mem_bounds_num].lo = (uint64_t)&(begin); \
+        (e)->mem_bounds[(e)->mem_bounds_num].hi = (uint64_t)&(end); \
+        (e)->mem_bounds_num++; \
+    } \
+} while (0)
+#define ADD_STACK_BOUND(e, len) do { \
+    if ((e)->mem_bounds_num < FIT_MEM_BOUNDS_MAX) { \
+        (e)->mem_bounds[(e)->mem_bounds_num].perm = DASICS_LIBCFG_R | DASICS_LIBCFG_W; \
+        (e)->mem_bounds[(e)->mem_bounds_num].lo = UINT64_MAX; \
+        (e)->mem_bounds[(e)->mem_bounds_num].hi = (len); \
+        (e)->mem_bounds_num++; \
+    } \
+} while (0)
 
 int fit_init_static(void) {
     extern uint64_t __ULIBTEXT_FUNC1_BEGIN__, __ULIBTEXT_FUNC1_END__;
@@ -39,32 +63,15 @@ int fit_init_static(void) {
         e->library_id = 0;
         e->closure_id = 1;
         e->heap_alloc_done = 0;
-        e->bounds_num = 6;
-        e->bounds_data = (struct fit_bounds *)malloc(BOUNDS_SLOTS * sizeof(struct fit_bounds));
-        if (!e->bounds_data) {
-            free(e->syscalls);
-            free(e->maincalls);
-            free(e);
-            return -1;
-        }
-        e->bounds_data[0].perm = DASICS_LIBCFG_X;
-        e->bounds_data[0].lo = (uint64_t)&__ULIBTEXT_FUNC1_BEGIN__;
-        e->bounds_data[0].hi = (uint64_t)&__ULIBTEXT_FUNC1_END__;
-        e->bounds_data[1].perm = DASICS_LIBCFG_R | DASICS_LIBCFG_W;
-        e->bounds_data[1].lo = (uint64_t)&__ULIBDATA_FUNC1_BEGIN__;
-        e->bounds_data[1].hi = (uint64_t)&__ULIBDATA_FUNC1_END__;
-        e->bounds_data[2].perm = DASICS_LIBCFG_R;
-        e->bounds_data[2].lo = (uint64_t)&__ULIBRODATA_FUNC1_BEGIN__;
-        e->bounds_data[2].hi = (uint64_t)&__ULIBRODATA_FUNC1_END__;
-        e->bounds_data[3].perm = DASICS_LIBCFG_R | DASICS_LIBCFG_W;
-        e->bounds_data[3].lo = (uint64_t)&__ULIBBSS_FUNC1_BEGIN__;
-        e->bounds_data[3].hi = (uint64_t)&__ULIBBSS_FUNC1_END__;
-        e->bounds_data[4].perm = DASICS_LIBCFG_R | DASICS_LIBCFG_W;
-        e->bounds_data[4].lo = (uint64_t)&__ULIBDATA_SHARE_BEGIN__;
-        e->bounds_data[4].hi = (uint64_t)&__ULIBDATA_SHARE_END__;
-        e->bounds_data[5].perm = DASICS_LIBCFG_R | DASICS_LIBCFG_W;
-        e->bounds_data[5].lo = UINT64_MAX;
-        e->bounds_data[5].hi = 48;
+        e->code_bounds_num = 0;
+        e->mem_bounds_num = 0;
+
+        ADD_CODE_BOUND(e, DASICS_LIBCFG_X, __ULIBTEXT_FUNC1_BEGIN__, __ULIBTEXT_FUNC1_END__);
+        ADD_MEM_BOUND(e, DASICS_LIBCFG_R | DASICS_LIBCFG_W, __ULIBDATA_FUNC1_BEGIN__, __ULIBDATA_FUNC1_END__);
+        ADD_MEM_BOUND(e, DASICS_LIBCFG_R, __ULIBRODATA_FUNC1_BEGIN__, __ULIBRODATA_FUNC1_END__);
+        ADD_MEM_BOUND(e, DASICS_LIBCFG_R | DASICS_LIBCFG_W, __ULIBBSS_FUNC1_BEGIN__, __ULIBBSS_FUNC1_END__);
+        ADD_MEM_BOUND(e, DASICS_LIBCFG_R | DASICS_LIBCFG_W, __ULIBDATA_SHARE_BEGIN__, __ULIBDATA_SHARE_END__);
+        ADD_STACK_BOUND(e, 48);
         HASH_ADD_PTR(fit_table, key, e);
     }
 
@@ -91,32 +98,15 @@ int fit_init_static(void) {
         e->library_id = 0;
         e->closure_id = 2;
         e->heap_alloc_done = 0;
-        e->bounds_num = 6;
-        e->bounds_data = (struct fit_bounds *)malloc(BOUNDS_SLOTS * sizeof(struct fit_bounds));
-        if (!e->bounds_data) {
-            free(e->syscalls);
-            free(e->maincalls);
-            free(e);
-            return -1;
-        }
-        e->bounds_data[0].perm = DASICS_LIBCFG_X;
-        e->bounds_data[0].lo = (uint64_t)&__ULIBTEXT_FUNC2_BEGIN__;
-        e->bounds_data[0].hi = (uint64_t)&__ULIBTEXT_FUNC2_END__;
-        e->bounds_data[1].perm = DASICS_LIBCFG_R | DASICS_LIBCFG_W;
-        e->bounds_data[1].lo = (uint64_t)&__ULIBDATA_FUNC2_BEGIN__;
-        e->bounds_data[1].hi = (uint64_t)&__ULIBDATA_FUNC2_END__;
-        e->bounds_data[2].perm = DASICS_LIBCFG_R;
-        e->bounds_data[2].lo = (uint64_t)&__ULIBRODATA_FUNC2_BEGIN__;
-        e->bounds_data[2].hi = (uint64_t)&__ULIBRODATA_FUNC2_END__;
-        e->bounds_data[3].perm = DASICS_LIBCFG_R | DASICS_LIBCFG_W;
-        e->bounds_data[3].lo = (uint64_t)&__ULIBBSS_FUNC2_BEGIN__;
-        e->bounds_data[3].hi = (uint64_t)&__ULIBBSS_FUNC2_END__;
-        e->bounds_data[4].perm = DASICS_LIBCFG_R | DASICS_LIBCFG_W;
-        e->bounds_data[4].lo = (uint64_t)&__ULIBDATA_SHARE_BEGIN__;
-        e->bounds_data[4].hi = (uint64_t)&__ULIBDATA_SHARE_END__;
-        e->bounds_data[5].perm = DASICS_LIBCFG_R | DASICS_LIBCFG_W;
-        e->bounds_data[5].lo = UINT64_MAX;
-        e->bounds_data[5].hi = 32;
+        e->code_bounds_num = 0;
+        e->mem_bounds_num = 0;
+
+        ADD_CODE_BOUND(e, DASICS_LIBCFG_X, __ULIBTEXT_FUNC2_BEGIN__, __ULIBTEXT_FUNC2_END__);
+        ADD_MEM_BOUND(e, DASICS_LIBCFG_R | DASICS_LIBCFG_W, __ULIBDATA_FUNC2_BEGIN__, __ULIBDATA_FUNC2_END__);
+        ADD_MEM_BOUND(e, DASICS_LIBCFG_R, __ULIBRODATA_FUNC2_BEGIN__, __ULIBRODATA_FUNC2_END__);
+        ADD_MEM_BOUND(e, DASICS_LIBCFG_R | DASICS_LIBCFG_W, __ULIBBSS_FUNC2_BEGIN__, __ULIBBSS_FUNC2_END__);
+        ADD_MEM_BOUND(e, DASICS_LIBCFG_R | DASICS_LIBCFG_W, __ULIBDATA_SHARE_BEGIN__, __ULIBDATA_SHARE_END__);
+        ADD_STACK_BOUND(e, 32);
         HASH_ADD_PTR(fit_table, key, e);
     }
 

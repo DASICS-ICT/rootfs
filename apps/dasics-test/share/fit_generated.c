@@ -3,32 +3,46 @@
 #include <asm/unistd.h>
 #include <fit.h>
 
+/* Only add a bound when begin and end symbols differ (non-empty region) */
+#define ADD_CODE_BOUND(e, perm_bits, begin, end) do { \
+    if ((uint64_t)&(begin) != (uint64_t)&(end) && (e)->code_bounds_num < FIT_CODE_BOUNDS_MAX) { \
+        (e)->code_bounds[(e)->code_bounds_num].perm = (perm_bits); \
+        (e)->code_bounds[(e)->code_bounds_num].lo = (uint64_t)&(begin); \
+        (e)->code_bounds[(e)->code_bounds_num].hi = (uint64_t)&(end); \
+        (e)->code_bounds_num++; \
+    } \
+} while (0)
+#define ADD_MEM_BOUND(e, perm_bits, begin, end) do { \
+    if ((uint64_t)&(begin) != (uint64_t)&(end) && (e)->mem_bounds_num < FIT_MEM_BOUNDS_MAX) { \
+        (e)->mem_bounds[(e)->mem_bounds_num].perm = (perm_bits); \
+        (e)->mem_bounds[(e)->mem_bounds_num].lo = (uint64_t)&(begin); \
+        (e)->mem_bounds[(e)->mem_bounds_num].hi = (uint64_t)&(end); \
+        (e)->mem_bounds_num++; \
+    } \
+} while (0)
+#define ADD_STACK_BOUND(e, len) do { \
+    if ((e)->mem_bounds_num < FIT_MEM_BOUNDS_MAX) { \
+        (e)->mem_bounds[(e)->mem_bounds_num].perm = DASICS_LIBCFG_R | DASICS_LIBCFG_W; \
+        (e)->mem_bounds[(e)->mem_bounds_num].lo = UINT64_MAX; \
+        (e)->mem_bounds[(e)->mem_bounds_num].hi = (len); \
+        (e)->mem_bounds_num++; \
+    } \
+} while (0)
+
 int fit_init_static(void) {
     // Linker symbol declarations
-    extern uint64_t __ULIBTEXT_TEST_RWX1_BEGIN__;
-    extern uint64_t __ULIBTEXT_TEST_RWX1_END__;
-    extern uint64_t __ULIBTEXT_TEST_RWX2_BEGIN__;
-    extern uint64_t __ULIBTEXT_TEST_RWX2_END__;
-    extern uint64_t __ULIBTEXT_SHARE_BEGIN__;
-    extern uint64_t __ULIBTEXT_SHARE_END__;
-    extern uint64_t __ULIBDATA_TEST_RWX1_BEGIN__;
-    extern uint64_t __ULIBDATA_TEST_RWX1_END__;
-    extern uint64_t __ULIBDATA_TEST_RWX2_BEGIN__;
-    extern uint64_t __ULIBDATA_TEST_RWX2_END__;
-    extern uint64_t __ULIBDATA_SHARE_BEGIN__;
-    extern uint64_t __ULIBDATA_SHARE_END__;
-    extern uint64_t __ULIBRODATA_TEST_RWX1_BEGIN__;
-    extern uint64_t __ULIBRODATA_TEST_RWX1_END__;
-    extern uint64_t __ULIBRODATA_TEST_RWX2_BEGIN__;
-    extern uint64_t __ULIBRODATA_TEST_RWX2_END__;
-    extern uint64_t __ULIBRODATA_SHARE_BEGIN__;
-    extern uint64_t __ULIBRODATA_SHARE_END__;
-    extern uint64_t __ULIBBSS_TEST_RWX1_BEGIN__;
-    extern uint64_t __ULIBBSS_TEST_RWX1_END__;
-    extern uint64_t __ULIBBSS_TEST_RWX2_BEGIN__;
-    extern uint64_t __ULIBBSS_TEST_RWX2_END__;
-    extern uint64_t __ULIBBSS_SHARE_BEGIN__;
-    extern uint64_t __ULIBBSS_SHARE_END__;
+    extern uint64_t __ULIBTEXT_TEST_RWX1_BEGIN__, __ULIBTEXT_TEST_RWX1_END__;
+    extern uint64_t __ULIBTEXT_TEST_RWX2_BEGIN__, __ULIBTEXT_TEST_RWX2_END__;
+    extern uint64_t __ULIBTEXT_SHARE_BEGIN__, __ULIBTEXT_SHARE_END__;
+    extern uint64_t __ULIBDATA_TEST_RWX1_BEGIN__, __ULIBDATA_TEST_RWX1_END__;
+    extern uint64_t __ULIBDATA_TEST_RWX2_BEGIN__, __ULIBDATA_TEST_RWX2_END__;
+    extern uint64_t __ULIBDATA_SHARE_BEGIN__, __ULIBDATA_SHARE_END__;
+    extern uint64_t __ULIBRODATA_TEST_RWX1_BEGIN__, __ULIBRODATA_TEST_RWX1_END__;
+    extern uint64_t __ULIBRODATA_TEST_RWX2_BEGIN__, __ULIBRODATA_TEST_RWX2_END__;
+    extern uint64_t __ULIBRODATA_SHARE_BEGIN__, __ULIBRODATA_SHARE_END__;
+    extern uint64_t __ULIBBSS_TEST_RWX1_BEGIN__, __ULIBBSS_TEST_RWX1_END__;
+    extern uint64_t __ULIBBSS_TEST_RWX2_BEGIN__, __ULIBBSS_TEST_RWX2_END__;
+    extern uint64_t __ULIBBSS_SHARE_BEGIN__, __ULIBBSS_SHARE_END__;
 
     // Create "test_rwx1" entry
     struct fit_entry *entry_test_rwx1 = (struct fit_entry *)malloc(sizeof(struct fit_entry));
@@ -65,61 +79,29 @@ int fit_init_static(void) {
 
     entry_test_rwx1->maincalls[Umaincall_PRINT / 8] |= (1 << (Umaincall_PRINT % 8));  // Set maincall bitmap
 
-    // Set bounds data (9 regions)
-    entry_test_rwx1->bounds_num = 9;
-    entry_test_rwx1->bounds_data = malloc(entry_test_rwx1->bounds_num * sizeof(struct fit_bounds));
-    if (!entry_test_rwx1->bounds_data) {
-        free(entry_test_rwx1->syscalls);
-        free(entry_test_rwx1->maincalls);
-        free(entry_test_rwx1);
-        return -1;
-    }
+    // Initialize code and memory bounds
+    entry_test_rwx1->code_bounds_num = 0;
+    entry_test_rwx1->mem_bounds_num = 0;
 
     // Fill bounds data - using DASICS_LIBCFG_XX permissions
-    // 1. Code segment of test_rwx1 (executable)
-    entry_test_rwx1->bounds_data[0].perm = DASICS_LIBCFG_X;
-    entry_test_rwx1->bounds_data[0].lo = (uint64_t)&__ULIBTEXT_TEST_RWX1_BEGIN__;
-    entry_test_rwx1->bounds_data[0].hi = (uint64_t)&__ULIBTEXT_TEST_RWX1_END__;
-
-    // 2. Data segment of test_rwx1 (read-write)
-    entry_test_rwx1->bounds_data[1].perm = DASICS_LIBCFG_R | DASICS_LIBCFG_W;
-    entry_test_rwx1->bounds_data[1].lo = (uint64_t)&__ULIBDATA_TEST_RWX1_BEGIN__;
-    entry_test_rwx1->bounds_data[1].hi = (uint64_t)&__ULIBDATA_TEST_RWX1_END__;
-
-    // 3. Read-only data segment of test_rwx1 (read-only)
-    entry_test_rwx1->bounds_data[2].perm = DASICS_LIBCFG_R;
-    entry_test_rwx1->bounds_data[2].lo = (uint64_t)&__ULIBRODATA_TEST_RWX1_BEGIN__;
-    entry_test_rwx1->bounds_data[2].hi = (uint64_t)&__ULIBRODATA_TEST_RWX1_END__;
-
-    // 4. BSS segment of test_rwx1 (read-write)
-    entry_test_rwx1->bounds_data[3].perm = DASICS_LIBCFG_R | DASICS_LIBCFG_W;
-    entry_test_rwx1->bounds_data[3].lo = (uint64_t)&__ULIBBSS_TEST_RWX1_BEGIN__;
-    entry_test_rwx1->bounds_data[3].hi = (uint64_t)&__ULIBBSS_TEST_RWX1_END__;
-
-    // 5. Code segment of share (executable)
-    entry_test_rwx1->bounds_data[4].perm = DASICS_LIBCFG_X;
-    entry_test_rwx1->bounds_data[4].lo = (uint64_t)&__ULIBTEXT_SHARE_BEGIN__;
-    entry_test_rwx1->bounds_data[4].hi = (uint64_t)&__ULIBTEXT_SHARE_END__;
-
-    // 6. Data segment of share (read-write)
-    entry_test_rwx1->bounds_data[5].perm = DASICS_LIBCFG_R | DASICS_LIBCFG_W;
-    entry_test_rwx1->bounds_data[5].lo = (uint64_t)&__ULIBDATA_SHARE_BEGIN__;
-    entry_test_rwx1->bounds_data[5].hi = (uint64_t)&__ULIBDATA_SHARE_END__;
-
-    // 7. Read-only data segment of share (read-only)
-    entry_test_rwx1->bounds_data[6].perm = DASICS_LIBCFG_R;
-    entry_test_rwx1->bounds_data[6].lo = (uint64_t)&__ULIBRODATA_SHARE_BEGIN__;
-    entry_test_rwx1->bounds_data[6].hi = (uint64_t)&__ULIBRODATA_SHARE_END__;
-
-    // 8. BSS segment of share (read-write)
-    entry_test_rwx1->bounds_data[7].perm = DASICS_LIBCFG_R | DASICS_LIBCFG_W;
-    entry_test_rwx1->bounds_data[7].lo = (uint64_t)&__ULIBBSS_SHARE_BEGIN__;
-    entry_test_rwx1->bounds_data[7].hi = (uint64_t)&__ULIBBSS_SHARE_END__;
-
+    // 1. Code segment (executable)
+    ADD_CODE_BOUND(entry_test_rwx1, DASICS_LIBCFG_X, __ULIBTEXT_TEST_RWX1_BEGIN__, __ULIBTEXT_TEST_RWX1_END__);
+    // 2. Data segment (read-write)
+    ADD_MEM_BOUND(entry_test_rwx1, DASICS_LIBCFG_R | DASICS_LIBCFG_W, __ULIBDATA_TEST_RWX1_BEGIN__, __ULIBDATA_TEST_RWX1_END__);
+    // 3. Read-only data segment (read-only)
+    ADD_MEM_BOUND(entry_test_rwx1, DASICS_LIBCFG_R, __ULIBRODATA_TEST_RWX1_BEGIN__, __ULIBRODATA_TEST_RWX1_END__);
+    // 4. BSS segment (read-write)
+    ADD_MEM_BOUND(entry_test_rwx1, DASICS_LIBCFG_R | DASICS_LIBCFG_W, __ULIBBSS_TEST_RWX1_BEGIN__, __ULIBBSS_TEST_RWX1_END__);
+    // 5. Shared code segment (executable)
+    ADD_CODE_BOUND(entry_test_rwx1, DASICS_LIBCFG_X, __ULIBTEXT_SHARE_BEGIN__, __ULIBTEXT_SHARE_END__);
+    // 6. Shared data segment (read-write)
+    ADD_MEM_BOUND(entry_test_rwx1, DASICS_LIBCFG_R | DASICS_LIBCFG_W, __ULIBDATA_SHARE_BEGIN__, __ULIBDATA_SHARE_END__);
+    // 7. Shared read-only data segment (read-only)
+    ADD_MEM_BOUND(entry_test_rwx1, DASICS_LIBCFG_R, __ULIBRODATA_SHARE_BEGIN__, __ULIBRODATA_SHARE_END__);
+    // 8. Shared BSS segment (read-write)
+    ADD_MEM_BOUND(entry_test_rwx1, DASICS_LIBCFG_R | DASICS_LIBCFG_W, __ULIBBSS_SHARE_BEGIN__, __ULIBBSS_SHARE_END__);
     // 9. Stack frame (read-write)
-    entry_test_rwx1->bounds_data[8].perm = DASICS_LIBCFG_R | DASICS_LIBCFG_W;
-    entry_test_rwx1->bounds_data[8].lo = UINT64_MAX;  // Maximum uint64_t value indicates stack frame
-    entry_test_rwx1->bounds_data[8].hi = 96;
+    ADD_STACK_BOUND(entry_test_rwx1, 96);
 
     // Add to hash table (UTHash operation)
     HASH_ADD_PTR(fit_table, key, entry_test_rwx1);
@@ -159,61 +141,29 @@ int fit_init_static(void) {
 
     entry_test_rwx2->maincalls[Umaincall_PRINT / 8] |= (1 << (Umaincall_PRINT % 8));  // Set maincall bitmap
 
-    // Set bounds data (9 regions)
-    entry_test_rwx2->bounds_num = 9;
-    entry_test_rwx2->bounds_data = malloc(entry_test_rwx2->bounds_num * sizeof(struct fit_bounds));
-    if (!entry_test_rwx2->bounds_data) {
-        free(entry_test_rwx2->syscalls);
-        free(entry_test_rwx2->maincalls);
-        free(entry_test_rwx2);
-        return -1;
-    }
+    // Initialize code and memory bounds
+    entry_test_rwx2->code_bounds_num = 0;
+    entry_test_rwx2->mem_bounds_num = 0;
 
     // Fill bounds data - using DASICS_LIBCFG_XX permissions
-    // 1. Code segment of test_rwx2 (executable)
-    entry_test_rwx2->bounds_data[0].perm = DASICS_LIBCFG_X;
-    entry_test_rwx2->bounds_data[0].lo = (uint64_t)&__ULIBTEXT_TEST_RWX2_BEGIN__;
-    entry_test_rwx2->bounds_data[0].hi = (uint64_t)&__ULIBTEXT_TEST_RWX2_END__;
-
-    // 2. Data segment of test_rwx2 (read-write)
-    entry_test_rwx2->bounds_data[1].perm = DASICS_LIBCFG_R | DASICS_LIBCFG_W;
-    entry_test_rwx2->bounds_data[1].lo = (uint64_t)&__ULIBDATA_TEST_RWX2_BEGIN__;
-    entry_test_rwx2->bounds_data[1].hi = (uint64_t)&__ULIBDATA_TEST_RWX2_END__;
-
-    // 3. Read-only data segment of test_rwx2 (read-only)
-    entry_test_rwx2->bounds_data[2].perm = DASICS_LIBCFG_R;
-    entry_test_rwx2->bounds_data[2].lo = (uint64_t)&__ULIBRODATA_TEST_RWX2_BEGIN__;
-    entry_test_rwx2->bounds_data[2].hi = (uint64_t)&__ULIBRODATA_TEST_RWX2_END__;
-
-    // 4. BSS segment of test_rwx2 (read-write)
-    entry_test_rwx2->bounds_data[3].perm = DASICS_LIBCFG_R | DASICS_LIBCFG_W;
-    entry_test_rwx2->bounds_data[3].lo = (uint64_t)&__ULIBBSS_TEST_RWX2_BEGIN__;
-    entry_test_rwx2->bounds_data[3].hi = (uint64_t)&__ULIBBSS_TEST_RWX2_END__;
-
-    // 5. Code segment of share (executable)
-    entry_test_rwx2->bounds_data[4].perm = DASICS_LIBCFG_X;
-    entry_test_rwx2->bounds_data[4].lo = (uint64_t)&__ULIBTEXT_SHARE_BEGIN__;
-    entry_test_rwx2->bounds_data[4].hi = (uint64_t)&__ULIBTEXT_SHARE_END__;
-
-    // 6. Data segment of share (read-write)
-    entry_test_rwx2->bounds_data[5].perm = DASICS_LIBCFG_R | DASICS_LIBCFG_W;
-    entry_test_rwx2->bounds_data[5].lo = (uint64_t)&__ULIBDATA_SHARE_BEGIN__;
-    entry_test_rwx2->bounds_data[5].hi = (uint64_t)&__ULIBDATA_SHARE_END__;
-
-    // 7. Read-only data segment of share (read-only)
-    entry_test_rwx2->bounds_data[6].perm = DASICS_LIBCFG_R;
-    entry_test_rwx2->bounds_data[6].lo = (uint64_t)&__ULIBRODATA_SHARE_BEGIN__;
-    entry_test_rwx2->bounds_data[6].hi = (uint64_t)&__ULIBRODATA_SHARE_END__;
-
-    // 8. BSS segment of share (read-write)
-    entry_test_rwx2->bounds_data[7].perm = DASICS_LIBCFG_R | DASICS_LIBCFG_W;
-    entry_test_rwx2->bounds_data[7].lo = (uint64_t)&__ULIBBSS_SHARE_BEGIN__;
-    entry_test_rwx2->bounds_data[7].hi = (uint64_t)&__ULIBBSS_SHARE_END__;
-
+    // 1. Code segment (executable)
+    ADD_CODE_BOUND(entry_test_rwx2, DASICS_LIBCFG_X, __ULIBTEXT_TEST_RWX2_BEGIN__, __ULIBTEXT_TEST_RWX2_END__);
+    // 2. Data segment (read-write)
+    ADD_MEM_BOUND(entry_test_rwx2, DASICS_LIBCFG_R | DASICS_LIBCFG_W, __ULIBDATA_TEST_RWX2_BEGIN__, __ULIBDATA_TEST_RWX2_END__);
+    // 3. Read-only data segment (read-only)
+    ADD_MEM_BOUND(entry_test_rwx2, DASICS_LIBCFG_R, __ULIBRODATA_TEST_RWX2_BEGIN__, __ULIBRODATA_TEST_RWX2_END__);
+    // 4. BSS segment (read-write)
+    ADD_MEM_BOUND(entry_test_rwx2, DASICS_LIBCFG_R | DASICS_LIBCFG_W, __ULIBBSS_TEST_RWX2_BEGIN__, __ULIBBSS_TEST_RWX2_END__);
+    // 5. Shared code segment (executable)
+    ADD_CODE_BOUND(entry_test_rwx2, DASICS_LIBCFG_X, __ULIBTEXT_SHARE_BEGIN__, __ULIBTEXT_SHARE_END__);
+    // 6. Shared data segment (read-write)
+    ADD_MEM_BOUND(entry_test_rwx2, DASICS_LIBCFG_R | DASICS_LIBCFG_W, __ULIBDATA_SHARE_BEGIN__, __ULIBDATA_SHARE_END__);
+    // 7. Shared read-only data segment (read-only)
+    ADD_MEM_BOUND(entry_test_rwx2, DASICS_LIBCFG_R, __ULIBRODATA_SHARE_BEGIN__, __ULIBRODATA_SHARE_END__);
+    // 8. Shared BSS segment (read-write)
+    ADD_MEM_BOUND(entry_test_rwx2, DASICS_LIBCFG_R | DASICS_LIBCFG_W, __ULIBBSS_SHARE_BEGIN__, __ULIBBSS_SHARE_END__);
     // 9. Stack frame (read-write)
-    entry_test_rwx2->bounds_data[8].perm = DASICS_LIBCFG_R | DASICS_LIBCFG_W;
-    entry_test_rwx2->bounds_data[8].lo = UINT64_MAX;  // Maximum uint64_t value indicates stack frame
-    entry_test_rwx2->bounds_data[8].hi = 96;
+    ADD_STACK_BOUND(entry_test_rwx2, 96);
 
     // Add to hash table (UTHash operation)
     HASH_ADD_PTR(fit_table, key, entry_test_rwx2);
