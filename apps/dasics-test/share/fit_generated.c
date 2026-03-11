@@ -20,14 +20,6 @@
         (e)->mem_bounds_num++; \
     } \
 } while (0)
-#define ADD_STACK_BOUND(e, len) do { \
-    if ((e)->mem_bounds_num < FIT_MEM_BOUNDS_MAX) { \
-        (e)->mem_bounds[(e)->mem_bounds_num].perm = DASICS_LIBCFG_R | DASICS_LIBCFG_W; \
-        (e)->mem_bounds[(e)->mem_bounds_num].lo = UINT64_MAX; \
-        (e)->mem_bounds[(e)->mem_bounds_num].hi = (len); \
-        (e)->mem_bounds_num++; \
-    } \
-} while (0)
 
 int fit_init_static(void) {
     // Linker symbol declarations
@@ -56,9 +48,7 @@ int fit_init_static(void) {
         return -1;
     }
 
-    // Set argument bound allocation and deallocation functions
-    entry_test_rwx1->argbound_alloc = NULL;
-    entry_test_rwx1->argbound_free = NULL;
+    // Set library and closure IDs
     entry_test_rwx1->library_id = 0;
     entry_test_rwx1->closure_id = 1;
     entry_test_rwx1->heap_alloc_done = 0;
@@ -82,6 +72,9 @@ int fit_init_static(void) {
     // Initialize code and memory bounds
     entry_test_rwx1->code_bounds_num = 0;
     entry_test_rwx1->mem_bounds_num = 0;
+    entry_test_rwx1->temp_code_bounds_num = 0;
+    entry_test_rwx1->temp_mem_bounds_num = 0;
+    entry_test_rwx1->temp_times = 0;
 
     // Fill bounds data - using DASICS_LIBCFG_XX permissions
     // 1. Code segment (executable)
@@ -100,8 +93,11 @@ int fit_init_static(void) {
     ADD_MEM_BOUND(entry_test_rwx1, DASICS_LIBCFG_R, __ULIBRODATA_SHARE_BEGIN__, __ULIBRODATA_SHARE_END__);
     // 8. Shared BSS segment (read-write)
     ADD_MEM_BOUND(entry_test_rwx1, DASICS_LIBCFG_R | DASICS_LIBCFG_W, __ULIBBSS_SHARE_BEGIN__, __ULIBBSS_SHARE_END__);
-    // 9. Stack frame (read-write)
-    ADD_STACK_BOUND(entry_test_rwx1, 96);
+    // 9. Stack frame (read-write), allocated dynamically
+    entry_test_rwx1->stack_top = 0;
+    entry_test_rwx1->stack_size = 96;
+    // 10. va_list permission, allocated dynamically
+    entry_test_rwx1->valist_size = 0;
 
     // Add to hash table (UTHash operation)
     HASH_ADD_PTR(fit_table, key, entry_test_rwx1);
@@ -118,9 +114,7 @@ int fit_init_static(void) {
         return -1;
     }
 
-    // Set argument bound allocation and deallocation functions
-    entry_test_rwx2->argbound_alloc = NULL;
-    entry_test_rwx2->argbound_free = NULL;
+    // Set library and closure IDs
     entry_test_rwx2->library_id = 0;
     entry_test_rwx2->closure_id = 2;
     entry_test_rwx2->heap_alloc_done = 0;
@@ -144,6 +138,9 @@ int fit_init_static(void) {
     // Initialize code and memory bounds
     entry_test_rwx2->code_bounds_num = 0;
     entry_test_rwx2->mem_bounds_num = 0;
+    entry_test_rwx2->temp_code_bounds_num = 0;
+    entry_test_rwx2->temp_mem_bounds_num = 0;
+    entry_test_rwx2->temp_times = 0;
 
     // Fill bounds data - using DASICS_LIBCFG_XX permissions
     // 1. Code segment (executable)
@@ -162,8 +159,11 @@ int fit_init_static(void) {
     ADD_MEM_BOUND(entry_test_rwx2, DASICS_LIBCFG_R, __ULIBRODATA_SHARE_BEGIN__, __ULIBRODATA_SHARE_END__);
     // 8. Shared BSS segment (read-write)
     ADD_MEM_BOUND(entry_test_rwx2, DASICS_LIBCFG_R | DASICS_LIBCFG_W, __ULIBBSS_SHARE_BEGIN__, __ULIBBSS_SHARE_END__);
-    // 9. Stack frame (read-write)
-    ADD_STACK_BOUND(entry_test_rwx2, 96);
+    // 9. Stack frame (read-write), allocated dynamically
+    entry_test_rwx2->stack_top = 0;
+    entry_test_rwx2->stack_size = 96;
+    // 10. va_list permission, allocated dynamically
+    entry_test_rwx2->valist_size = 0;
 
     // Add to hash table (UTHash operation)
     HASH_ADD_PTR(fit_table, key, entry_test_rwx2);

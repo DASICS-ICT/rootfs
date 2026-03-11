@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <asm/unistd.h>
 #include <fit.h>
@@ -20,14 +19,6 @@
         (e)->mem_bounds_num++; \
     } \
 } while (0)
-#define ADD_STACK_BOUND(e, len) do { \
-    if ((e)->mem_bounds_num < FIT_MEM_BOUNDS_MAX) { \
-        (e)->mem_bounds[(e)->mem_bounds_num].perm = DASICS_LIBCFG_R | DASICS_LIBCFG_W; \
-        (e)->mem_bounds[(e)->mem_bounds_num].lo = UINT64_MAX; \
-        (e)->mem_bounds[(e)->mem_bounds_num].hi = (len); \
-        (e)->mem_bounds_num++; \
-    } \
-} while (0)
 
 int fit_init_static(void) {
     extern uint64_t __ULIBTEXT_FUNC1_BEGIN__, __ULIBTEXT_FUNC1_END__;
@@ -46,8 +37,6 @@ int fit_init_static(void) {
         if (!e) return -1;
         extern void func1(void);
         e->key = (void *)func1;
-        e->argbound_alloc = NULL;
-        e->argbound_free = NULL;
         e->syscalls_size = (__NR_syscalls + 7) / 8;
         e->maincalls_size = (Umaincall_UNKNOWN + 7) / 8;
         e->syscalls = bitmap_alloc(__NR_syscalls);
@@ -63,6 +52,9 @@ int fit_init_static(void) {
         e->library_id = 0;
         e->closure_id = 1;
         e->heap_alloc_done = 0;
+        e->temp_code_bounds_num = 0;
+        e->temp_mem_bounds_num = 0;
+        e->temp_times = 0;
         e->code_bounds_num = 0;
         e->mem_bounds_num = 0;
 
@@ -71,7 +63,9 @@ int fit_init_static(void) {
         ADD_MEM_BOUND(e, DASICS_LIBCFG_R, __ULIBRODATA_FUNC1_BEGIN__, __ULIBRODATA_FUNC1_END__);
         ADD_MEM_BOUND(e, DASICS_LIBCFG_R | DASICS_LIBCFG_W, __ULIBBSS_FUNC1_BEGIN__, __ULIBBSS_FUNC1_END__);
         ADD_MEM_BOUND(e, DASICS_LIBCFG_R | DASICS_LIBCFG_W, __ULIBDATA_SHARE_BEGIN__, __ULIBDATA_SHARE_END__);
-        ADD_STACK_BOUND(e, 48);
+        e->stack_top = 0;
+        e->stack_size = 48;
+        e->valist_size = 0;
         HASH_ADD_PTR(fit_table, key, e);
     }
 
@@ -81,8 +75,6 @@ int fit_init_static(void) {
         if (!e) return -1;
         extern void func2(void);
         e->key = (void *)func2;
-        e->argbound_alloc = NULL;
-        e->argbound_free = NULL;
         e->syscalls_size = (__NR_syscalls + 7) / 8;
         e->maincalls_size = (Umaincall_UNKNOWN + 7) / 8;
         e->syscalls = bitmap_alloc(__NR_syscalls);
@@ -98,6 +90,9 @@ int fit_init_static(void) {
         e->library_id = 0;
         e->closure_id = 2;
         e->heap_alloc_done = 0;
+        e->temp_code_bounds_num = 0;
+        e->temp_mem_bounds_num = 0;
+        e->temp_times = 0;
         e->code_bounds_num = 0;
         e->mem_bounds_num = 0;
 
@@ -106,7 +101,9 @@ int fit_init_static(void) {
         ADD_MEM_BOUND(e, DASICS_LIBCFG_R, __ULIBRODATA_FUNC2_BEGIN__, __ULIBRODATA_FUNC2_END__);
         ADD_MEM_BOUND(e, DASICS_LIBCFG_R | DASICS_LIBCFG_W, __ULIBBSS_FUNC2_BEGIN__, __ULIBBSS_FUNC2_END__);
         ADD_MEM_BOUND(e, DASICS_LIBCFG_R | DASICS_LIBCFG_W, __ULIBDATA_SHARE_BEGIN__, __ULIBDATA_SHARE_END__);
-        ADD_STACK_BOUND(e, 32);
+        e->stack_top = 0;
+        e->stack_size = 32;
+        e->valist_size = 0;
         HASH_ADD_PTR(fit_table, key, e);
     }
 

@@ -22,53 +22,6 @@
         (e)->mem_bounds_num++; \
     } \
 } while (0)
-#define ADD_STACK_BOUND(e, len) do { \
-    if ((e)->mem_bounds_num < FIT_MEM_BOUNDS_MAX) { \
-        (e)->mem_bounds[(e)->mem_bounds_num].perm = DASICS_LIBCFG_R | DASICS_LIBCFG_W; \
-        (e)->mem_bounds[(e)->mem_bounds_num].lo = UINT64_MAX; \
-        (e)->mem_bounds[(e)->mem_bounds_num].hi = (len); \
-        (e)->mem_bounds_num++; \
-    } \
-} while (0)
-
-static fit_handles_t *handle_argbound_test_argbound = NULL;
-static const size_t argbound_num_test_argbound = 3;
-
-static void fit_argbound_alloc_test_argbound(va_list args) {
-    // Allocate memory for the handle array
-    handle_argbound_test_argbound = (fit_handles_t *)malloc(argbound_num_test_argbound * sizeof(fit_handles_t));
-    if (!handle_argbound_test_argbound) {
-        fprintf(stderr, "Memory allocation failed for handle_argbound_test_argbound\n");
-        return;
-    }
-
-    // Initialize the handles and permissions for va_list args
-    handle_argbound_test_argbound[0].handle = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, (uint64_t)args, (uint64_t)args + sizeof(char *) * 2);
-    handle_argbound_test_argbound[0].perm = DASICS_LIBCFG_R | DASICS_LIBCFG_W;
-
-    // Get the arguments
-    char *src = va_arg(args, char *);
-    char *dst = va_arg(args, char *);
-
-    // Initialize the handles and permissions
-    handle_argbound_test_argbound[1].handle = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)src, (uint64_t)src + 10);
-    handle_argbound_test_argbound[1].perm = DASICS_LIBCFG_R;
-    handle_argbound_test_argbound[2].handle = dasics_libcfg_alloc(DASICS_LIBCFG_W, (uint64_t)dst, (uint64_t)dst + 10);
-    handle_argbound_test_argbound[2].perm = DASICS_LIBCFG_W;
-}
-
-static void fit_argbound_free_test_argbound(void) {
-    // Free the allocated handles
-    for (size_t i = 0; i < argbound_num_test_argbound; i++) {
-        if (handle_argbound_test_argbound[i].perm & DASICS_LIBCFG_X) {
-            dasics_jumpcfg_free(handle_argbound_test_argbound[i].handle);
-        } else {
-            dasics_libcfg_free(handle_argbound_test_argbound[i].handle);
-        }
-    }
-    free(handle_argbound_test_argbound);
-    handle_argbound_test_argbound = NULL;
-}
 
 int fit_init_static(void) {
     // Linker symbol declarations
@@ -93,9 +46,7 @@ int fit_init_static(void) {
         return -1;
     }
 
-    // Set argument bound allocation and deallocation functions
-    entry->argbound_alloc = fit_argbound_alloc_test_argbound;
-    entry->argbound_free = fit_argbound_free_test_argbound;
+    // Set library and closure IDs
     entry->library_id = 0;
     entry->closure_id = 1;
     entry->heap_alloc_done = 0;
@@ -119,6 +70,9 @@ int fit_init_static(void) {
     // Initialize code and memory bounds
     entry->code_bounds_num = 0;
     entry->mem_bounds_num = 0;
+    entry->temp_code_bounds_num = 0;
+    entry->temp_mem_bounds_num = 0;
+    entry->temp_times = 0;
 
     // Fill bounds data - using DASICS_LIBCFG_XX permissions
     // 1. Code segment (executable)
@@ -129,8 +83,11 @@ int fit_init_static(void) {
     ADD_MEM_BOUND(entry, DASICS_LIBCFG_R, __ULIBRODATA_TEST_ARGBOUND_BEGIN__, __ULIBRODATA_TEST_ARGBOUND_END__);
     // 4. BSS segment (read-write)
     ADD_MEM_BOUND(entry, DASICS_LIBCFG_R | DASICS_LIBCFG_W, __ULIBBSS_TEST_ARGBOUND_BEGIN__, __ULIBBSS_TEST_ARGBOUND_END__);
-    // 5. Stack frame (read-write)
-    ADD_STACK_BOUND(entry, 96);
+    // 5. Stack frame (read-write), allocated dynamically
+    entry->stack_top = 0;
+    entry->stack_size = 96;
+    // 6. va_list permission, allocated dynamically
+    entry->valist_size = 0;
 
     // Add to hash table (UTHash operation)
     HASH_ADD_PTR(fit_table, key, entry);

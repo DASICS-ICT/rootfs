@@ -79,6 +79,23 @@ int main() {
         .sensitive_int = 123123
     };
 
+    /* Grant parameter bounds to test_argbound_wrapper (src.string R, dst.string W), times=1 */
+    fit_bounds_t arg_perms[2];
+    arg_perms[0].perm = DASICS_LIBCFG_R;
+    arg_perms[0].lo = (uint64_t)src.string;
+    arg_perms[0].hi = (uint64_t)src.string + 10;
+    arg_perms[0].handle = -1;
+    arg_perms[1].perm = DASICS_LIBCFG_W;
+    arg_perms[1].lo = (uint64_t)dst.string;
+    arg_perms[1].hi = (uint64_t)dst.string + 10;
+    arg_perms[1].handle = -1;
+    size_t valist_size = sizeof(char *) * 2;
+    if (fit_permission_grant(test_argbound_wrapper, arg_perms, 2, valist_size, 1) != 0) {
+        printf("[MAIN] fit_permission_grant failed\n");
+        fit_destroy();
+        return -1;
+    }
+
     uint64_t ret = 0;
     ret = fit_switchto(test_argbound_wrapper, src.string, dst.string);
     printf("[MAIN] return value: %lx\n", ret);
