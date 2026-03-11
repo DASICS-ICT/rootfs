@@ -1,0 +1,107 @@
+#!/bin/sh
+
+TEST_BIN="/root/test_m3_cprog_feas"
+DEFAULT_CASE_LIST="case00_single_slot case00_prologue_only"
+EXTENDED_CASE_LIST="$DEFAULT_CASE_LIST case01_simple_chain"
+AUTH_CASE_LIST="case20_auth_tamper_bitflip_c"
+AUTH_OVERWRITE_CASE_LIST="case21_auth_tamper_overwrite_c"
+AUTH_OVERFLOW_CASE_LIST="case22_auth_tamper_overflow_c"
+RVC_CASE_LIST="case10_natural_single_layer"
+RVC_EXTENDED_CASE_LIST="case11_natural_simple_chain"
+CASE_SCOPE="single-layer"
+CASE_LIST="$DEFAULT_CASE_LIST"
+DMESG_CLEAR_OK=0
+FAULT_PAT="\\[DASICS SREG\\] (VIOL|PROTO|AUTH) fault|Raised a dasics 24 exception|fault reason: .*000000000000000[789]"
+
+if grep -q "dasics_m3_case_scope=extended" /proc/cmdline 2>/dev/null; then
+    CASE_SCOPE="extended"
+    CASE_LIST="$EXTENDED_CASE_LIST"
+elif grep -q "dasics_m3_case_scope=auth-bitflip" /proc/cmdline 2>/dev/null; then
+    CASE_SCOPE="auth-bitflip"
+    CASE_LIST="$AUTH_CASE_LIST"
+elif grep -q "dasics_m3_case_scope=auth-overwrite" /proc/cmdline 2>/dev/null; then
+    CASE_SCOPE="auth-overwrite"
+    CASE_LIST="$AUTH_OVERWRITE_CASE_LIST"
+elif grep -q "dasics_m3_case_scope=auth-overflow" /proc/cmdline 2>/dev/null; then
+    CASE_SCOPE="auth-overflow"
+    CASE_LIST="$AUTH_OVERFLOW_CASE_LIST"
+elif grep -q "dasics_m3_case_scope=rvc-natural-single-layer" /proc/cmdline 2>/dev/null; then
+    CASE_SCOPE="rvc-natural-single-layer"
+    CASE_LIST="$RVC_CASE_LIST"
+    TEST_BIN="/root/test_m3_cprog_feas_rvc"
+elif grep -q "dasics_m3_case_scope=rvc-natural-simple-chain" /proc/cmdline 2>/dev/null; then
+    CASE_SCOPE="rvc-natural-simple-chain"
+    CASE_LIST="$RVC_EXTENDED_CASE_LIST"
+    TEST_BIN="/root/test_m3_cprog_feas_rvc"
+fi
+
+echo "[M3-FEASIBILITY] START: m3-cprog-feas"
+echo "[M3-FEASIBILITY] MODE: ON (-sreg-open)"
+echo "[M3-FEASIBILITY] CASE SCOPE: $CASE_SCOPE"
+
+fail_count=0
+
+if [ ! -x "$TEST_BIN" ]; then
+    echo "[M3-FEASIBILITY] MISSING: $TEST_BIN"
+    fail_count=$((fail_count + 1))
+else
+    if dmesg -c >/dev/null 2>&1; then
+        DMESG_CLEAR_OK=1
+    fi
+
+    for CASE_NAME in $CASE_LIST; do
+        if [ "$DMESG_CLEAR_OK" -eq 1 ]; then
+            dmesg -c >/dev/null 2>&1 || true
+        fi
+
+        echo "[M3-FEASIBILITY] RUN: $TEST_BIN --case $CASE_NAME -dasics -sreg-open"
+        case_out=$("$TEST_BIN" --case "$CASE_NAME" -dasics -sreg-open 2>&1)
+        case_rc=$?
+        kmsg_out=""
+        if [ "$DMESG_CLEAR_OK" -eq 1 ]; then
+            kmsg_out=$(dmesg -c 2>/dev/null)
+        fi
+
+        echo "$case_out" | grep -E "^\[M3-FEASIBILITY\]|^\[DASICS SREG\]" || true
+
+        if [ "$CASE_SCOPE" = "auth-bitflip" ] || \
+           [ "$CASE_SCOPE" = "auth-overwrite" ] || \
+           [ "$CASE_SCOPE" = "auth-overflow" ]; then
+            auth_hit=0
+            if printf '%s\n%s\n' "$case_out" "$kmsg_out" | grep -Fq "[DASICS SREG] AUTH fault"; then
+                auth_hit=1
+            fi
+            if printf '%s\n%s\n' "$case_out" "$kmsg_out" | grep -Eq "fault reason: .*0000000000000009"; then
+                auth_hit=1
+            fi
+            if [ "$case_rc" -ne 0 ] && [ "$auth_hit" -eq 1 ]; then
+                echo "[M3-FEASIBILITY] CASE PASS: $CASE_NAME"
+            else
+                echo "[M3-FEASIBILITY] FAIL(case=$CASE_NAME rc=$case_rc)"
+                echo "[M3-FEASIBILITY] CASE RAW LOG: $CASE_NAME"
+                echo "$case_out"
+                echo "$kmsg_out" | tail -n 40
+                fail_count=$((fail_count + 1))
+            fi
+        elif [ "$case_rc" -eq 0 ] && \
+           echo "$case_out" | grep -Fq "[M3-FEASIBILITY] CASE PASS: $CASE_NAME" && \
+           ! echo "$case_out" | grep -Eq "$FAULT_PAT" && \
+           ! echo "$kmsg_out" | grep -Eq "$FAULT_PAT"; then
+            echo "[M3-FEASIBILITY] CASE PASS: $CASE_NAME"
+        else
+            echo "[M3-FEASIBILITY] FAIL(case=$CASE_NAME rc=$case_rc)"
+            echo "[M3-FEASIBILITY] CASE RAW LOG: $CASE_NAME"
+            echo "$case_out"
+            echo "$kmsg_out" | tail -n 40
+            fail_count=$((fail_count + 1))
+        fi
+    done
+fi
+
+if [ "$fail_count" -ne 0 ]; then
+    echo "[M3-FEASIBILITY] FAIL(total_fail=$fail_count)"
+else
+    echo "[M3-FEASIBILITY] PASS"
+fi
+
+exit 0

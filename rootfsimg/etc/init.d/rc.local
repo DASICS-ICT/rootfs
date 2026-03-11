@@ -1,5 +1,14 @@
 #!/bin/sh
 
+if grep -qw "dasics_test=m3_feasibility" /proc/cmdline 2>/dev/null; then
+    if [ -x /etc/init.d/rc.m3-feasibility ]; then
+        exec /etc/init.d/rc.m3-feasibility
+    fi
+    echo "[M3-FEASIBILITY] MISSING: /etc/init.d/rc.m3-feasibility"
+    echo "[M3-FEASIBILITY] FAIL(total_fail=1)"
+    exit 0
+fi
+
 if grep -qw "dasics_test=sreg_switch" /proc/cmdline 2>/dev/null; then
     if [ -x /etc/init.d/rc.sreg-switch ]; then
         exec /etc/init.d/rc.sreg-switch
