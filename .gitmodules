@@ -6,6 +6,7 @@
 	path = libs/LibDASICS/repo
 	url = https://github.com/DASICS-ICT/LibDASICS.git
 	branch = dasics-fit
-[submodule "mimalloc_v2.2.2"]
+[submodule "mimalloc-fit_v2.2.2"]
 	path = libs/mimalloc/repo
-	url = https://github.com/microsoft/mimalloc.git
+	url = https://github.com/DASICS-ICT/mimalloc.git
+	branch = dasics-fit-v2.2.2
