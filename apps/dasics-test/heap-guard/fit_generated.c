@@ -1,24 +1,4 @@
-#include <stdlib.h>
-#include <asm/unistd.h>
-#include <fit.h>
-
-/* Only add a bound when begin and end symbols differ (non-empty region) */
-#define ADD_CODE_BOUND(e, perm_bits, begin, end) do { \
-    if ((uint64_t)&(begin) != (uint64_t)&(end) && (e)->code_bounds_num < FIT_CODE_BOUNDS_MAX) { \
-        (e)->code_bounds[(e)->code_bounds_num].perm = (perm_bits); \
-        (e)->code_bounds[(e)->code_bounds_num].lo = (uint64_t)&(begin); \
-        (e)->code_bounds[(e)->code_bounds_num].hi = (uint64_t)&(end); \
-        (e)->code_bounds_num++; \
-    } \
-} while (0)
-#define ADD_MEM_BOUND(e, perm_bits, begin, end) do { \
-    if ((uint64_t)&(begin) != (uint64_t)&(end) && (e)->mem_bounds_num < FIT_MEM_BOUNDS_MAX) { \
-        (e)->mem_bounds[(e)->mem_bounds_num].perm = (perm_bits); \
-        (e)->mem_bounds[(e)->mem_bounds_num].lo = (uint64_t)&(begin); \
-        (e)->mem_bounds[(e)->mem_bounds_num].hi = (uint64_t)&(end); \
-        (e)->mem_bounds_num++; \
-    } \
-} while (0)
+#include <compartment.h>
 
 int fit_init_static(void) {
     extern uint64_t __ULIBTEXT_FUNC1_BEGIN__, __ULIBTEXT_FUNC1_END__;
@@ -31,81 +11,45 @@ int fit_init_static(void) {
     extern uint64_t __ULIBBSS_FUNC2_BEGIN__, __ULIBBSS_FUNC2_END__;
     extern uint64_t __ULIBDATA_SHARE_BEGIN__, __ULIBDATA_SHARE_END__;
 
-    /* Entry for func1 */
-    {
-        struct fit_entry *e = (struct fit_entry *)malloc(sizeof(struct fit_entry));
-        if (!e) return -1;
-        extern void func1(void);
-        e->key = (void *)func1;
-        e->syscalls_size = (__NR_syscalls + 7) / 8;
-        e->maincalls_size = (Umaincall_UNKNOWN + 7) / 8;
-        e->syscalls = bitmap_alloc(__NR_syscalls);
-        e->maincalls = bitmap_alloc(Umaincall_UNKNOWN);
-        if (!e->syscalls || !e->maincalls) {
-            if (e->syscalls) free(e->syscalls);
-            if (e->maincalls) free(e->maincalls);
-            free(e);
-            return -1;
-        }
-        e->maincalls[Umaincall_PRINT / 8] |= (1 << (Umaincall_PRINT % 8));
-        e->maincalls[Umaincall_MALLOC / 8] |= (1 << (Umaincall_MALLOC % 8));
-        e->library_id = 0;
-        e->closure_id = 1;
-        e->heap_alloc_done = 0;
-        e->temp_code_bounds_num = 0;
-        e->temp_mem_bounds_num = 0;
-        e->temp_times = 0;
-        e->code_bounds_num = 0;
-        e->mem_bounds_num = 0;
+    /* Compartment for func1 */
+    extern void func1(void);
+    compartment_t *comp1 = compartment_create(func1, 0, 1);
+    if (!comp1) return -1;
 
-        ADD_CODE_BOUND(e, DASICS_LIBCFG_X, __ULIBTEXT_FUNC1_BEGIN__, __ULIBTEXT_FUNC1_END__);
-        ADD_MEM_BOUND(e, DASICS_LIBCFG_R | DASICS_LIBCFG_W, __ULIBDATA_FUNC1_BEGIN__, __ULIBDATA_FUNC1_END__);
-        ADD_MEM_BOUND(e, DASICS_LIBCFG_R, __ULIBRODATA_FUNC1_BEGIN__, __ULIBRODATA_FUNC1_END__);
-        ADD_MEM_BOUND(e, DASICS_LIBCFG_R | DASICS_LIBCFG_W, __ULIBBSS_FUNC1_BEGIN__, __ULIBBSS_FUNC1_END__);
-        ADD_MEM_BOUND(e, DASICS_LIBCFG_R | DASICS_LIBCFG_W, __ULIBDATA_SHARE_BEGIN__, __ULIBDATA_SHARE_END__);
-        e->stack_top = 0;
-        e->stack_size = 48;
-        e->valist_size = 0;
-        HASH_ADD_PTR(fit_table, key, e);
-    }
+    compartment_permit_maincall(comp1, 2, Umaincall_PRINT, Umaincall_MALLOC);
 
-    /* Entry for func2 */
-    {
-        struct fit_entry *e = (struct fit_entry *)malloc(sizeof(struct fit_entry));
-        if (!e) return -1;
-        extern void func2(void);
-        e->key = (void *)func2;
-        e->syscalls_size = (__NR_syscalls + 7) / 8;
-        e->maincalls_size = (Umaincall_UNKNOWN + 7) / 8;
-        e->syscalls = bitmap_alloc(__NR_syscalls);
-        e->maincalls = bitmap_alloc(Umaincall_UNKNOWN);
-        if (!e->syscalls || !e->maincalls) {
-            if (e->syscalls) free(e->syscalls);
-            if (e->maincalls) free(e->maincalls);
-            free(e);
-            return -1;
-        }
-        e->maincalls[Umaincall_PRINT / 8] |= (1 << (Umaincall_PRINT % 8));
-        e->maincalls[Umaincall_MALLOC / 8] |= (1 << (Umaincall_MALLOC % 8));
-        e->library_id = 0;
-        e->closure_id = 2;
-        e->heap_alloc_done = 0;
-        e->temp_code_bounds_num = 0;
-        e->temp_mem_bounds_num = 0;
-        e->temp_times = 0;
-        e->code_bounds_num = 0;
-        e->mem_bounds_num = 0;
+    compartment_add_code_bound(comp1, DASICS_LIBCFG_X,
+        (uint64_t)&__ULIBTEXT_FUNC1_BEGIN__, (uint64_t)&__ULIBTEXT_FUNC1_END__);
+    compartment_add_mem_bound(comp1, DASICS_LIBCFG_R | DASICS_LIBCFG_W,
+        (uint64_t)&__ULIBDATA_FUNC1_BEGIN__, (uint64_t)&__ULIBDATA_FUNC1_END__);
+    compartment_add_mem_bound(comp1, DASICS_LIBCFG_R,
+        (uint64_t)&__ULIBRODATA_FUNC1_BEGIN__, (uint64_t)&__ULIBRODATA_FUNC1_END__);
+    compartment_add_mem_bound(comp1, DASICS_LIBCFG_R | DASICS_LIBCFG_W,
+        (uint64_t)&__ULIBBSS_FUNC1_BEGIN__, (uint64_t)&__ULIBBSS_FUNC1_END__);
+    compartment_add_mem_bound(comp1, DASICS_LIBCFG_R | DASICS_LIBCFG_W,
+        (uint64_t)&__ULIBDATA_SHARE_BEGIN__, (uint64_t)&__ULIBDATA_SHARE_END__);
 
-        ADD_CODE_BOUND(e, DASICS_LIBCFG_X, __ULIBTEXT_FUNC2_BEGIN__, __ULIBTEXT_FUNC2_END__);
-        ADD_MEM_BOUND(e, DASICS_LIBCFG_R | DASICS_LIBCFG_W, __ULIBDATA_FUNC2_BEGIN__, __ULIBDATA_FUNC2_END__);
-        ADD_MEM_BOUND(e, DASICS_LIBCFG_R, __ULIBRODATA_FUNC2_BEGIN__, __ULIBRODATA_FUNC2_END__);
-        ADD_MEM_BOUND(e, DASICS_LIBCFG_R | DASICS_LIBCFG_W, __ULIBBSS_FUNC2_BEGIN__, __ULIBBSS_FUNC2_END__);
-        ADD_MEM_BOUND(e, DASICS_LIBCFG_R | DASICS_LIBCFG_W, __ULIBDATA_SHARE_BEGIN__, __ULIBDATA_SHARE_END__);
-        e->stack_top = 0;
-        e->stack_size = 32;
-        e->valist_size = 0;
-        HASH_ADD_PTR(fit_table, key, e);
-    }
+    compartment_set_stack(comp1, 48);
+
+    /* Compartment for func2 */
+    extern void func2(void);
+    compartment_t *comp2 = compartment_create(func2, 0, 2);
+    if (!comp2) return -1;
+
+    compartment_permit_maincall(comp2, 2, Umaincall_PRINT, Umaincall_MALLOC);
+
+    compartment_add_code_bound(comp2, DASICS_LIBCFG_X,
+        (uint64_t)&__ULIBTEXT_FUNC2_BEGIN__, (uint64_t)&__ULIBTEXT_FUNC2_END__);
+    compartment_add_mem_bound(comp2, DASICS_LIBCFG_R | DASICS_LIBCFG_W,
+        (uint64_t)&__ULIBDATA_FUNC2_BEGIN__, (uint64_t)&__ULIBDATA_FUNC2_END__);
+    compartment_add_mem_bound(comp2, DASICS_LIBCFG_R,
+        (uint64_t)&__ULIBRODATA_FUNC2_BEGIN__, (uint64_t)&__ULIBRODATA_FUNC2_END__);
+    compartment_add_mem_bound(comp2, DASICS_LIBCFG_R | DASICS_LIBCFG_W,
+        (uint64_t)&__ULIBBSS_FUNC2_BEGIN__, (uint64_t)&__ULIBBSS_FUNC2_END__);
+    compartment_add_mem_bound(comp2, DASICS_LIBCFG_R | DASICS_LIBCFG_W,
+        (uint64_t)&__ULIBDATA_SHARE_BEGIN__, (uint64_t)&__ULIBDATA_SHARE_END__);
+
+    compartment_set_stack(comp2, 32);
 
     return 0;
 }
