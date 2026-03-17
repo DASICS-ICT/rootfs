@@ -2,9 +2,9 @@ include Makefile.check
 
 APPS = busybox dasics-test/rwx dasics-test/syscall dasics-test/argbound dasics-test/share dasics-test/heap-guard dasics-test/pgtrans
 APPS_DIR = $(addprefix apps/, $(APPS))
-LIBS = LibDASICS mimalloc
+LIBS = mimalloc
 LIBS_DIR = $(addprefix libs/, $(LIBS))
-LIBS_DEP =
+LIBS_DEP = LibDASICS
 LIBS_DEP_DIR = $(addprefix libs/, $(LIBS_DEP))
 ROOTFSIMG_DIR = $(abspath rootfsimg)
 UTILS_DIR = $(abspath utils)
@@ -35,6 +35,9 @@ all: $(APPS_DIR) network
 	$(MAKE) -s -C $(RISCV_ROOTFS_HOME) initramfs
 
 $(APPS_DIR): %: $(LIBS_DIR) $(LIBS_DEP_DIR)
+	$(MAKE) -s -C $@ install
+
+libs/LibDASICS: libs/mimalloc
 	$(MAKE) -s -C $@ install
 
 $(LIBS_DIR): %:
