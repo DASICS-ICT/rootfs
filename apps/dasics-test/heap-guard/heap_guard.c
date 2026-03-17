@@ -60,7 +60,7 @@ int main(void)
     fit_switchto(func2);
 
     if (shared_ptr) {
-        mi_free(shared_ptr);
+        free(shared_ptr);
         printf("[MAIN] freed shared_ptr\n");
     }
 
