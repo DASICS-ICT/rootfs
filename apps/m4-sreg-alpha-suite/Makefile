@@ -15,11 +15,13 @@ LIBDASICS_LIB := $(LIBDASICS_HOME)/build/libDASICS.a
 LIBDASICS_LDS := $(LIBDASICS_HOME)/ld.lds
 
 COMMON_OBJS := \
-	$(DST_DIR)/sreg_guard_suite_common.o \
-	$(DST_DIR)/sreg_untrusted.o
+	$(DST_DIR)/m4_sreg_alpha_suite_common.o \
+	$(DST_DIR)/m4_untrusted.o \
+	$(DST_DIR)/m4_migrated_cases.o \
+	$(DST_DIR)/m4_trusted.o
 
 TARGETS := \
-	test_sreg_guard_suite
+	test_m4_sreg_alpha_suite
 
 CFLAGS += -O2 -g -MMD -fomit-frame-pointer -DDASICS_LINUX -I$(APP_DIR)/include -I$(LIBDASICS_HOME)/include
 LDFLAGS += -T$(LIBDASICS_LDS)
@@ -38,32 +40,27 @@ $(DST_DIR)/%.o: src/%.c | $(DST_DIR)
 	@$(CC) $(CFLAGS) -c -o $@ $<
 
 $(DST_DIR)/%.o: src/%.S | $(DST_DIR)
-	@echo + CC $<
+	@echo + AS $<
 	@$(CC) $(CFLAGS) -c -o $@ $<
 
-$(DST_DIR)/sreg_guard_suite_main.o: src/sreg_guard_suite_main.c | $(DST_DIR)
-	@echo + CC $<
-	@$(CC) $(CFLAGS) -c -o $@ $<
-
-$(DST_DIR)/test_sreg_guard_suite: $(COMMON_OBJS) $(DST_DIR)/sreg_guard_suite_main.o
+$(DST_DIR)/test_m4_sreg_alpha_suite: $(COMMON_OBJS) $(DST_DIR)/m4_sreg_alpha_suite_main.o
 	@echo + LD $@
 	@$(LD) $(LDFLAGS) -o $@ $^ $(LIBDASICS_LIB)
 	@$(OBJDUMP) -d $@ > $@.txt
 
 install: all
 	@mkdir -p $(IST_DIR)
-	@rm -f $(IST_DIR)/test_s0_guard_suite
-	@for bin in $(TARGETS); do \
-		cp -f $(DST_DIR)/$$bin $(IST_DIR)/$$bin; \
-		chmod +x $(IST_DIR)/$$bin; \
-	done
+	@cp -f $(DST_DIR)/test_m4_sreg_alpha_suite $(IST_DIR)/test_m4_sreg_alpha_suite
+	@chmod +x $(IST_DIR)/test_m4_sreg_alpha_suite
 
 clean:
 	rm -rf $(DST_DIR)
-	rm -f $(IST_DIR)/test_sreg_guard_suite $(IST_DIR)/test_s0_guard_suite
+	rm -f $(IST_DIR)/test_m4_sreg_alpha_suite
 
 DEPS := \
-	$(DST_DIR)/sreg_guard_suite_common.d \
-	$(DST_DIR)/sreg_guard_suite_main.d \
-	$(DST_DIR)/sreg_untrusted.d
+	$(DST_DIR)/m4_sreg_alpha_suite_common.d \
+	$(DST_DIR)/m4_migrated_cases.d \
+	$(DST_DIR)/m4_sreg_alpha_suite_main.d \
+	$(DST_DIR)/m4_trusted.d \
+	$(DST_DIR)/m4_untrusted.d
 -include $(DEPS)

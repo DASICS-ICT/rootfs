@@ -1,76 +1,12 @@
 #!/bin/sh
 
-if grep -qw "dasics_test=m3_feasibility" /proc/cmdline 2>/dev/null; then
-    if [ -x /etc/init.d/rc.m3-feasibility ]; then
-        exec /etc/init.d/rc.m3-feasibility
+if grep -qw "dasics_test=m4_alpha" /proc/cmdline 2>/dev/null; then
+    if [ -x /etc/init.d/rc.m4-alpha ]; then
+        exec /etc/init.d/rc.m4-alpha
     fi
-    echo "[M3-FEASIBILITY] MISSING: /etc/init.d/rc.m3-feasibility"
-    echo "[M3-FEASIBILITY] FAIL(total_fail=1)"
+    echo "[M4-ALPHA] MISSING: /etc/init.d/rc.m4-alpha"
+    echo "[M4-ALPHA] FAIL(total_fail=1)"
     exit 0
-fi
-
-if grep -qw "dasics_test=sreg_switch" /proc/cmdline 2>/dev/null; then
-    if [ -x /etc/init.d/rc.sreg-switch ]; then
-        exec /etc/init.d/rc.sreg-switch
-    fi
-    echo "[SREG-SWITCH-TEST] MISSING: /etc/init.d/rc.sreg-switch"
-    echo "[SREG-SWITCH-TEST] FAIL(total_fail=1)"
-    exit 0
-fi
-
-SREG_SUITE_BIN="/root/test_sreg_guard_suite"
-SREG_LIST="s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11"
-SREG_CASES="viol_write viol_read proto_mismatch legal_save_restore post_save_cipher_read missing_restore_return auth_tamper_bitflip auth_tamper_overwrite"
-
-echo "[DASICS-TEST] START: sreg-guard-suite only"
-
-fail_count=0
-
-echo "[DASICS-TEST] SUITE START: sreg-guard-suite"
-if [ ! -x "$SREG_SUITE_BIN" ]; then
-    echo "[DASICS-TEST] MISSING: $SREG_SUITE_BIN"
-    fail_count=$((fail_count + 1))
-else
-    for reg_name in $SREG_LIST; do
-        for case_name in $SREG_CASES; do
-            echo "[DASICS-TEST] RUN: $SREG_SUITE_BIN --reg $reg_name --case $case_name"
-            case_out=$("$SREG_SUITE_BIN" --reg "$reg_name" --case "$case_name" -dasics 2>&1)
-            echo "$case_out" | grep -E "^\[SREG-GUARD\]|^\[DASICS SREG\]" || true
-
-            case "$case_name" in
-                viol_write|viol_read)
-                    expect_text="[DASICS SREG] VIOL fault"
-                    ;;
-                proto_mismatch|missing_restore_return)
-                    expect_text="[DASICS SREG] PROTO fault"
-                    ;;
-                auth_tamper_bitflip|auth_tamper_overwrite)
-                    expect_text="[DASICS SREG] AUTH fault"
-                    ;;
-                legal_save_restore|post_save_cipher_read)
-                    expect_text="[SREG-GUARD] RESULT: PASS ($reg_name/$case_name)"
-                    ;;
-                *)
-                    expect_text=""
-                    ;;
-            esac
-
-            if [ -n "$expect_text" ] && echo "$case_out" | grep -Fq "$expect_text"; then
-                echo "[DASICS-TEST] CASE PASS: $reg_name/$case_name"
-            else
-                echo "[DASICS-TEST] CASE FAIL: $reg_name/$case_name missing expected text: $expect_text"
-                echo "[DASICS-TEST] CASE RAW LOG: $reg_name/$case_name"
-                echo "$case_out"
-                fail_count=$((fail_count + 1))
-            fi
-        done
-    done
-fi
-
-if [ "$fail_count" -eq 0 ]; then
-    echo "[DASICS-TEST] PASS"
-else
-    echo "[DASICS-TEST] FAIL(total_fail=$fail_count)"
 fi
 
 exit 0

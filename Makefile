@@ -1,6 +1,6 @@
 include Makefile.check
 
-APPS = busybox hello-world sreg-guard-tests sreg-guard-suite m3-cprog-feas
+APPS = busybox hello-world m4-sreg-alpha-suite
 APPS_DIR = $(addprefix apps/, $(APPS))
 LIBS =
 LIBS_DIR = $(addprefix libs/, $(LIBS))

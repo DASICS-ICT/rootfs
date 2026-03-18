@@ -1,0 +1,113 @@
+#!/bin/sh
+set -eu
+
+TEST_BIN="/root/test_m4_sreg_alpha_suite"
+CASES="case00_no_touch_fast_return case01_first_read_tokenize_then_open case02_token_passthrough_stack_roundtrip case03_token_arith_corrupt_fault case04_first_dest_write_then_unused case05_first_dest_write_then_trusted_overwrite case06_first_dest_write_then_trusted_use_fault case07_swap_s1_to_s2_fault case07_swap_s1_to_s11_fault case08_multi_slot_independence case09_natural_prologue_only case10_natural_single_layer case11_natural_simple_chain case12_stack_token_bitflip_fault case13_stack_token_overflow_fault"
+FAIL_COUNT=0
+DMESG_CLEAR_OK=0
+AUTH_FALLBACK_PAT="Raised a dasics 24 exception\\.|dfreason: 0x9|dfreason: 0x0000000000000009"
+
+echo "[M4-ALPHA] START: m4-sreg-alpha-suite"
+echo "[M4-ALPHA] MODE: detect-only no-dynamic-AD per-slot-hidden-subkeys trusted-untrusted-reuse-dasics"
+
+if [ ! -x "$TEST_BIN" ]; then
+    echo "[M4-ALPHA] MISSING: $TEST_BIN"
+    echo "[M4-ALPHA] FAIL(total_fail=1)"
+    exit 0
+fi
+
+if dmesg -c >/dev/null 2>&1; then
+    DMESG_CLEAR_OK=1
+fi
+
+collect_kmsg() {
+    local tries=0
+    local out=""
+
+    if [ "$DMESG_CLEAR_OK" -eq 0 ]; then
+        printf '%s' "$out"
+        return
+    fi
+
+    while [ $tries -lt 3 ]; do
+        sleep 1
+        out="${out}
+$(dmesg -c 2>/dev/null || true)"
+        tries=$((tries + 1))
+    done
+
+    printf '%s' "$out"
+}
+
+for case_name in $CASES; do
+    if [ "$DMESG_CLEAR_OK" -eq 1 ]; then
+        dmesg -c >/dev/null 2>&1 || true
+    fi
+    echo "[M4-ALPHA] RUN: $TEST_BIN --case $case_name -dasics -sreg-open"
+    set +e
+    case_out=$("$TEST_BIN" --case "$case_name" -dasics -sreg-open 2>&1)
+    case_rc=$?
+    set -e
+    kmsg_out=""
+    if [ "$case_rc" -ne 0 ]; then
+        kmsg_out=$(collect_kmsg)
+    elif [ "$DMESG_CLEAR_OK" -eq 1 ]; then
+        kmsg_out=$(dmesg -c 2>/dev/null)
+    fi
+    echo "$case_out" | grep -E "^\[M4-ALPHA\]|^\[DASICS SREG\]" || true
+
+    case "$case_name" in
+        case00_no_touch_fast_return|case01_first_read_tokenize_then_open|case02_token_passthrough_stack_roundtrip|case04_first_dest_write_then_unused|case05_first_dest_write_then_trusted_overwrite|case08_multi_slot_independence|case09_natural_prologue_only|case10_natural_single_layer|case11_natural_simple_chain)
+            if [ "$case_rc" -eq 0 ] && echo "$case_out" | grep -Fq "[M4-ALPHA] RESULT: PASS ($case_name)"; then
+                echo "[M4-ALPHA] CASE PASS: $case_name"
+            else
+                echo "[M4-ALPHA] CASE FAIL: $case_name missing PASS marker or rc=$case_rc"
+                echo "$case_out"
+                echo "$kmsg_out" | tail -n 40
+                FAIL_COUNT=$((FAIL_COUNT + 1))
+            fi
+            ;;
+        case03_token_arith_corrupt_fault|case06_first_dest_write_then_trusted_use_fault|case12_stack_token_bitflip_fault|case13_stack_token_overflow_fault)
+            if [ "$case_rc" -ne 0 ]; then
+                echo "[M4-ALPHA] CASE PASS: $case_name returned non-zero (host oracle verifies fault type)"
+            else
+                echo "[M4-ALPHA] CASE FAIL: $case_name expected non-zero rc on negative path"
+                echo "$case_out"
+                echo "$kmsg_out" | tail -n 40
+                FAIL_COUNT=$((FAIL_COUNT + 1))
+            fi
+            ;;
+        case07_swap_s1_to_s2_fault)
+            if [ "$case_rc" -ne 0 ] && echo "$case_out" | grep -Fq "pair=s1->s2"; then
+                echo "[M4-ALPHA] CASE PASS: $case_name negative path returned non-zero (host oracle verifies slot)"
+            else
+                echo "[M4-ALPHA] CASE FAIL: $case_name missing swap pair marker or rc=$case_rc"
+                echo "$case_out"
+                echo "$kmsg_out" | tail -n 40
+                FAIL_COUNT=$((FAIL_COUNT + 1))
+            fi
+            ;;
+        case07_swap_s1_to_s11_fault)
+            if [ "$case_rc" -ne 0 ] && echo "$case_out" | grep -Fq "pair=s1->s11"; then
+                echo "[M4-ALPHA] CASE PASS: $case_name negative path returned non-zero (host oracle verifies slot)"
+            else
+                echo "[M4-ALPHA] CASE FAIL: $case_name missing swap pair marker or rc=$case_rc"
+                echo "$case_out"
+                echo "$kmsg_out" | tail -n 40
+                FAIL_COUNT=$((FAIL_COUNT + 1))
+            fi
+            ;;
+        *)
+            echo "[M4-ALPHA] CASE FAIL: unsupported case $case_name"
+            FAIL_COUNT=$((FAIL_COUNT + 1))
+            ;;
+    esac
+done
+
+if [ "$FAIL_COUNT" -eq 0 ]; then
+    echo "[M4-ALPHA] PASS"
+else
+    echo "[M4-ALPHA] FAIL(total_fail=$FAIL_COUNT)"
+fi
+
+poweroff -f >/dev/null 2>&1 || halt -f >/dev/null 2>&1 || exit 0
