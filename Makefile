@@ -1,10 +1,10 @@
 include Makefile.check
 
-APPS = busybox dasics-test/rwx dasics-test/syscall dasics-test/argbound dasics-test/share dasics-test/heap-guard dasics-test/pgtrans
+APPS = busybox dasics-test/rwx dasics-test/syscall dasics-test/argbound dasics-test/share dasics-test/heap-guard dasics-test/pgtrans dasics-test/vuldyn
 APPS_DIR = $(addprefix apps/, $(APPS))
 LIBS = mimalloc
 LIBS_DIR = $(addprefix libs/, $(LIBS))
-LIBS_DEP = LibDASICS
+LIBS_DEP = LibDASICS vuldyn
 LIBS_DEP_DIR = $(addprefix libs/, $(LIBS_DEP))
 ROOTFSIMG_DIR = $(abspath rootfsimg)
 UTILS_DIR = $(abspath utils)
@@ -38,6 +38,9 @@ $(APPS_DIR): %: $(LIBS_DIR) $(LIBS_DEP_DIR)
 	$(MAKE) -s -C $@ install
 
 libs/LibDASICS: libs/mimalloc
+	$(MAKE) -s -C $@ install
+
+libs/vuldyn: libs/LibDASICS
 	$(MAKE) -s -C $@ install
 
 $(LIBS_DIR): %:

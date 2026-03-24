@@ -1,0 +1,87 @@
+# Version script for libvuldyn.so
+#
+# Controls which symbols appear in the dynamic symbol table.
+#
+# Exported symbols fall into two categories:
+#
+#   1. Function symbols (entry, func1_wrapper, func2_wrapper):
+#      Real functions called by the main executable.  Resolved via PLT/GOT.
+#
+#   2. Boundary data symbols (__ULIBTEXT_VULDYN_BEGIN__, etc.):
+#      8-byte data objects defined in vuldyn_syms.S.  Each .quad stores
+#      the runtime address of a section boundary.  The main executable
+#      reads the boundary address via copy relocation:
+#        extern uint64_t __ULIBTEXT_VULDYN_BEGIN__;
+#        addr = __ULIBTEXT_VULDYN_BEGIN__;   // read value, NOT &sym
+#
+# Internal linker-script symbols (_vuldyn_*) are kept local.
+
+LIBVULDYN_1.0 {
+  global:
+    /* Functions callable from the main executable */
+    entry;
+    func1_wrapper;
+    func2_wrapper;
+
+    /* .ulibtext boundary data objects */
+    __ULIBTEXT_VULDYN_BEGIN__;
+    __ULIBTEXT_VULDYN_END__;
+    __ULIBTEXT_VULDYN_ENTRY_BEGIN__;
+    __ULIBTEXT_VULDYN_ENTRY_END__;
+    __ULIBTEXT_VULDYN_FUNC1_BEGIN__;
+    __ULIBTEXT_VULDYN_FUNC1_END__;
+    __ULIBTEXT_VULDYN_FUNC2_BEGIN__;
+    __ULIBTEXT_VULDYN_FUNC2_END__;
+    __ULIBTEXT_VULDYN_SHARE_BEGIN__;
+    __ULIBTEXT_VULDYN_SHARE_END__;
+
+    /* .ulibrodata boundary data objects */
+    __ULIBRODATA_VULDYN_BEGIN__;
+    __ULIBRODATA_VULDYN_END__;
+    __ULIBRODATA_VULDYN_ENTRY_BEGIN__;
+    __ULIBRODATA_VULDYN_ENTRY_END__;
+    __ULIBRODATA_VULDYN_FUNC1_BEGIN__;
+    __ULIBRODATA_VULDYN_FUNC1_END__;
+    __ULIBRODATA_VULDYN_FUNC2_BEGIN__;
+    __ULIBRODATA_VULDYN_FUNC2_END__;
+    __ULIBRODATA_VULDYN_SHARE_BEGIN__;
+    __ULIBRODATA_VULDYN_SHARE_END__;
+
+    /* .ulibdata boundary data objects */
+    __ULIBDATA_VULDYN_BEGIN__;
+    __ULIBDATA_VULDYN_END__;
+    __ULIBDATA_VULDYN_ENTRY_BEGIN__;
+    __ULIBDATA_VULDYN_ENTRY_END__;
+    __ULIBDATA_VULDYN_FUNC1_BEGIN__;
+    __ULIBDATA_VULDYN_FUNC1_END__;
+    __ULIBDATA_VULDYN_FUNC2_BEGIN__;
+    __ULIBDATA_VULDYN_FUNC2_END__;
+    __ULIBDATA_VULDYN_SHARE_BEGIN__;
+    __ULIBDATA_VULDYN_SHARE_END__;
+
+    /* .ulibbss boundary data objects */
+    __ULIBBSS_VULDYN_BEGIN__;
+    __ULIBBSS_VULDYN_END__;
+    __ULIBBSS_VULDYN_ENTRY_BEGIN__;
+    __ULIBBSS_VULDYN_ENTRY_END__;
+    __ULIBBSS_VULDYN_FUNC1_BEGIN__;
+    __ULIBBSS_VULDYN_FUNC1_END__;
+    __ULIBBSS_VULDYN_FUNC2_BEGIN__;
+    __ULIBBSS_VULDYN_FUNC2_END__;
+    __ULIBBSS_VULDYN_SHARE_BEGIN__;
+    __ULIBBSS_VULDYN_SHARE_END__;
+
+    /* PLT and GOT boundary data objects */
+    __VULDYN_PLT_BEGIN__;
+    __VULDYN_PLT_END__;
+    __VULDYN_GOT_BEGIN__;
+    __VULDYN_GOT_END__;
+
+    /* Real function-address data objects used by FIT key registration */
+    __VULDYN_ENTRY_ADDR__;
+    __VULDYN_FUNC1_WRAPPER_ADDR__;
+    __VULDYN_FUNC2_WRAPPER_ADDR__;
+
+  local:
+    *;
+};
