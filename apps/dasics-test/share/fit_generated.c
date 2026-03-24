@@ -16,7 +16,7 @@ int fit_init_static(void) {
 
     /* Compartment for test_rwx1 */
     extern void test_rwx1(void);
-    compartment_t *comp1 = compartment_create(test_rwx1, 0, 1);
+    compartment_t *comp1 = compartment_create(test_rwx1);
     if (!comp1) return -1;
 
     compartment_permit_maincall(comp1, 1, Umaincall_PRINT);
@@ -44,7 +44,7 @@ int fit_init_static(void) {
 
     /* Compartment for test_rwx2 */
     extern void test_rwx2(void);
-    compartment_t *comp2 = compartment_create(test_rwx2, 0, 2);
+    compartment_t *comp2 = compartment_create(test_rwx2);
     if (!comp2) return -1;
 
     compartment_permit_maincall(comp2, 1, Umaincall_PRINT);

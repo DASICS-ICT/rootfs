@@ -13,7 +13,7 @@ int fit_init_static(void) {
 
     /* Compartment for func1 */
     extern void func1(void);
-    compartment_t *comp1 = compartment_create(func1, 0, 1);
+    compartment_t *comp1 = compartment_create(func1);
     if (!comp1) return -1;
 
     compartment_permit_maincall(comp1, 5,
@@ -33,7 +33,7 @@ int fit_init_static(void) {
 
     /* Compartment for func2_wrapper */
     extern int func2_wrapper(va_list args);
-    compartment_t *comp2 = compartment_create(func2_wrapper, 0, 2);
+    compartment_t *comp2 = compartment_create(func2_wrapper);
     if (!comp2) return -1;
 
     compartment_permit_maincall(comp2, 1, Umaincall_PRINT);

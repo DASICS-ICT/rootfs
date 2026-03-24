@@ -8,7 +8,7 @@ int fit_init_static(void) {
     extern uint64_t __ULIBBSS_TEST_SYSCALL_BEGIN__, __ULIBBSS_TEST_SYSCALL_END__;
 
     extern void test_syscall(void);
-    compartment_t *comp = compartment_create(test_syscall, 0, 1);
+    compartment_t *comp = compartment_create(test_syscall);
     if (!comp) return -1;
 
     compartment_permit_syscall(comp, 1, __NR_getpid);

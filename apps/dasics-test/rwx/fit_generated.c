@@ -7,7 +7,7 @@ int fit_init_static(void) {
     extern uint64_t __ULIBBSS_TEST_RWX_BEGIN__, __ULIBBSS_TEST_RWX_END__;
 
     extern void test_rwx(void);
-    compartment_t *comp = compartment_create(test_rwx, 0, 1);
+    compartment_t *comp = compartment_create(test_rwx);
     if (!comp) return -1;
 
     compartment_permit_maincall(comp, 1, Umaincall_PRINT);

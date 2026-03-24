@@ -8,7 +8,7 @@ int fit_init_static(void) {
     extern uint64_t __ULIBBSS_TEST_ARGBOUND_BEGIN__, __ULIBBSS_TEST_ARGBOUND_END__;
 
     extern int test_argbound_wrapper(va_list);
-    compartment_t *comp = compartment_create(test_argbound_wrapper, 0, 1);
+    compartment_t *comp = compartment_create(test_argbound_wrapper);
     if (!comp) return -1;
 
     compartment_permit_maincall(comp, 1, Umaincall_PRINT);
