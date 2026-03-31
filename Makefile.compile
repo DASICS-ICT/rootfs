@@ -2,18 +2,21 @@ include $(RISCV_ROOTFS_HOME)/Makefile.app
 
 # Compilation flags
 
-CROSS_COMPILE ?= riscv64-unknown-linux-gnu-
+CLANG_TARGET      ?= --target=riscv64-unknown-linux-gnu
+CLANG_SYSROOT     ?= --sysroot=$(RISCV)/sysroot
+CLANG_GCC_TOOLCHAIN ?= --gcc-toolchain=$(RISCV)
+CLANG_FLAGS       ?= $(CLANG_TARGET) $(CLANG_SYSROOT) $(CLANG_GCC_TOOLCHAIN)
 
-AS      = $(CROSS_COMPILE)gcc
-CC      = $(CROSS_COMPILE)gcc
-CXX     = $(CROSS_COMPILE)g++
-LD      = $(CROSS_COMPILE)gcc
-OBJDUMP = $(CROSS_COMPILE)objdump
+AS      = clang $(CLANG_FLAGS)
+CC      = clang $(CLANG_FLAGS)
+CXX     = clang++ $(CLANG_FLAGS)
+LD      = clang $(CLANG_FLAGS) -no-pie
+OBJDUMP = llvm-objdump
 
 INCLUDES  = $(addprefix -I, $(INC_DIR))
 
-CFLAGS   += -O0 -MMD $(INCLUDES)
-CXXFLAGS += -O0 -MMD $(INCLUDES)
+CFLAGS   += -O0 -fno-PIC -MMD $(INCLUDES)
+CXXFLAGS += -O0 -fno-PIC -MMD $(INCLUDES)
 
 # Files to be compiled
 OBJS = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(SRCS))))
