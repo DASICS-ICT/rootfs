@@ -40,7 +40,7 @@ int fit_init_static(void) {
     compartment_add_mem_bound(comp1, DASICS_LIBCFG_R | DASICS_LIBCFG_W,
         (uint64_t)&__ULIBBSS_SHARE_BEGIN__, (uint64_t)&__ULIBBSS_SHARE_END__);
 
-    compartment_set_stack(comp1, 96);
+    compartment_set_stack(comp1, 0x60 + 0x50);
 
     /* Compartment for test_rwx2 */
     extern void test_rwx2(void);
@@ -68,7 +68,7 @@ int fit_init_static(void) {
     compartment_add_mem_bound(comp2, DASICS_LIBCFG_R | DASICS_LIBCFG_W,
         (uint64_t)&__ULIBBSS_SHARE_BEGIN__, (uint64_t)&__ULIBBSS_SHARE_END__);
 
-    compartment_set_stack(comp2, 96);
+    compartment_set_stack(comp2, 0x60 + 0x50);
 
     return 0;
 }

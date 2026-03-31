@@ -144,7 +144,7 @@ int fit_init_dynamic_libvuldyn(void)
      * and normal function prologue/epilogue. 16 bytes is too small and
      * can corrupt return context near the final return-to-main path.
      */
-    compartment_set_stack(comp_entry, 128);
+    compartment_set_stack(comp_entry, 0x20);
 
 
     /* ==================================================================
@@ -204,7 +204,7 @@ int fit_init_dynamic_libvuldyn(void)
         __VULDYN_GOT_BEGIN__, __VULDYN_GOT_END__);
 
     /* Stack: 128 bytes (func1_wrapper + func1 + share) */
-    compartment_set_stack(comp_func1, 160);
+    compartment_set_stack(comp_func1, 0x20 + 0x90 + 0x30);
 
 
     /* ==================================================================
@@ -265,7 +265,7 @@ int fit_init_dynamic_libvuldyn(void)
         __VULDYN_GOT_BEGIN__, __VULDYN_GOT_END__);
 
     /* Stack: 256 bytes (func2_wrapper + func2 + share) */
-    compartment_set_stack(comp_func2, 256);
+    compartment_set_stack(comp_func2, 0x20 + 0x120 + 0x30);
 
     return 0;
 }

@@ -29,7 +29,7 @@ int fit_init_static(void) {
     compartment_add_mem_bound(comp1, DASICS_LIBCFG_R | DASICS_LIBCFG_W,
         (uint64_t)&__ULIBBSS_FUNC1_BEGIN__, (uint64_t)&__ULIBBSS_FUNC1_END__);
 
-    compartment_set_stack(comp1, 96);
+    compartment_set_stack(comp1, 0x80);
 
     /* Compartment for func2_wrapper */
     extern int func2_wrapper(va_list args);
@@ -47,7 +47,7 @@ int fit_init_static(void) {
     compartment_add_mem_bound(comp2, DASICS_LIBCFG_R | DASICS_LIBCFG_W,
         (uint64_t)&__ULIBBSS_FUNC2_BEGIN__, (uint64_t)&__ULIBBSS_FUNC2_END__);
 
-    compartment_set_stack(comp2, 96);
+    compartment_set_stack(comp2, 0x20 + 0x30);
 
     return 0;
 }

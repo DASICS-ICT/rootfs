@@ -22,7 +22,7 @@ int fit_init_static(void) {
     compartment_add_mem_bound(comp, DASICS_LIBCFG_R | DASICS_LIBCFG_W,
         (uint64_t)&__ULIBBSS_TEST_ARGBOUND_BEGIN__, (uint64_t)&__ULIBBSS_TEST_ARGBOUND_END__);
 
-    compartment_set_stack(comp, 96);
+    compartment_set_stack(comp, 0x70);
 
     return 0;
 }
