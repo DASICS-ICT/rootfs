@@ -147,7 +147,7 @@ void exit_function() {
 int main() {
     atexit(exit_function);
 
-    printf(test_info);
+    printf("%s", test_info);
 
     fit_init(0);
     fit_print();
