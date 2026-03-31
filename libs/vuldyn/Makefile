@@ -21,9 +21,15 @@ else
 $(error RISCV_ROOTFS_HOME is not defined)
 endif
 
-CROSS_COMPILE ?= riscv64-unknown-linux-gnu-
-CC      = $(CROSS_COMPILE)gcc
-OBJDUMP = $(CROSS_COMPILE)objdump
+CLANG_TARGET      ?= --target=riscv64-unknown-linux-gnu
+CLANG_SYSROOT     ?= --sysroot=$(RISCV)/sysroot
+CLANG_GCC_TOOLCHAIN ?= --gcc-toolchain=$(RISCV)
+CLANG_FLAGS       ?= $(CLANG_TARGET) $(CLANG_SYSROOT) $(CLANG_GCC_TOOLCHAIN)
+
+# Use GNU ld (not lld) for linking: ld_vuldyn.lds uses INSERT AFTER
+# directives which lld cannot resolve in shared library internal layouts.
+CC      = clang $(CLANG_FLAGS)
+OBJDUMP = llvm-objdump
 
 # -O0: no optimisation (predictable instruction layout for debugging)
 # -fPIC: position-independent code (required for shared libraries)
