@@ -1,3 +1,5 @@
+BUILD_TYPE ?= Release
+
 APP_DIR ?= $(shell pwd)
 INC_DIR += $(APP_DIR)/include
 DST_DIR ?= $(APP_DIR)/build

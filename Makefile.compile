@@ -12,8 +12,19 @@ OBJDUMP = $(CROSS_COMPILE)objdump
 
 INCLUDES  = $(addprefix -I, $(INC_DIR))
 
-CFLAGS   += -O2 -MMD $(INCLUDES)
-CXXFLAGS += -O2 -MMD $(INCLUDES)
+# Build type: Release by default, Debug enables symbols.
+BUILD_TYPE ?= Release
+
+ifeq ($(BUILD_TYPE),Debug)
+CFLAGS_OPT   := -O0 -g
+CXXFLAGS_OPT := -O0 -g
+else
+CFLAGS_OPT   := -O2
+CXXFLAGS_OPT := -O2
+endif
+
+CFLAGS   += $(CFLAGS_OPT) -MMD $(INCLUDES)
+CXXFLAGS += $(CXXFLAGS_OPT) -MMD $(INCLUDES)
 
 # Files to be compiled
 OBJS = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(SRCS))))

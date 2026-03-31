@@ -10,6 +10,7 @@ ROOTFSIMG_DIR = $(abspath rootfsimg)
 UTILS_DIR = $(abspath utils)
 NETWORK ?=
 NETWORK_DIR = $(abspath network)
+BUILD_TYPE ?= Release
 
 ROOTFSIMG_NEW_DIRS = bin dev dev/pts lib proc sbin sys tmp mnt root \
 	usr usr/bin usr/sbin usr/lib var var/run
@@ -35,10 +36,10 @@ all: $(APPS_DIR) network
 	$(MAKE) -s -C $(RISCV_ROOTFS_HOME) initramfs
 
 $(APPS_DIR): %: $(LIBS_DIR) $(LIBS_DEP_DIR)
-	$(MAKE) -s -C $@ install
+	$(MAKE) -s -C $@ install BUILD_TYPE=$(BUILD_TYPE)
 
 $(LIBS_DIR): %:
-	$(MAKE) -s -C $@ install
+	$(MAKE) -s -C $@ install BUILD_TYPE=$(BUILD_TYPE)
 
 network:
 	$(MAKE) -s -C $(NETWORK_DIR) NETWORK=$(NETWORK)
