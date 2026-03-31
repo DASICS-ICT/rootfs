@@ -33,6 +33,23 @@ make all
 
 This target compiles and installs the specified applications (in this case, `busybox`) and generates the initial RAM filesystem (`initramfs`) using a Python script located in the `utils` directory.
 
+### Build Type
+
+The `BUILD_TYPE` variable controls the optimization and debug settings. It defaults to `Release`.
+
+```bash
+# Release build (default): -O2, no debug symbols
+make all
+
+# Debug build: -O0 -g, with debug symbols
+make all BUILD_TYPE=Debug
+```
+
+In Debug mode:
+
+- Applications using `Makefile.compile` are compiled with `-O0 -g` instead of `-O2`.
+- Applications with their own build systems (e.g., Busybox) will also be built with debug symbols. The exact flags or configuration may vary per application — see each application's `Makefile` for details.
+
 ### Cleaning the Rootfs
 
 To clean the build artifacts and directories, use:
