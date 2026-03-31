@@ -107,12 +107,10 @@ void __attribute__((section(".ulibtext.func1"))) func1(void)
 int main(void)
 {
     printf("%s", test_info);
-    fit_init(0);
     fit_print();
 
     fit_switchto(func1);
 
-    fit_destroy();
     printf("[MAIN] done\n");
     return 0;
 }

@@ -36,17 +36,6 @@ int main(void)
 
     printf("[MAIN] Dynamic library comprehensive test (vuldyn)\n");
 
-    /*
-     * fit_init(0) performs:
-     *   - register_udasics(): sets CSR 0x8b0 to dasics_umaincall address
-     *   - Calls fit_init_static() (defined in fit_generated.c) to create
-     *     compartments and register them in the FIT hash table
-     *   - Calls create_umain_elf_chain() for dynamic library GOT patching
-     *
-     * The argument 0 means "use default funcptr" (dasics_umaincall).
-     */
-    fit_init(0);
-
     /* Print the compartment table for debugging / verification */
     fit_print();
 
@@ -60,11 +49,6 @@ int main(void)
      * syscall, maincall).
      */
     fit_switchto(entry);
-
-    /*
-     * Clean up: free all compartment data, unregister DASICS, etc.
-     */
-    fit_destroy();
 
     return 0;
 }

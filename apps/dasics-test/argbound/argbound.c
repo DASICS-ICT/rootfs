@@ -64,7 +64,6 @@ int main() {
 
     printf("%s", test_info);
 
-    fit_init(0);
     fit_print();
 
     test_argbound_args_t src = {
@@ -92,15 +91,12 @@ int main() {
     size_t valist_size = sizeof(char *) * 2;
     if (fit_permission_grant(test_argbound_wrapper, arg_perms, 2, valist_size, 1) != 0) {
         printf("[MAIN] fit_permission_grant failed\n");
-        fit_destroy();
         return -1;
     }
 
     uint64_t ret = 0;
     ret = fit_switchto(test_argbound_wrapper, src.string, dst.string);
     printf("[MAIN] return value: %lx\n", ret);
-
-    fit_destroy();
 
     return 0;
 }

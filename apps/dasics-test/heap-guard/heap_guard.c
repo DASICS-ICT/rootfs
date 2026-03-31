@@ -53,7 +53,6 @@ void __attribute__((section(".ulibtext.func2"))) func2(void)
 int main(void)
 {
     printf("%s", test_info);
-    fit_init(0);
     fit_print();
 
     fit_switchto(func1);
@@ -64,7 +63,6 @@ int main(void)
         printf("[MAIN] freed shared_ptr\n");
     }
 
-    fit_destroy();
     printf("[MAIN] done\n");
     return 0;
 }

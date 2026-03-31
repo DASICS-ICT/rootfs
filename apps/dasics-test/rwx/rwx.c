@@ -64,12 +64,9 @@ int main() {
 
     printf("%s", test_info);
 
-    fit_init(0);
     fit_print();
 
     fit_switchto(test_rwx);
-
-    fit_destroy();
 
     return 0;
 }
