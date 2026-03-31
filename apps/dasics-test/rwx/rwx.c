@@ -38,11 +38,17 @@ void __attribute__((section(".ulibtext.test_rwx"))) test_rwx() {
     for (int i = 0; i < 10; i++) {
         pub_rwbss[i] = 'A';               // That's ok
     }
-    pub_rwbss[10] = '\0';               // That's ok
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+    pub_rwbss[10] = '\0';               // That's ok (intentional OOB for test)
+#pragma GCC diagnostic pop
     dasics_umaincall(Umaincall_PRINT, "new bss buffer: %s\n", pub_rwbss);  // That's ok
     pub_rwbss[7] = pub_readonly[12];  // That's ok
     pub_rwbss[4] = 'B';               // That's ok
-    pub_rwbss[100] = 'B';             // raise DasicsUStoreAccessFault
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+    pub_rwbss[100] = 'B';             // raise DasicsUStoreAccessFault (intentional OOB)
+#pragma GCC diagnostic pop
     dasics_umaincall(Umaincall_PRINT, "new bss buffer: %s\n", pub_rwbss);  // That's ok
 
     dasics_umaincall(Umaincall_PRINT, "************* ULIB   END ***************** \n");  // lib call main
