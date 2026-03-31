@@ -8,7 +8,9 @@ else
 $(error RISCV_ROOTFS_HOME is not defined)
 endif
 
-CROSS_COMPILE   = riscv64-unknown-linux-gnu
+CLANG_TARGET      = --target=riscv64-unknown-linux-gnu
+CLANG_SYSROOT     = --sysroot=$(RISCV)/sysroot
+CLANG_GCC_TOOLCHAIN = --gcc-toolchain=$(RISCV)
 
 MIMALLOC_REPO   = $(abspath repo)
 MIMALLOC_BUILD  = $(MIMALLOC_REPO)/build
@@ -23,8 +25,16 @@ libmalloc: $(MIMALLOC_CONFIG)
 $(MIMALLOC_CONFIG):
 	mkdir -p $(MIMALLOC_BUILD) && cd $(MIMALLOC_BUILD) && \
 		cmake .. -DCMAKE_INSTALL_PREFIX=$(DST_DIR) \
-				 -DCMAKE_C_COMPILER=$(CROSS_COMPILE)-gcc \
-				 -DCMAKE_CXX_COMPILER=$(CROSS_COMPILE)-g++
+				 -DCMAKE_C_COMPILER=clang \
+				 -DCMAKE_CXX_COMPILER=clang++ \
+				 -DCMAKE_AR=$(shell which llvm-ar) \
+				 -DCMAKE_RANLIB=$(shell which llvm-ranlib) \
+				 -DCMAKE_C_FLAGS="$(CLANG_TARGET) $(CLANG_SYSROOT) $(CLANG_GCC_TOOLCHAIN)" \
+				 -DCMAKE_CXX_FLAGS="$(CLANG_TARGET) $(CLANG_SYSROOT) $(CLANG_GCC_TOOLCHAIN)" \
+				 -DCMAKE_EXE_LINKER_FLAGS="$(CLANG_TARGET) $(CLANG_SYSROOT) $(CLANG_GCC_TOOLCHAIN)" \
+				 -DCMAKE_SHARED_LINKER_FLAGS="$(CLANG_TARGET) $(CLANG_SYSROOT) $(CLANG_GCC_TOOLCHAIN)" \
+				 -DCMAKE_SYSTEM_NAME=Linux \
+				 -DCMAKE_SYSTEM_PROCESSOR=riscv64
 
 $(MIMALLOC_ELF): libmalloc
 
