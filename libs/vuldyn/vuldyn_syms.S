@@ -120,6 +120,6 @@
     /* ================================================================
      * Real function entry addresses used as FIT lookup keys
      * ================================================================ */
-    DECLARE_SYM __VULDYN_ENTRY_ADDR__,         entry
-    DECLARE_SYM __VULDYN_FUNC1_WRAPPER_ADDR__, func1_wrapper
-    DECLARE_SYM __VULDYN_FUNC2_WRAPPER_ADDR__, func2_wrapper
+    DECLARE_SYM __VULDYN_ENTRY_ADDR__, entry
+    DECLARE_SYM __VULDYN_FUNC1_ADDR__, func1
+    DECLARE_SYM __VULDYN_FUNC2_ADDR__, func2

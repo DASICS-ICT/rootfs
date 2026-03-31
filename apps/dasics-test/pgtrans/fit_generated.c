@@ -1,4 +1,3 @@
-#include <stdarg.h>
 #include <compartment.h>
 
 int fit_init_static(void) {
@@ -31,9 +30,9 @@ int fit_init_static(void) {
 
     compartment_set_stack(comp1, 0x80);
 
-    /* Compartment for func2_wrapper */
-    extern int func2_wrapper(va_list args);
-    compartment_t *comp2 = compartment_create(func2_wrapper);
+    /* Compartment for func2 */
+    extern void func2(char *buffer);
+    compartment_t *comp2 = compartment_create(func2);
     if (!comp2) return -1;
 
     compartment_permit_maincall(comp2, 1, Umaincall_PRINT);
@@ -47,7 +46,7 @@ int fit_init_static(void) {
     compartment_add_mem_bound(comp2, DASICS_LIBCFG_R | DASICS_LIBCFG_W,
         (uint64_t)&__ULIBBSS_FUNC2_BEGIN__, (uint64_t)&__ULIBBSS_FUNC2_END__);
 
-    compartment_set_stack(comp2, 0x20 + 0x30);
+    compartment_set_stack(comp2, 0x30);
 
     return 0;
 }

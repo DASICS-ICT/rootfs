@@ -7,7 +7,6 @@
  */
 #include <stdio.h>
 #include <stdint.h>
-#include <stdarg.h>
 
 #include "udasics.h"
 #include "fit.h"
@@ -38,13 +37,6 @@ void __attribute__((section(".ulibtext.func2"))) func2(char *buffer)
     dasics_umaincall(Umaincall_PRINT, "[func2] end\n");
 }
 
-int __attribute__((section(".ulibtext.func2"))) func2_wrapper(va_list args)
-{
-    char *buffer = va_arg(args, char *);
-    func2(buffer);
-    return 0;
-}
-
 /* ---- func1 (untrusted, .ulibtext.func1) ---- */
 
 void __attribute__((section(".ulibtext.func1"))) func1(void)
@@ -69,17 +61,16 @@ void __attribute__((section(".ulibtext.func1"))) func1(void)
     buffer[i] = '\0';
     dasics_umaincall(Umaincall_PRINT, "[func1] wrote: %s\n", buffer);
 
-    /* Grant READ permission on the first 16 bytes of buffer to func2_wrapper */
+    /* Grant READ permission on the first 16 bytes of buffer to func2 */
     fit_bounds_t perms[1];
     perms[0].perm = DASICS_LIBCFG_R;
     perms[0].lo = (uint64_t)buffer;
     perms[0].hi = (uint64_t)buffer + 15;
     perms[0].handle = -1;
 
-    size_t valist_size = sizeof(char *);
     int ret = (int)dasics_umaincall(Umaincall_PGRANT,
-                                    (void *)func2_wrapper, &perms[0],
-                                    (size_t)1, valist_size, (unsigned)1);
+                                    (void *)func2, &perms[0],
+                                    (size_t)1, (unsigned)1);
     if (ret != 0) {
         dasics_umaincall(Umaincall_PRINT, "[func1] PGRANT failed\n");
         dasics_umaincall(Umaincall_FREE, (void *)buffer);
@@ -87,12 +78,12 @@ void __attribute__((section(".ulibtext.func1"))) func1(void)
     }
     dasics_umaincall(Umaincall_PRINT, "[func1] granted READ permission to func2\n");
 
-    /* Domain switch into func2_wrapper, passing buffer pointer */
-    dasics_umaincall(Umaincall_TRANS, (void *)func2_wrapper, buffer);
+    /* Domain switch into func2, passing buffer pointer */
+    dasics_umaincall(Umaincall_TRANS, (void *)func2, buffer);
     dasics_umaincall(Umaincall_PRINT, "[func1] returned from func2\n");
 
-    /* Domain switch into func2_wrapper, passing buffer pointer, expecting func2 fails to access the buffer */
-    dasics_umaincall(Umaincall_TRANS, (void *)func2_wrapper, buffer);
+    /* Domain switch into func2, passing buffer pointer, expecting func2 fails to access the buffer */
+    dasics_umaincall(Umaincall_TRANS, (void *)func2, buffer);
     dasics_umaincall(Umaincall_PRINT, "[func1] returned from func2\n");
 
     /* Free the buffer via trusted maincall */

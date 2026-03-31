@@ -4,7 +4,7 @@
 #
 # Exported symbols fall into two categories:
 #
-#   1. Function symbols (entry, func1_wrapper, func2_wrapper):
+#   1. Function symbols (entry, func1, func2):
 #      Real functions called by the main executable.  Resolved via PLT/GOT.
 #
 #   2. Boundary data symbols (__ULIBTEXT_VULDYN_BEGIN__, etc.):
@@ -20,8 +20,8 @@ LIBVULDYN_1.0 {
   global:
     /* Functions callable from the main executable */
     entry;
-    func1_wrapper;
-    func2_wrapper;
+    func1;
+    func2;
 
     /* .ulibtext boundary data objects */
     __ULIBTEXT_VULDYN_BEGIN__;
@@ -79,8 +79,8 @@ LIBVULDYN_1.0 {
 
     /* Real function-address data objects used by FIT key registration */
     __VULDYN_ENTRY_ADDR__;
-    __VULDYN_FUNC1_WRAPPER_ADDR__;
-    __VULDYN_FUNC2_WRAPPER_ADDR__;
+    __VULDYN_FUNC1_ADDR__;
+    __VULDYN_FUNC2_ADDR__;
 
   local:
     *;

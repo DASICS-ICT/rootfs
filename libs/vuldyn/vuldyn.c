@@ -23,7 +23,6 @@
  */
 
 #include <stdint.h>
-#include <stdarg.h>
 #include <stddef.h>
 #include <asm/unistd.h>
 
@@ -31,12 +30,9 @@
 #include "udasics.h"
 #include "usyscall.h"
 
-/* ======================================================================
- * Forward declarations for wrapper functions used as domain-switch targets.
- * These are placed in their respective ulibtext sections below.
- * ====================================================================== */
-int func1_wrapper(va_list args);
-int func2_wrapper(va_list args);
+/* Forward declarations for domain-switch target functions. */
+void func1(void);
+void func2(char *str);
 
 /* ======================================================================
  * Secret data -- deliberately NOT placed in any ulib* section.
@@ -165,8 +161,8 @@ void __attribute__((section(".ulibtext.share"))) share(void)
  *    4. [rwx]     Illegal read of func2 private    -> DasicsULoadAccessFault
  *    5. [share]   Call share() -- exercises shared bounds
  *    6. [heap]    Allocate heap via Umaincall_MALLOC, write data, store in shared_ptr
- *    7. [pgtrans] Grant READ permission on hello_msg to func2_wrapper
- *    8. [pgtrans] Domain-switch to func2_wrapper, passing hello_msg as argument
+ *    7. [pgtrans] Grant READ permission on hello_msg to func2
+ *    8. [pgtrans] Domain-switch to func2, passing hello_msg as argument
  *    9. [heap]    Free heap via Umaincall_FREE
  * ====================================================================== */
 void __attribute__((section(".ulibtext.func1"))) func1(void)
@@ -255,10 +251,10 @@ void __attribute__((section(".ulibtext.func1"))) func1(void)
     dasics_umaincall(Umaincall_PRINT, "[func1] stored heap pointer in shared_ptr\n");
 
     /* ------------------------------------------------------------------
-     * [pgtrans] Grant READ permission on hello_msg to the func2_wrapper
+     * [pgtrans] Grant READ permission on hello_msg to the func2
      * compartment.  The permission covers sizeof(hello_msg) bytes.
      *
-     * After the grant, func2_wrapper will have a temporary mem bound
+     * After the grant, func2 will have a temporary mem bound
      * allowing it to read hello_msg.  The grant is valid for 1 transition.
      * ------------------------------------------------------------------ */
     fit_bounds_t perms[1];
@@ -267,14 +263,9 @@ void __attribute__((section(".ulibtext.func1"))) func1(void)
     perms[0].hi     = (uint64_t)hello_msg + sizeof(hello_msg) - 1;
     perms[0].handle = -1;
 
-    /*
-     * valist_size: the total byte size of the va_list arguments that will
-     * be passed in the subsequent Umaincall_TRANS call (one char* pointer).
-     */
-    size_t valist_size = sizeof(char *);
     int grant_ret = (int)dasics_umaincall(Umaincall_PGRANT,
-                                          (void *)func2_wrapper, &perms[0],
-                                          (size_t)1, valist_size, (unsigned)1);
+                                          (void *)func2, &perms[0],
+                                          (size_t)1, (unsigned)1);
     if (grant_ret != 0) {
         dasics_umaincall(Umaincall_PRINT, "[func1] PGRANT failed (ret=%d)\n", grant_ret);
     } else {
@@ -282,13 +273,13 @@ void __attribute__((section(".ulibtext.func1"))) func1(void)
     }
 
     /* ------------------------------------------------------------------
-     * [pgtrans] Domain-switch into func2_wrapper, passing hello_msg.
-     * The runtime (do_transition) will push func1's state, apply func2's
+     * [pgtrans] Domain-switch into func2, passing hello_msg.
+     * The TRANS assembly fast path will push func1's state, apply func2's
      * bounds (including the temporary argbound from PGRANT), and invoke
-     * func2_wrapper(va_list) in the func2 compartment.
+     * func2 via dasicscall.jr in the func2 compartment.
      * ------------------------------------------------------------------ */
-    dasics_umaincall(Umaincall_PRINT, "[func1] switching to func2_wrapper...\n");
-    dasics_umaincall(Umaincall_TRANS, (void *)func2_wrapper, (char *)hello_msg);
+    dasics_umaincall(Umaincall_PRINT, "[func1] switching to func2...\n");
+    dasics_umaincall(Umaincall_TRANS, (void *)func2, (char *)hello_msg);
     dasics_umaincall(Umaincall_PRINT, "[func1] returned from func2\n");
 
     /* ------------------------------------------------------------------
@@ -301,21 +292,6 @@ void __attribute__((section(".ulibtext.func1"))) func1(void)
     dasics_umaincall(Umaincall_PRINT, "[func1] freed heap buffer\n");
 
     dasics_umaincall(Umaincall_PRINT, "[func1] end\n");
-}
-
-
-/* ======================================================================
- *  func1_wrapper() -- va_list wrapper for func1.
- *
- *  Domain switches via Umaincall_TRANS require a function with the
- *  signature `int wrapper(va_list args)`.  This wrapper simply calls
- *  func1() with no arguments.
- * ====================================================================== */
-int __attribute__((section(".ulibtext.func1"))) func1_wrapper(va_list args)
-{
-    (void)args;  /* func1 takes no arguments */
-    func1();
-    return 0;
 }
 
 
@@ -415,38 +391,25 @@ void __attribute__((section(".ulibtext.func2"))) func2(char *str)
 
 
 /* ======================================================================
- *  func2_wrapper() -- va_list wrapper for func2.
- *
- *  Extracts the char* argument from the va_list passed by Umaincall_TRANS
- *  and forwards it to func2().
- * ====================================================================== */
-int __attribute__((section(".ulibtext.func2"))) func2_wrapper(va_list args)
-{
-    char *str = va_arg(args, char *);
-    func2(str);
-    return 0;
-}
-
-
-/* ======================================================================
  *  entry() -- Library entry point (compartment closure_id=0).
  *
  *  This compartment has full-library bounds (all ulibtext, ulibrodata,
  *  ulibdata, ulibbss sections).  It acts as the orchestrator: prints a
- *  banner, domain-switches into func1_wrapper, then prints completion.
+ *  banner, domain-switches into func1, then prints completion.
  *
  *  Allowed maincalls: PRINT, TRANS (just enough to print and switch).
  * ====================================================================== */
 void __attribute__((section(".ulibtext.entry"))) entry(void)
 {
     dasics_umaincall(Umaincall_PRINT, "========== VULDYN TEST START ==========\n");
-    dasics_umaincall(Umaincall_PRINT, "[entry] switching to func1_wrapper...\n");
+    dasics_umaincall(Umaincall_PRINT, "[entry] switching to func1...\n");
 
     /*
-     * Domain-switch into func1.  The runtime will push entry's context,
-     * apply func1's narrower bounds, and call func1_wrapper(va_list).
+     * Domain-switch into func1.  The TRANS fast path will push entry's
+     * context, apply func1's narrower bounds, and invoke func1 via
+     * dasicscall.jr.
      */
-    dasics_umaincall(Umaincall_TRANS, (void *)func1_wrapper);
+    dasics_umaincall(Umaincall_TRANS, (void *)func1);
 
     dasics_umaincall(Umaincall_PRINT, "[entry] returned from func1\n");
     dasics_umaincall(Umaincall_PRINT, "========== VULDYN TEST END   ==========\n");

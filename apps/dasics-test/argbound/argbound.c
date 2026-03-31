@@ -46,15 +46,6 @@ int __attribute__((section(".ulibtext.test_argbound"))) test_argbound(char *src,
     return 123;
 }
 
-int __attribute__((section(".ulibtext.test_argbound"))) test_argbound_wrapper(va_list args) {
-    // Get the arguments
-    char *src = va_arg(args, char *);
-    char *dest = va_arg(args, char *);
-
-    // Call the actual test function
-    return test_argbound(src, dest);
-}
-
 void exit_function() {
     printf("[MAIN] test dasics finished\n");
 }
@@ -78,7 +69,7 @@ int main() {
         .sensitive_int = 123123
     };
 
-    /* Grant parameter bounds to test_argbound_wrapper (src.string R, dst.string W), times=1 */
+    /* Grant parameter bounds to test_argbound (src.string R, dst.string W), times=1 */
     fit_bounds_t arg_perms[2];
     arg_perms[0].perm = DASICS_LIBCFG_R;
     arg_perms[0].lo = (uint64_t)src.string;
@@ -88,14 +79,15 @@ int main() {
     arg_perms[1].lo = (uint64_t)dst.string;
     arg_perms[1].hi = (uint64_t)dst.string + 10;
     arg_perms[1].handle = -1;
-    size_t valist_size = sizeof(char *) * 2;
-    if (fit_permission_grant(test_argbound_wrapper, arg_perms, 2, valist_size, 1) != 0) {
+    if (fit_permission_grant(test_argbound, arg_perms, 2, 1) != 0) {
         printf("[MAIN] fit_permission_grant failed\n");
         return -1;
     }
 
     uint64_t ret = 0;
-    ret = fit_switchto(test_argbound_wrapper, src.string, dst.string);
+    char *src_ptr = src.string;
+    char *dst_ptr = dst.string;
+    ret = fit_switchto(test_argbound, src_ptr, dst_ptr);
     printf("[MAIN] return value: %lx\n", ret);
 
     return 0;

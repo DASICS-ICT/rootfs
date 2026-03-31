@@ -39,7 +39,6 @@
  *     Dynamic linking (here):  sym              -- read value of data object
  */
 
-#include <stdarg.h>
 #include <stdint.h>
 #include <asm/unistd.h>
 #include <compartment.h>
@@ -93,8 +92,8 @@ int fit_init_dynamic_libvuldyn(void)
      * These values are the real in-library entry addresses.
      */
     extern uint64_t __VULDYN_ENTRY_ADDR__;
-    extern uint64_t __VULDYN_FUNC1_WRAPPER_ADDR__;
-    extern uint64_t __VULDYN_FUNC2_WRAPPER_ADDR__;
+    extern uint64_t __VULDYN_FUNC1_ADDR__;
+    extern uint64_t __VULDYN_FUNC2_ADDR__;
 
 
     /* ==================================================================
@@ -148,7 +147,7 @@ int fit_init_dynamic_libvuldyn(void)
 
 
     /* ==================================================================
-     * Compartment 2: func1_wrapper (library_id=runtime, closure_id=auto)
+     * Compartment 2: func1 (library_id=runtime, closure_id=auto)
      *
      * Restricted compartment for func1.  Has access to:
      *   - func1's private code and data sections
@@ -164,11 +163,11 @@ int fit_init_dynamic_libvuldyn(void)
      *         + 1 (GOT R) + 1 (stack) = 8 / 16 max
      *         (+ heap bound added dynamically by Umaincall_MALLOC)
      * ================================================================== */
-    extern int func1_wrapper(va_list args);
+    extern void func1(void);
     compartment_t *comp_func1 = compartment_create(
-        (void *)(uintptr_t)__VULDYN_FUNC1_WRAPPER_ADDR__);
+        (void *)(uintptr_t)__VULDYN_FUNC1_ADDR__);
     if (!comp_func1) return -1;
-    if (!compartment_duplicate(comp_func1, func1_wrapper)) return -1;
+    if (!compartment_duplicate(comp_func1, func1)) return -1;
 
     /* Permitted maincalls for the full test sequence */
     compartment_permit_maincall(comp_func1, 5,
@@ -203,12 +202,12 @@ int fit_init_dynamic_libvuldyn(void)
     compartment_add_mem_bound(comp_func1, DASICS_LIBCFG_R,
         __VULDYN_GOT_BEGIN__, __VULDYN_GOT_END__);
 
-    /* Stack: 128 bytes (func1_wrapper + func1 + share) */
-    compartment_set_stack(comp_func1, 0x20 + 0x90 + 0x30);
+    /* Stack: func1 + share (no wrapper overhead) */
+    compartment_set_stack(comp_func1, 0x80 + 0x30);
 
 
     /* ==================================================================
-     * Compartment 3: func2_wrapper (library_id=runtime, closure_id=auto)
+     * Compartment 3: func2 (library_id=runtime, closure_id=auto)
      *
      * Restricted compartment for func2.  Has access to:
      *   - func2's private code and data sections
@@ -222,13 +221,13 @@ int fit_init_dynamic_libvuldyn(void)
      *   Jump: 1 (func2 text) + 1 (share text) + 1 (PLT) = 3 / 4 max
      *   Mem:  3 (func2 rodata/data/bss) + 3 (share rodata/data/bss)
      *         + 1 (GOT R) + 1 (stack) = 8 / 16 max
-     *         (+ valist bound and temp argbound added dynamically)
+     *         (+ temp argbound added dynamically)
      * ================================================================== */
-    extern int func2_wrapper(va_list args);
+    extern void func2(char *str);
     compartment_t *comp_func2 = compartment_create(
-        (void *)(uintptr_t)__VULDYN_FUNC2_WRAPPER_ADDR__);
+        (void *)(uintptr_t)__VULDYN_FUNC2_ADDR__);
     if (!comp_func2) return -1;
-    if (!compartment_duplicate(comp_func2, func2_wrapper)) return -1;
+    if (!compartment_duplicate(comp_func2, func2)) return -1;
 
     /* Permitted maincall: PRINT only (attempting UNKNOWN will be rejected) */
     compartment_permit_maincall(comp_func2, 1, Umaincall_PRINT);
@@ -264,8 +263,8 @@ int fit_init_dynamic_libvuldyn(void)
     compartment_add_mem_bound(comp_func2, DASICS_LIBCFG_R,
         __VULDYN_GOT_BEGIN__, __VULDYN_GOT_END__);
 
-    /* Stack: 256 bytes (func2_wrapper + func2 + share) */
-    compartment_set_stack(comp_func2, 0x20 + 0x120 + 0x30);
+    /* Stack: func2 + share (no wrapper overhead) */
+    compartment_set_stack(comp_func2, 0x120 + 0x30);
 
     return 0;
 }
