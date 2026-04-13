@@ -1,6 +1,6 @@
 include Makefile.check
 
-APPS = busybox hello
+APPS = busybox hello zimt_test
 APPS_DIR = $(addprefix apps/, $(APPS))
 LIBS =
 LIBS_DIR = $(addprefix libs/, $(LIBS))
