@@ -12,8 +12,8 @@ OBJDUMP = $(CROSS_COMPILE)objdump
 
 INCLUDES  = $(addprefix -I, $(INC_DIR))
 
-CFLAGS   += -O2 -MMD $(INCLUDES)
-CXXFLAGS += -O2 -MMD $(INCLUDES)
+CFLAGS   += -O2 -MMD $(INCLUDES) #-g
+CXXFLAGS += -O2 -MMD $(INCLUDES) #-g
 
 # Files to be compiled
 OBJS = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(SRCS))))

@@ -213,11 +213,10 @@ static void tag_fault_handler(int sig, siginfo_t *si, void *uctx)
 	tag_fault_si_addr = si->si_addr;
 
 	/*
-	 * The faulting instruction was a memory access with a mismatched tag.
-	 * We cannot simply return (the instruction would re-execute and fault
-	 * again). Use siglongjmp or _exit.
-	 * For simplicity, we set a flag and call _exit from a child process.
+	 * Returning would re-execute the faulting instruction and loop forever.
+	 * Exit directly from the handler.
 	 */
+	_exit(0);
 }
 
 static void test_tag_fault_signal(void)
