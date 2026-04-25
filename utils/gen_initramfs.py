@@ -1,6 +1,5 @@
 import os
 import subprocess
-import sys
 import datetime
 import fnmatch
 
@@ -54,6 +53,8 @@ def link_dependencies_to_rootfsimg(rootfsimg_path, sysroot_path, f):
         if os.path.exists(full_dir_path):
             for file in os.listdir(full_dir_path):
                 file_path = os.path.join(full_dir_path, file)
+                if os.path.islink(file_path) and not os.path.exists(file_path):
+                    raise FileNotFoundError(f"SymLink {file_path} is broken")
                 if os.path.isfile(file_path) and (os.access(file_path, os.X_OK) or file_path.split('.')[1] == 'so'):
                     dependencies = find_dependencies(file_path, sysroot_path, rootfsimg_path)
                     for dep in dependencies:
@@ -117,9 +118,11 @@ def generate_initramfs_txt(rootfsimg_path, sysroot_path, output_file):
 
 if __name__ == "__main__":
     # Check environment variables
-    if not os.getenv("RISCV_ROOTFS_HOME") or not os.getenv("RISCV"):
-        print("Error: Environment variables RISCV_ROOTFS_HOME and RISCV must be set!")
-        sys.exit(1)
+    if not os.getenv("RISCV_ROOTFS_HOME"):
+        raise ValueError("Environment variable RISCV_ROOTFS_HOME is not set")
+
+    if not os.getenv("RISCV"):
+        raise ValueError("Environment variable RISCV is not set")
 
     # Initialize paths
     rootfsimg_path = os.path.join(os.getenv("RISCV_ROOTFS_HOME"), "rootfsimg")
@@ -128,4 +131,4 @@ if __name__ == "__main__":
 
     # Start to generate initramfs.txt
     generate_initramfs_txt(rootfsimg_path, sysroot_path, output_file)
-    print(f"initramfs.txt has been generated successfully at {output_file}")
+    print(f"[INFO] initramfs.txt has been generated successfully at {output_file}")
