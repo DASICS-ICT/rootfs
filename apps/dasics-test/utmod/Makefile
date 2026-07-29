@@ -1,22 +1,6 @@
-NAME = utmod
-obj-m += $(NAME).o
-TARGET := $(NAME).ko
-KERNEL_SRC ?= ~/dasics/riscv-linux
-PWD := $(shell pwd)
-ARCH ?= riscv
-CROSS_COMPILE ?= riscv64-unknown-linux-gnu-
-ROOTFSIMG := ~/dasics/rootfs/rootfsimg/root
-BUILD_DIR := $(PWD)/build
-FLAGS ?= -fPIC -g
-ccflags-y += $(FLAGS)
+obj-m += utmod.o
+ccflags-y += -fPIC -g
 
-install:
-	mkdir $(BUILD_DIR)
-	$(MAKE) -C $(KERNEL_SRC) M=$(PWD) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) modules
-	cp $(TARGET) $(BUILD_DIR)
-	ln -sf $(BUILD_DIR)/$(TARGET) $(ROOTFSIMG)/$(TARGET)
-	
-
-clean:
-	$(MAKE) -C $(KERNEL_SRC) M=$(PWD) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) clean
-	rm -rf $(BUILD_DIR)
+MODULE_NAME := utmod
+MODULE_DIR := $(abspath $(if $(src),$(src),$(CURDIR)))
+include $(MODULE_DIR)/../module-test.mk

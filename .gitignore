@@ -1,3 +1,11 @@
 .vscode
 .idea
 build
+*.ko
+*.mod
+*.mod.c
+*.o
+.*.cmd
+Module.symvers
+modules.order
+.tmp_versions

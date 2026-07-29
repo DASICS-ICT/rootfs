@@ -25,13 +25,34 @@ This command updates and initializes the submodules with a shallow clone (`--dep
 
 ### Building the Rootfs
 
-To build the `rootfs`, run:
+The default `base` profile builds a minimal image and does not auto-run DASICS
+tests:
 
 ```bash
 make all
 ```
 
-This target compiles and installs the specified applications (in this case, `busybox`) and generates the initial RAM filesystem (`initramfs`) using a Python script located in the `utils` directory.
+Select an explicit profile for other images:
+
+```bash
+# Current C6/D3/D4/E1/E5/F1 kernel-runtime regression modules.
+make PROFILE=runtime-regression all
+
+# Reserved for the hand-written dummy logic/glue modules.
+make PROFILE=dummy all
+
+# Historical user-space DASICS programs.
+make PROFILE=legacy all
+```
+
+The runtime modules are copied into
+`/root/modules/dasics/runtime/` in the guest. They are regular initramfs files,
+not absolute host symlinks. Intermediate phase sources such as A2/C3/C4/C5/D1
+remain buildable directly but are not packaged by a standard profile.
+
+No profile loads a test automatically from `rc.local`; run the desired
+`insmod` commands explicitly so a boot transcript has an unambiguous test
+scope.
 
 ### Cleaning the Rootfs
 
