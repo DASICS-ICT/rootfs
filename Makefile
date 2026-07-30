@@ -9,7 +9,7 @@ RUNTIME_REGRESSION_APPS = dasics-test/utmod dasics-test/tmod \
 	dasics-test/e1-utmod dasics-test/e1-tmod \
 	dasics-test/e5-utmod dasics-test/e5-tmod \
 	dasics-test/f1-utmod dasics-test/f1-tmod
-DUMMY_APPS =
+DUMMY_APPS = dasics-test/dummy-glue dasics-test/dummy-logic
 LEGACY_APPS = dasics-test/rwx dasics-test/free dasics-test/ofb \
 	dasics-test/vnic
 
@@ -85,6 +85,7 @@ apps/dasics-test/d4-tmod: apps/dasics-test/d4-utmod
 apps/dasics-test/e1-tmod: apps/dasics-test/e1-utmod
 apps/dasics-test/e5-tmod: apps/dasics-test/e5-utmod
 apps/dasics-test/f1-tmod: apps/dasics-test/f1-utmod
+apps/dasics-test/dummy-logic: apps/dasics-test/dummy-glue
 
 $(LIBS_DIR): %:
 	$(MAKE) -s -C $@ install

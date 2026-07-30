@@ -38,7 +38,7 @@ Select an explicit profile for other images:
 # Current C6/D3/D4/E1/E5/F1 kernel-runtime regression modules.
 make PROFILE=runtime-regression all
 
-# Reserved for the hand-written dummy logic/glue modules.
+# Hand-written KSplit-IDL-derived dummy logic/glue modules.
 make PROFILE=dummy all
 
 # Historical user-space DASICS programs.
@@ -53,6 +53,16 @@ remain buildable directly but are not packaged by a standard profile.
 No profile loads a test automatically from `rc.local`; run the desired
 `insmod` commands explicitly so a boot transcript has an unambiguous test
 scope.
+
+For the dummy profile, load trusted glue before untrusted logic:
+
+```sh
+insmod /root/modules/dasics/dummy/dummy_glue.ko trust=1
+insmod /root/modules/dasics/dummy/dummy_logic.ko
+ip link show dummy0
+rmmod dummy_logic
+rmmod dummy_glue
+```
 
 ### Cleaning the Rootfs
 
