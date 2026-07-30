@@ -10,6 +10,7 @@ RISCV_ROOTFS_HOME ?= $(abspath $(MODULE_DIR)/../../..)
 KERNEL_SRC ?= $(abspath $(RISCV_ROOTFS_HOME)/../riscv-linux)
 ARCH ?= riscv
 CROSS_COMPILE ?= riscv64-unknown-linux-gnu-
+KERNEL_PREPARE_CROSS_COMPILE ?= riscv64-linux-gnu-
 PROFILE ?= runtime-regression
 MODULE_SET := $(if $(filter runtime-regression,$(PROFILE)),runtime,$(PROFILE))
 MODULE_INSTALL_DIR ?= $(abspath \
@@ -25,6 +26,9 @@ endif
 .PHONY: all install clean
 
 all:
+	$(MAKE) -C $(KERNEL_SRC) ARCH=$(ARCH) \
+		CROSS_COMPILE=$(KERNEL_PREPARE_CROSS_COMPILE) \
+		olddefconfig prepare
 	$(MAKE) -C $(KERNEL_SRC) M=$(MODULE_DIR) $(KBUILD_ARGS) modules
 
 install: all
