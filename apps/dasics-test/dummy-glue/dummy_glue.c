@@ -64,7 +64,7 @@ struct dummy_callback_context {
 	void *arg0;
 	void *arg1;
 	void *arg2;
-	bool skb_freed;
+	bool skb_free_requested;
 };
 
 static struct dasics_compartment dummy_compartment;
@@ -79,6 +79,11 @@ static bool dummy_self_ref;
 static bool dummy_pernet_locked;
 static bool dummy_rtnl_locked;
 static bool dummy_link_registered;
+static bool omit_xmit_skb_bound;
+
+module_param(omit_xmit_skb_bound, bool, 0400);
+MODULE_PARM_DESC(omit_xmit_skb_bound,
+		 "Test only: omit the skb read bound for dummy_xmit");
 
 static const struct net_device_ops dummy_glue_netdev_ops;
 static const struct ethtool_ops dummy_glue_ethtool_ops;
@@ -125,7 +130,7 @@ static long dummy_enter_callback(enum dummy_callback_kind kind, void *target,
 				 void *arg0, void *arg1, void *arg2,
 				 struct dasics_region *regions,
 				 unsigned int nr_regions, bool has_result,
-				 bool *skb_freed)
+				 bool *skb_free_requested)
 {
 	struct dasics_call_policy policy = {
 		.callee = &dummy_compartment,
@@ -159,10 +164,10 @@ static long dummy_enter_callback(enum dummy_callback_kind kind, void *target,
 	dummy_context.arg0 = arg0;
 	dummy_context.arg1 = arg1;
 	dummy_context.arg2 = arg2;
-	dummy_context.skb_freed = false;
+	dummy_context.skb_free_requested = false;
 	ret = dasics_call(&dummy_callback_frame, &policy, &regs);
-	if (skb_freed)
-		*skb_freed = dummy_context.skb_freed;
+	if (skb_free_requested)
+		*skb_free_requested = dummy_context.skb_free_requested;
 	memset(&dummy_context, 0, sizeof(dummy_context));
 	atomic_set(&dummy_callback_busy, 0);
 	return ret ?: (has_result ? (long)regs.ret_a0 : 0);
@@ -260,21 +265,40 @@ static netdev_tx_t dummy_xmit_stub(struct sk_buff *skb,
 {
 	struct dasics_region regions[2];
 	unsigned int nr = 0;
-	bool skb_freed = false;
+	bool skb_free_requested = false;
 	long ret;
 
-	if (!skb || !dev ||
+	if (!skb || !dev)
+		return NETDEV_TX_BUSY;
+	if (!READ_ONCE(omit_xmit_skb_bound) &&
 	    dummy_add_region(regions, &nr, skb, sizeof(*skb),
-			     DASICS_REGION_READ) ||
-	    dummy_add_region(regions, &nr, dev, sizeof(*dev),
+			     DASICS_REGION_READ))
+		return NETDEV_TX_BUSY;
+	if (dummy_add_region(regions, &nr, dev, sizeof(*dev),
 			     DASICS_REGION_READ))
 		return NETDEV_TX_BUSY;
 	ret = dummy_enter_callback(DUMMY_CALLBACK_XMIT, dummy_targets.xmit,
 				   skb, dev, NULL, regions, nr, true,
-				   &skb_freed);
-	if (skb_freed)
+				   &skb_free_requested);
+	if (READ_ONCE(omit_xmit_skb_bound) && ret)
+		pr_info_ratelimited("dummy_glue: expected xmit isolation fault: %ld\n",
+				    ret);
+	if (skb_free_requested) {
+		/*
+		 * dummy_enter_callback() returns only after dasics_call_finish()
+		 * restored the parent hardware state.  Do not make this address
+		 * reusable while the untrusted callback still has its skb bound.
+		 */
+		if (WARN_ON_ONCE(dummy_callback_frame.state !=
+				 DASICS_CALL_FRAME_CLEANED))
+			return NETDEV_TX_BUSY;
+		dev_kfree_skb(skb);
+		pr_info_once("dummy_glue: deferred skb free after callback revoke\n");
 		return NETDEV_TX_OK;
-	return ret ? NETDEV_TX_BUSY : NETDEV_TX_OK;
+	}
+	if (!ret)
+		pr_err_ratelimited("dummy_glue: xmit returned without consuming skb\n");
+	return NETDEV_TX_BUSY;
 }
 
 static void dummy_set_rx_mode_stub(struct net_device *dev)
@@ -699,12 +723,15 @@ static long dummy_maincall_invoke_impl(
 		return 0;
 	case DUMMY_MC_KFREE_SKB:
 		if (!dummy_in_callback(DUMMY_CALLBACK_XMIT) ||
-		    dummy_context.skb_freed ||
+		    dummy_context.skb_free_requested ||
 		    dummy_context.arg0 != (void *)request->args[0] ||
 		    !dummy_args_zero(request, 1))
 			return -EPERM;
-		dummy_context.skb_freed = true;
-		dev_kfree_skb((struct sk_buff *)request->args[0]);
+		/*
+		 * Record ownership transfer, but keep the object alive until the
+		 * outer DASICS callback has returned and its data bounds are gone.
+		 */
+		dummy_context.skb_free_requested = true;
 		return 0;
 	case DUMMY_MC_DEV_LSTATS_READ:
 		dev = (struct net_device *)request->args[0];
