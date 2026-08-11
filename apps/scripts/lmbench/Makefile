@@ -6,7 +6,7 @@ TARGET_FILE := $(INITRAMFS_ROOT)/lib/libtirpc.so
 CFLAGS += -O
 CFLAGS += -I$(INITRAMFS_ROOT)/include/tirpc
 LDFLAGS += -L$(INITRAMFS_ROOT)/lib
-LDFLAGS += -ltirpc
+LDLIBS += -ltirpc
 CC = $(CROSS_COMPILE)gcc
 AR = $(CROSS_COMPILE)ar
 RANLIB = $(CROSS_COMPILE)ranlib
@@ -14,6 +14,7 @@ override OS = unknown
 
 export CFLAGS
 export LDFLAGS
+export LDLIBS
 export CC
 export AR
 export RANLIB
