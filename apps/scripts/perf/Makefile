@@ -10,7 +10,7 @@ CC = $(CROSS_COMPILE)gcc
 all: $(TARGET_FILE)
 
 $(TARGET_FILE): $(REPO_PATH)/main.c $(REPO_PATH)/read_hpm.c $(REPO_PATH)/write_hpm.c
+	mkdir -p $(dir $@)
 	$(CC) $^ -o $@
 
 clean:
-	
