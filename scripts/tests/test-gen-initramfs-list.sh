@@ -36,6 +36,25 @@ chmod 0444 -- "$private_root/data"
 RISCV="$riscv_root" INITRAMFS_ROOT="$initramfs_root" \
   "$generator" "$output"
 
+for library in libc.so.6 libdl.so.2 libm.so.6 libpthread.so.0 libresolv.so.2; do
+  file_line="file /lib/riscv64-linux-gnu/$library $riscv_root/lib/$library 755 0 0"
+  link_line="slink /lib/$library riscv64-linux-gnu/$library 755 0 0"
+  [[ "$(grep -Fxc -- "$file_line" "$output")" -eq 1 ]] || {
+    printf 'Expected one multiarch provider entry for %s\n' "$library" >&2
+    exit 1
+  }
+  [[ "$(grep -Fxc -- "$link_line" "$output")" -eq 1 ]] || {
+    printf 'Expected one early-runtime alias for %s\n' "$library" >&2
+    exit 1
+  }
+done
+
+libtirpc_link_line='slink /lib/libtirpc.so.3 riscv64-linux-gnu/libtirpc.so.3 755 0 0'
+[[ "$(grep -Fxc -- "$libtirpc_link_line" "$output")" -eq 1 ]] || {
+  printf 'Expected one early-runtime alias for libtirpc.so.3\n' >&2
+  exit 1
+}
+
 program_line="file /my-dir/register-pressure/private-workloads/milc_scalar/program $private_root/program 755 0 0"
 data_line="file /my-dir/register-pressure/private-workloads/milc_scalar/data $private_root/data 444 0 0"
 [[ "$(grep -Fxc -- "$program_line" "$output")" -eq 1 ]] || {

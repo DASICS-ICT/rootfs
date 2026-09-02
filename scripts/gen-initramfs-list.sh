@@ -66,6 +66,9 @@ for lib in "${LIBS[@]}"; do
     fi
     printf 'file /lib/riscv64-linux-gnu/%s %s 755 0 0\n' \
       "$lib" "$p" >>"$output"
+    # The bundled loader searches /lib before init can establish an environment.
+    printf 'slink /lib/%s riscv64-linux-gnu/%s 755 0 0\n' \
+      "$lib" "$lib" >>"$output"
 done
 
 cat <<EOF >>"$output"
@@ -77,6 +80,7 @@ file /usr/share/udhcpc/default.script ${INITRAMFS_ROOT}/../files/usr/share/udhcp
 slink /init /bin/busybox 755 0 0
 
 file /lib/riscv64-linux-gnu/libtirpc.so.3 ${INITRAMFS_ROOT}/lib/libtirpc.so.3 755 0 0
+slink /lib/libtirpc.so.3 riscv64-linux-gnu/libtirpc.so.3 755 0 0
 EOF
 
 BINS=()
