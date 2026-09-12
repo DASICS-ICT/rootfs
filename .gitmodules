@@ -6,4 +6,4 @@
 	url = https://salsa.debian.org/debian/libtirpc.git
 [submodule "apps/lmbench"]
 	path = apps/lmbench
-	url = https://github.com/intel/lmbench
+	url = https://github.com/DASICS-ICT/lmbench.git
